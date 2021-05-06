@@ -1,51 +1,12 @@
-# Views & View Containers
+# LiquidJava VS Code Client
 
-This sample demonstrates how to implement and contribute a tree view in VS Code. This includes:
+This client was inspired in microsoft's [tree-view-sample](https://github.com/microsoft/vscode-extension-samples/tree/main/tree-view-sample) project.
 
-- Contributing views and view containers.
-- Contributing actions in various location of the view.
-- Implementing the tree data provider for the view.
-- Creating and working with the view.
+## Running Client
 
-This sample provides following views
-
-- Node dependencies view
-- Ftp file explorer view
-
-Following example shows Node dependencies view in Package Explorer View container.
-
-![Package Explorer](./resources/package-explorer.png)
-
-## VS Code API
-
-This sample uses following contribution points, activation events and APIs
-
-### Contribution Points
-
-- `views`
-- `viewsContainers`
-- `menu`
-  - `view/title`
-  - `view/item/context`
-
-### Activation Events
-
-- `onView:${viewId}`
-
-### APIs
-
-- `window.createTreeView`
-- `window.registerTreeDataProvider`
-- `TreeView`
-- `TreeDataProvider`
-
-Refer to [Usage](./USAGE.md) document for more details.
-
-## Running the Sample
-
-- Open this example in VS Code Insiders
+- Open this folder in terminal/VS Code terminal
 - `npm install`
 - `npm run watch`
-- `F5` to start debugging
-- Node dependencies view is shown in Package explorer view container in Activity bar.
-- FTP file explorer view should be shown in Explorer
+- Open this folder in VS Code
+- `F5` to start debugging or go to `Run View > run Lauch Extension`.
+- A view with LiquidJava is shown and allows the start of the verification. Inside the view the verification conditions and the error report can be seen.
