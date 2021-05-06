@@ -1,0 +1,109 @@
+{
+	"name": "custom-view-samples",
+	"displayName": "LiquidJava",
+	"description": "Samples for VSCode's view API",
+	"version": "0.0.1",
+	"publisher": "vscode-samples",
+	"enableProposedApi": true,
+	"engines": {
+		"vscode": "^1.52.0"
+	},
+	"languages": [
+		{
+			"id": "java"
+		}
+	],
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+        "java",
+        "test",
+        "junit",
+        "testng",
+        "debug"
+    ],
+	"activationEvents": [
+		"onLanguage:java",
+		"onView:liquidJava",
+		"onCommand:liquidJavaVCS.reveal"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "package-liquid-java",
+					"title": "Package Liquid Java",
+					"icon": "media/pingo-d'agua.svg"
+				}
+			]
+		},
+		"views": {
+			"package-liquid-java": [
+				{
+					"id": "liquidJava",
+					"name": "Liquid Java",
+					"icon": "media/pingo-d'agua.svg",
+					"contextualTitle": "Package Liquid Java"
+				},
+				{
+					"id": "liquidJavaVCS",
+					"name": "Verification Conditions"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "liquidJava.start",
+				"title": "Check",
+				"icon": {
+					"light": "resources/light/round-play-button.svg",
+					"dark": "resources/dark/round-play-button.svg"
+				}
+			},
+			{
+				"command": "liquidJavaVCS.reveal",
+				"title": "Liquid Java: Reveal"
+			}
+		],
+		"menus": {
+			
+			"view/title": [
+				{
+					"command": "liquidJava.start",
+					"when": "java:view == liquidJava",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": []
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"lint": "eslint . --ext .ts,.tsx"
+	},
+	"extensionDependencies": [
+        "redhat.java",
+        "vscjava.vscode-java-debug"
+    ],
+	"devDependencies": {
+		"@types/mkdirp": "^0.5.2",
+		"@types/node": "^12.12.0",
+		"@types/rimraf": "^2.0.2",
+		"@types/vscode": "^1.45.0",
+		"@typescript-eslint/eslint-plugin": "^4.16.0",
+		"@typescript-eslint/parser": "^4.16.0",
+		"eslint": "^7.21.0",
+		"typescript": "^4.2.2"
+	},
+	"dependencies": {
+		"ftp": "^0.3.10",
+		"jsonc-parser": "^0.4.2",
+		"minimist": "^0.2.1",
+		"mkdirp": "^0.5.1",
+		"rimraf": "^2.6.2"
+	}
+}
