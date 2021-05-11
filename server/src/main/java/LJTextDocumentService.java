@@ -53,6 +53,7 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		 // Provide completion item.
+		System.out.println("on completion");
         return CompletableFuture.supplyAsync(() -> {
             List<CompletionItem> completionItems = new ArrayList<>();
             try {
@@ -84,125 +85,142 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	@Override
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		// TODO Auto-generated method stub
+		System.out.println("on resolveCompletionItem");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
 		// TODO Auto-generated method stub
+		System.out.println("on hover");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<SignatureHelp> signatureHelp(TextDocumentPositionParams position) {
 		// TODO Auto-generated method stub
+		System.out.println("on signatureHelp");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
 		// TODO Auto-generated method stub
+		System.out.println("on definition");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on references");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
 		// TODO Auto-generated method stub
+		System.out.println("on documentHighlight");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on documentSymbol");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends Command>> codeAction(CodeActionParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on codeAction");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on code lens");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
 		// TODO Auto-generated method stub
+		System.out.println("on resolveCodeLens");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on formatting");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends TextEdit>> rangeFormatting(DocumentRangeFormattingParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on rangeFormatting");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<List<? extends TextEdit>> onTypeFormatting(DocumentOnTypeFormattingParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on typeformatting");
 		return null;
 	}
 
 	@Override
 	public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on rename");
 		return null;
 	}
 
 	@Override
 	public void didOpen(DidOpenTextDocumentParams params) {
 		// TODO Auto-generated method stub
-
+		System.out.println("on did open");
 	}
 
 	@Override
 	public void didChange(DidChangeTextDocumentParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("on didChange doc");
 
 	}
 
 	@Override
 	public void didClose(DidCloseTextDocumentParams params) {
 		// TODO Auto-generated method stub
-
+		System.out.println("on didClose");
 	}
 
 	@Override
 	public void didSave(DidSaveTextDocumentParams params) {
 		// TODO Auto-generated method stub
-
+		System.out.println("didSave");
 	}
 
 	@Override
 	public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
 		// TODO Auto-generated method stub
+		System.out.println("symbol");
 		return null;
 	}
 
 	@Override
 	public void didChangeConfiguration(DidChangeConfigurationParams params) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("on didChange config");
 	}
 
 	@Override
 	public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+		System.out.println("on didChange");
 		// TODO Auto-generated method stub
 		
 	}

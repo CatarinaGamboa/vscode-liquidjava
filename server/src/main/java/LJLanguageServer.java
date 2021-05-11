@@ -90,8 +90,8 @@ public class LJLanguageServer implements LanguageServer{
 //	        serverInfo.setVersion("0.0.1-alpha");
 	        completableFuture.complete(new InitializeResult(capabilities));
 	        System.err.println(params.getRootUri());
-	        System.err.println(params.getWorkspaceFolders());
-
+//	        System.err.println(params.getWorkspaceFolders());
+	        
 	        return completableFuture;
 		
 		
@@ -115,12 +115,10 @@ public class LJLanguageServer implements LanguageServer{
 	}
 
 	public TextDocumentService getTextDocumentService() {
-		// TODO Auto-generated method stub
 		return textDocumentService;
 	}
 
 	public WorkspaceService getWorkspaceService() {
-		// TODO Auto-generated method stub
 		return textDocumentService;
 	}
 
