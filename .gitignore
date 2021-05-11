@@ -1,36 +1,5 @@
-# Compiled class file
-*.class
-
-
-# Package Files #
-*.jar
-*.war
-*.ear
-*.zip
-*.tar.gz
-*.rar
-*.iml
-**/*.vsix
-
 **/node_modules/
-.DS_Store
-target/
-.classpath
-.project
-.settings
-**/.checkstyle
-target/
-bin/
-**/lib/
-out/
-server/
-.jqwik-database
-
 out
 node_modules
 *.vsix
 .vscode-test
-resources/templates/css/**
-resources/templates/js/**
-resources/templates/fonts/**
-dist
