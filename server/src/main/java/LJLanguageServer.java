@@ -90,6 +90,7 @@ public class LJLanguageServer implements LanguageServer{
 //	        serverInfo.setVersion("0.0.1-alpha");
 	        completableFuture.complete(new InitializeResult(capabilities));
 	        System.err.println(params.getRootUri());
+	     
 //	        System.err.println(params.getWorkspaceFolders());
 	        
 	        return completableFuture;

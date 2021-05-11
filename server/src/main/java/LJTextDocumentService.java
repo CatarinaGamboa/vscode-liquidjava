@@ -65,7 +65,8 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 		if(oparams.isPresent())
 			remoteProxy.publishDiagnostics(oparams.get());
 		else
-			remoteProxy.publishDiagnostics(new PublishDiagnosticsParams());
+			remoteProxy.publishDiagnostics(null);
+		
 	}
 
 	public void setRemoteProxy(LanguageClient remoteProxy) {

@@ -19,20 +19,21 @@ public class LJDiagnostics {
 	
 
 	public static Optional<PublishDiagnosticsParams> checkDiagnostics(TextDocumentItem textDocumentItem) {
-		return verifyFile(textDocumentItem.getUri());
+		return verify(textDocumentItem.getUri());
 	}
 	
 
 	public static Optional<PublishDiagnosticsParams> checkDiagnostics(TextDocumentIdentifier textDocumentItem) {
-		return verifyFile(textDocumentItem.getUri());
+		return verify(textDocumentItem.getUri());
 	}
 	
 	
-	private static Optional<PublishDiagnosticsParams> verifyFile(String uri){
-		String s = "C:/Regen/test-projects/src/Main.java";
+	private static Optional<PublishDiagnosticsParams> verify(String uri){
+		String u = "C:/"+uri.substring(12);
+//		String s = "C:/Regen/test-projects/src/Main.java";
 		ErrorEmitter ee;
 		try {
-			ee = CommandLineLauncher.launch(s);
+			ee = CommandLineLauncher.launch(u);
 		}catch(Exception e) {
 			System.err.println("Exception:" + e.getMessage());
 			return Optional.empty();
@@ -45,11 +46,11 @@ public class LJDiagnostics {
 		PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
 		List<Diagnostic> diagnostics = new ArrayList<>();
         Range range = new Range(
-                new Position(pos.getLineStart()-1, pos.getColStart()),
-                new Position(pos.getLineEnd()-1, pos.getColEnd())
+                new Position(pos.getLineStart()-1, pos.getColStart()-1),
+                new Position(pos.getLineEnd()-1, pos.getColEnd()-1)
         );
         String posss = String.format("(%d,%d) (%d,%d)", pos.getLineStart(), pos.getColStart(), pos.getLineEnd(), pos.getColEnd());
-        diagnostics.add(new Diagnostic(range, "Refinement Error"+pos.getLineStart()+posss,  DiagnosticSeverity.Error, ee.getMessage()));
+        diagnostics.add(new Diagnostic(range, "Refinement Type Error",  DiagnosticSeverity.Error, ee.getMessage()));
         diagnosticsParams.setDiagnostics(diagnostics);
         diagnosticsParams.setUri(uri);
 		return Optional.of(diagnosticsParams);
