@@ -7,11 +7,14 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
+import repair.regen.api.CommandLineLauncher;
+
 public class LJWorkspaceService implements WorkspaceService {
 
 	@Override
 	public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
 		// TODO Auto-generated method stub
+//		CommandLineLauncher.launch(file)
 		return null;
 	}
 

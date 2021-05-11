@@ -10,7 +10,9 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
@@ -28,11 +30,26 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.WorkspaceSymbolParams;
+import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
+import org.eclipse.lsp4j.services.WorkspaceService;
 
-public class LJTextDocumentService implements TextDocumentService {
-
+public class LJTextDocumentService implements TextDocumentService, WorkspaceService {
+	 private LanguageClient remoteProxy;
+//	 private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
+	 private RemoteEndpoint remoteEndPoint;
+	
+    public void setRemoteProxy(LanguageClient remoteProxy) {
+        this.remoteProxy = remoteProxy;
+    }
+    
+    public void setRemoteEndPoint(RemoteEndpoint remoteEndpoint) {
+        this.remoteEndPoint = remoteEndpoint;
+    }
+	
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		 // Provide completion item.
@@ -170,6 +187,24 @@ public class LJTextDocumentService implements TextDocumentService {
 	public void didSave(DidSaveTextDocumentParams params) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void didChangeConfiguration(DidChangeConfigurationParams params) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
