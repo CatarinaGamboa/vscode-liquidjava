@@ -17,12 +17,12 @@
 		"Other"
 	],
 	"keywords": [
-        "java",
-        "test",
-        "junit",
-        "testng",
-        "debug"
-    ],
+		"java",
+		"test",
+		"junit",
+		"testng",
+		"debug"
+	],
 	"activationEvents": [
 		"onLanguage:java",
 		"onView:liquidJava",
@@ -30,6 +30,27 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "Liquid Java configuration",
+			"properties": {
+			  "liquidJavaServer.maxNumberOfProblems": {
+				"type": "number",
+				"default": 100,
+				"description": "Controls the maximum number of problems produced by the server."
+			  },
+			  "liquidJavaServer.trace.server": {
+				"type": "string",
+				"enum": [
+				  "off",
+				  "messages",
+				  "verbose"
+				],
+				"default": "off",
+				"description": "Traces the communication between VSCode and the liquidJavaServer service."
+			  }
+			}
+		},
 		"viewsContainers": {
 			"activitybar": [
 				{
@@ -68,7 +89,6 @@
 			}
 		],
 		"menus": {
-			
 			"view/title": [
 				{
 					"command": "liquidJava.start",
@@ -86,9 +106,9 @@
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"extensionDependencies": [
-        "redhat.java",
-        "vscjava.vscode-java-debug"
-    ],
+		"redhat.java",
+		"vscjava.vscode-java-debug"
+	],
 	"devDependencies": {
 		"@types/mkdirp": "^0.5.2",
 		"@types/node": "^12.12.0",
@@ -104,6 +124,7 @@
 		"jsonc-parser": "^0.4.2",
 		"minimist": "^0.2.1",
 		"mkdirp": "^0.5.1",
-		"rimraf": "^2.6.2"
+		"rimraf": "^2.6.2",
+		"vscode-languageclient": "^3.1.0"
 	}
 }
