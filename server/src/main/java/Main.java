@@ -75,6 +75,7 @@ public class Main {
                                 launcher.startListening();
                             }
                         } catch (IOException e) {
+                        	System.out.println("Caught error here: " + e.getMessage());
                             e.printStackTrace();
                         }
                     }

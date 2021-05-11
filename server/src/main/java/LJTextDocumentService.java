@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -86,28 +87,35 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		// TODO Auto-generated method stub
 		System.out.println("on resolveCompletionItem");
-		return null;
+		return CompletableFuture.supplyAsync(() -> {
+			return new CompletionItem();
+		});
 	}
 
 	@Override
 	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
-		// TODO Auto-generated method stub
 		System.out.println("on hover");
-		return null;
+		return CompletableFuture.supplyAsync(() -> {
+			return new Hover();
+		});
 	}
 
 	@Override
 	public CompletableFuture<SignatureHelp> signatureHelp(TextDocumentPositionParams position) {
-		// TODO Auto-generated method stub
 		System.out.println("on signatureHelp");
-		return null;
+		return CompletableFuture.supplyAsync(() -> {
+			return new SignatureHelp();
+		});
 	}
 
 	@Override
 	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
 		// TODO Auto-generated method stub
 		System.out.println("on definition");
-		return null;
+		return CompletableFuture.supplyAsync(() -> {
+			Location t = new Location();
+			return Arrays.asList(t);
+		});
 	}
 
 	@Override
@@ -128,7 +136,10 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params) {
 		// TODO Auto-generated method stub
 		System.out.println("on documentSymbol");
-		return null;
+		return CompletableFuture.supplyAsync(() -> {
+			SymbolInformation t = new SymbolInformation();
+			return Arrays.asList(t);
+		});
 	}
 
 	@Override
@@ -142,7 +153,10 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
 		// TODO Auto-generated method stub
 		System.out.println("on code lens");
-		return null;
+		return CompletableFuture.supplyAsync(() -> {
+			CodeLens t = new CodeLens();
+			return Arrays.asList(t);
+		});
 	}
 
 	@Override
