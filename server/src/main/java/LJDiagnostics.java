@@ -39,8 +39,13 @@ public class LJDiagnostics {
 			return Optional.empty();
 		}
 		
-		if(!ee.foundError())
-			return Optional.empty();
+		if(!ee.foundError()) {
+			PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
+			List<Diagnostic> diagnostics = new ArrayList<>();
+			diagnosticsParams.setDiagnostics(diagnostics);
+			diagnosticsParams.setUri(uri);
+			return Optional.of(diagnosticsParams);
+		}
 		ErrorPosition pos = ee.getPosition();
 		
 		PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
@@ -49,8 +54,8 @@ public class LJDiagnostics {
                 new Position(pos.getLineStart()-1, pos.getColStart()-1),
                 new Position(pos.getLineEnd()-1, pos.getColEnd()-1)
         );
-        String posss = String.format("(%d,%d) (%d,%d)", pos.getLineStart(), pos.getColStart(), pos.getLineEnd(), pos.getColEnd());
-        diagnostics.add(new Diagnostic(range, "Refinement Type Error",  DiagnosticSeverity.Error, ee.getMessage()));
+        //String posss = String.format("(%d,%d) (%d,%d)", pos.getLineStart(), pos.getColStart(), pos.getLineEnd(), pos.getColEnd());
+        diagnostics.add(new Diagnostic(range, "Refinement Type Error",  DiagnosticSeverity.Error, "Refinement Type Error: "+ee.getMessage()));
         diagnosticsParams.setDiagnostics(diagnostics);
         diagnosticsParams.setUri(uri);
 		return Optional.of(diagnosticsParams);
@@ -58,20 +63,20 @@ public class LJDiagnostics {
 	
 	
 
-	public static PublishDiagnosticsParams createDiagnostics(TextDocumentIdentifier textDocumentItem) {
-        PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
-        List<Diagnostic> diagnostics = new ArrayList<>();
-        Range range = new Range(
-                new Position(0, 1),
-                new Position(0, 50)
-        );
-//        exception.printStackTrace();
-        diagnostics.add(new Diagnostic(range, "Error",  DiagnosticSeverity.Error, "Error processing file"));
-        diagnosticsParams.setDiagnostics(diagnostics);
-        diagnosticsParams.setUri(textDocumentItem.getUri());
-//        setBasicDiagnostics(document, diagnosticsParams);
-        return diagnosticsParams;
-    }
+//	public static PublishDiagnosticsParams createDiagnostics(TextDocumentIdentifier textDocumentItem) {
+//        PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
+//        List<Diagnostic> diagnostics = new ArrayList<>();
+//        Range range = new Range(
+//                new Position(0, 1),
+//                new Position(0, 50)
+//        );
+////        exception.printStackTrace();
+//        diagnostics.add(new Diagnostic(range, "Error",  DiagnosticSeverity.Error, "Error processing file"));
+//        diagnosticsParams.setDiagnostics(diagnostics);
+//        diagnosticsParams.setUri(textDocumentItem.getUri());
+////        setBasicDiagnostics(document, diagnosticsParams);
+//        return diagnosticsParams;
+//    }
 
 //    private static void setBasicDiagnostics(TextDocumentIdentifier document, PublishDiagnosticsParams diagnosticsParams) {
 //        diagnosticsParams.setUri(document.getUri());
