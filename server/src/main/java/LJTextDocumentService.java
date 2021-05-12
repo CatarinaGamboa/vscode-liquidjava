@@ -47,11 +47,17 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJTextDocumentService implements TextDocumentService, WorkspaceService {
 	private LanguageClient remoteProxy;
-	//	 private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
 	private RemoteEndpoint remoteEndPoint;
+	private String workspaceRoot;
+//	 private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
+	
+	
+	public void setWorkspaceRoot(String s) {
+		workspaceRoot = s;
+	}
 
 	public void checkDiagnostics(TextDocumentItem textDocumentItem) {
-		Optional<PublishDiagnosticsParams> oparams = LJDiagnostics.checkDiagnostics(textDocumentItem);
+		Optional<PublishDiagnosticsParams> oparams = LJDiagnostics.checkDiagnostics(workspaceRoot,textDocumentItem);
 		if(oparams.isPresent())
 			remoteProxy.publishDiagnostics(oparams.get());
 		else
@@ -61,7 +67,7 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	
 
 	private void checkDiagnostics(VersionedTextDocumentIdentifier textDocument) {
-		Optional<PublishDiagnosticsParams> oparams = LJDiagnostics.checkDiagnostics(textDocument);
+		Optional<PublishDiagnosticsParams> oparams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocument);
 		if(oparams.isPresent())
 			remoteProxy.publishDiagnostics(oparams.get());
 		else
@@ -296,5 +302,7 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 			return Arrays.asList(s);
 		});
     }
+    
+
 
 }

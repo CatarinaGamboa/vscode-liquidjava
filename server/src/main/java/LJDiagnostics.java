@@ -13,24 +13,23 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
 
 import repair.regen.api.CommandLineLauncher;
-import repair.regen.utils.ErrorEmitter;
-import repair.regen.utils.ErrorPosition;
+import repair.regen.errors.ErrorEmitter;
+import repair.regen.errors.ErrorPosition;
 
 public class LJDiagnostics {
 	
-
-	public static Optional<PublishDiagnosticsParams> checkDiagnostics(TextDocumentItem textDocumentItem) {
-		return verify(textDocumentItem.getUri());
+	public static Optional<PublishDiagnosticsParams> checkDiagnostics(String root, TextDocumentItem textDocumentItem) {
+		return verify(root, textDocumentItem.getUri());
 	}
 	
 
-	public static Optional<PublishDiagnosticsParams> checkDiagnostics(TextDocumentIdentifier textDocumentItem) {
-		return verify(textDocumentItem.getUri());
+	public static Optional<PublishDiagnosticsParams> checkDiagnostics(String root, TextDocumentIdentifier textDocumentItem) {
+		return verify(root, textDocumentItem.getUri());
 	}
 	
 	
-	private static Optional<PublishDiagnosticsParams> verify(String uri){
-		String u = uri.substring(8);
+	public static Optional<PublishDiagnosticsParams> verify(String root, String uri){
+		String u = root.substring(8);
 		u = convertUTFtoCharacters(u);
 		ErrorEmitter ee;
 		try {
@@ -56,9 +55,10 @@ public class LJDiagnostics {
                 new Position(pos.getLineEnd()-1, pos.getColEnd()-1)
         );
         //String posss = String.format("(%d,%d) (%d,%d)", pos.getLineStart(), pos.getColStart(), pos.getLineEnd(), pos.getColEnd());
-        diagnostics.add(new Diagnostic(range, "Refinement Type Error",  DiagnosticSeverity.Error, "Refinement Type Error: "+ee.getMessage()));
+        diagnostics.add(new Diagnostic(range, "Refinement Type Error",  
+        		DiagnosticSeverity.Error, ee.getTitleMessage()));
         diagnosticsParams.setDiagnostics(diagnostics);
-        diagnosticsParams.setUri(uri);
+        diagnosticsParams.setUri(ee.getFilePath().toString());
 		return Optional.of(diagnosticsParams);
 	}
 	

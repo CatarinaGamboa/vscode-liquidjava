@@ -27,13 +27,12 @@ public class LJLanguageServer implements LanguageServer{
     private LanguageClient remoteProxy;
     private RemoteEndpoint remoteEndpoint;
 
-
 	
 //
 //	private LanguageClient client = null;
 //    @SuppressWarnings("unused")
-//    private String workspaceRoot = null;
 //    private WorkspaceService workspaceService;
+    
     private int errorCode = 1;
     
     public LJLanguageServer() {
@@ -85,14 +84,9 @@ public class LJLanguageServer implements LanguageServer{
 //	                ADL2TextDocumentService.SHOW_INFO_COMMAND
 //	                )));
 
-//	        ServerInfo serverInfo = new ServerInfo();
-//	        serverInfo.setName("ADL 2 Archetype language server");
-//	        serverInfo.setVersion("0.0.1-alpha");
 	        completableFuture.complete(new InitializeResult(capabilities));
 	        System.err.println(params.getRootUri());
-	     
-//	        System.err.println(params.getWorkspaceFolders());
-	        
+	        textDocumentService.setWorkspaceRoot(params.getRootUri());
 	        return completableFuture;
 		
 		
