@@ -30,7 +30,6 @@ public class LJDiagnostics {
 	
 	private static Optional<PublishDiagnosticsParams> verify(String uri){
 		String u = "C:/"+uri.substring(12);
-//		String s = "C:/Regen/test-projects/src/Main.java";
 		ErrorEmitter ee;
 		try {
 			ee = CommandLineLauncher.launch(u);
