@@ -12,7 +12,7 @@ let diagnosticCollection: vscode.DiagnosticCollection;
 
 export function activate(context: ExtensionContext) {
     //Checking if liquid java api is inside workspace,
-    //if yes connect to server, otherwise do nothing
+    //if yes connect to server, otherwise return
 
     //https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Glob-Patterns
     let glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
@@ -30,9 +30,9 @@ export function activate(context: ExtensionContext) {
 
      
         
-        // The server is a started as a separate app and listens on port 1278
+        // The server is a started as a separate app and listens on port 50000
         let connectionInfo = {
-            port: 1278
+            port: 50000
         };
         let serverOptions = () => {
             // Connect to language server via socket

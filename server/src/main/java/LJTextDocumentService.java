@@ -90,22 +90,15 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 		return CompletableFuture.supplyAsync(() -> {
 			List<CompletionItem> completionItems = new ArrayList<>();
 			try {
-				// Sample Completion item for sayHello
-				CompletionItem completionItem = new CompletionItem();
-				// Define the text to be inserted in to the file if the completion item is selected.
-				completionItem.setInsertText("Catarina");
-				// Set the label that shows when the completion drop down appears in the Editor.
-				completionItem.setLabel("catarina");
-				// Set the completion kind. This is a snippet.
-				// That means it replace character which trigger the completion and
-				// replace it with what defined in inserted text.
-				completionItem.setKind(CompletionItemKind.Snippet);
-				// This will set the details for the snippet code which will help user to
-				// understand what this completion item is.
-				completionItem.setDetail("catarina\n my name");
-
+				CompletionItem req = new CompletionItem();
+				req.setInsertText("@Refinement()");
+				req.setLabel("@Refinement");
+				req.setKind(CompletionItemKind.Snippet);
+				req.setDetail("Refinement annotation");
+				
+				
 				// Add the sample completion item to the list.
-				completionItems.add(completionItem);
+				completionItems.add(req);
 			} catch (Exception e) {
 				//TODO: Handle the exception.
 			}
@@ -126,6 +119,8 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 
 	@Override
 	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
+		position.getPosition().getCharacter();
+	
 		System.out.println("on hover");
 		return CompletableFuture.supplyAsync(() -> {
 			return new Hover();

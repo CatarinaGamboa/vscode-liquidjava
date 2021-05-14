@@ -55,7 +55,7 @@ public class Main {
 
 	private void startNetworkedLanguageServer() {
 		System.out.println("Starting listening in Network Server");
-		int port = 1278;
+		int port = 50000;
         try {
             final ServerSocket serversocket = new ServerSocket(port);
             new Thread( () -> {

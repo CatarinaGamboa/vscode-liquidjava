@@ -54,9 +54,10 @@ public class LJDiagnostics {
                 new Position(pos.getLineStart()-1, pos.getColStart()-1),
                 new Position(pos.getLineEnd()-1, pos.getColEnd()-1)
         );
+        String msg = ee.getTitleMessage()+"\n"+ee.getFullMessage();
         //String posss = String.format("(%d,%d) (%d,%d)", pos.getLineStart(), pos.getColStart(), pos.getLineEnd(), pos.getColEnd());
         diagnostics.add(new Diagnostic(range, "Refinement Type Error",  
-        		DiagnosticSeverity.Error, ee.getTitleMessage()));
+        		DiagnosticSeverity.Error, msg));
         diagnosticsParams.setDiagnostics(diagnostics);
         diagnosticsParams.setUri(ee.getFilePath().toString());
 		return Optional.of(diagnosticsParams);
