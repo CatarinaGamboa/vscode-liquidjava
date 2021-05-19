@@ -1,20 +1,17 @@
-'use strict';
-
-import * as net from 'net';
-
-import {Trace} from 'vscode-jsonrpc';
-import { window, workspace, commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, StreamInfo, Position as LSPosition, Location as LSLocation } from 'vscode-languageclient';
 import * as vscode from 'vscode';
-import * as fs from 'fs'; 
+import * as fs from "fs";
+import * as path from 'path';
+import {Trace} from 'vscode-jsonrpc';
+import * as net from 'net';
+import * as child_process from "child_process";
 
-let diagnosticCollection: vscode.DiagnosticCollection;
+import { workspace, Disposable, ExtensionContext } from 'vscode';
+import { LanguageClient, LanguageClientOptions, SettingMonitor, StreamInfo } from 'vscode-languageclient';
 
-export function activate(context: ExtensionContext) {
-    //Checking if liquid java api is inside workspace,
-    //if yes connect to server, otherwise return
+import { LiquidJavaProvider } from './liquidJavaProvider';
 
-    //https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Glob-Patterns
+export function activate(context: vscode.ExtensionContext) {
+
     let glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
     vscode.workspace.findFiles(glob, null, 100).then((uris: vscode.Uri[] ) => { 
         if(uris.length == 0){
@@ -28,83 +25,97 @@ export function activate(context: ExtensionContext) {
               console.log("Found uri:"+uri);
         });
 
-     
-        
-        // The server is a started as a separate app and listens on port 50000
-        let connectionInfo = {
-            port: 50000
+        //Start server only if api is inside the project
+        let serverOptions;
+
+        let javaExecutablePath = findJavaExecutable('java');
+        let serverCommand = javaExecutablePath + " -jar " + path.join(context.extensionPath, '..', 'server', 'language-server-liquidjava.jar');
+
+        console.log("serverCommand:");
+        console.log(serverCommand);
+
+
+        serverOptions = {
+            run: {
+                command: serverCommand
+            },
+            debug: {
+                command: serverCommand
+            }
         };
-        let serverOptions = () => {
-            // Connect to language server via socket
-            let socket = net.connect(connectionInfo);
-            let result: StreamInfo = {
-                writer: socket,
-                reader: socket
-            };
-            return Promise.resolve(result);
-        };
-        
+
         let clientOptions: LanguageClientOptions = {
             documentSelector: ['java'],
             synchronize: {
                 fileEvents: workspace.createFileSystemWatcher('**/*.java')
             }
         };
-        
-        // Create the language client and start the client.
-        let lc = new LanguageClient('LiquidJava Server', serverOptions, clientOptions);
-        lc.trace = Trace.Messages;
-        let disposable = lc.start();
-    }); 
-    // var disposable2 =commands.registerCommand("adl.a.proxy", async () => {
-    //     let activeEditor = window.activeTextEditor;
-    //     if (!activeEditor || !activeEditor.document || activeEditor.document.languageId !== 'plaintext') {
-    //         return;
-    //     }
 
-    //     if (activeEditor.document.uri instanceof Uri) {
-    //         commands.executeCommand("adl.a", activeEditor.document.uri.toString());
-    //     }
-    // })
+         // Create the language client and start the client.
+    let lc = new LanguageClient('LiquidJava Server', serverOptions, clientOptions);
 
-   // context.subscriptions.push(disposable2);
-
-    // enable tracing (.Off, .Messages, Verbose)
-   
+	lc.trace = Trace.Verbose;
+    
+    let disposable = lc.start();
     
     // Push the disposable to the context's subscriptions so that the 
     // client can be deactivated on extension deactivation
-    // context.subscriptions.push(disposable);
+    context.subscriptions.push(disposable);
+        
 
+    });
 
-	// diagnosticCollection = vscode.languages.createDiagnosticCollection('go');
-  	// context.subscriptions.push(diagnosticCollection);
+	//side bar extension - info and vcs
+	// const ljProvider = new LiquidJavaProvider(vscode.workspace.rootPath, context);
+	// vscode.window.registerTreeDataProvider('liquidJava', ljProvider);
+	// vscode.commands.registerCommand('liquidJava.start', () => ljProvider.start());
+	
 }
 
 
-// export function deactivate(): Thenable<void> | undefined {
-//     if (!client) {
-//       return undefined;
-//     }
-//     return client.stop();
-// }
 
-// function onChange() {
-// 	diagnosticCollection.clear();
-// 	// let uri = document.uri;
-// 	// check(uri.fsPath, goConfig).then(errors => {
-// 	//   diagnosticCollection.clear();
-// 	//   let diagnosticMap: Map<string, vscode.Diagnostic[]> = new Map();
-// 	//   errors.forEach(error => {
-// 	// 	let canonicalFile = vscode.Uri.file(error.file).toString();
-// 	// 	let range = new vscode.Range(error.line-1, error.startColumn, error.line-1, error.endColumn);
-// 	// 	let diagnostics = diagnosticMap.get(canonicalFile);
-// 	// 	if (!diagnostics) { diagnostics = []; }
-// 	// 	diagnostics.push(new vscode.Diagnostic(range, error.msg, error.severity));
-// 	// 	diagnosticMap.set(canonicalFile, diagnostics);
-// 	//   });
-// 	//   diagnosticMap.forEach((diags, file) => {
-// 	// 	diagnosticCollection.set(vscode.Uri.parse(file), diags);
-// 	//   });
-// 	// })
-//   }
+
+
+
+
+
+
+
+// MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
+function findJavaExecutable(binname: string) {
+	binname = correctBinname(binname);
+
+	// First search each JAVA_HOME bin folder
+	if (process.env['JAVA_HOME']) {
+		let workspaces = process.env['JAVA_HOME'].split(path.delimiter);
+		for (let i = 0; i < workspaces.length; i++) {
+			let binpath = path.join(workspaces[i], 'bin', binname);
+			if (fs.existsSync(binpath)) {
+				return binpath;
+			}
+		}
+	}
+
+	// Then search PATH parts
+	if (process.env['PATH']) {
+		let pathparts = process.env['PATH'].split(path.delimiter);
+		for (let i = 0; i < pathparts.length; i++) {
+			let binpath = path.join(pathparts[i], binname);
+			if (fs.existsSync(binpath)) {
+				return binpath;
+			}
+		}
+	}
+
+	// Else return the binary name directly (this will likely always fail downstream) 
+	return null;
+}
+
+function correctBinname(binname: string) {
+	if (process.platform === 'win32')
+		return binname + '.exe';
+	else
+		return binname;
+}
+
+

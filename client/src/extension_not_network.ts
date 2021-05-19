@@ -13,25 +13,19 @@ import { LiquidJavaProvider } from './liquidJavaProvider';
 export function activate(context: vscode.ExtensionContext) {
 
 	// The server is a started as a separate app and listens on port 1278
-	let connectionInfo = {
-		port: 1278
-	};
-
 	let serverOptions;
     if(process.arch != 'x32' && process.arch != 'x64') {
         throw 'unsupported CPU, this extension only runs on windows, macos or linux on x86 CPUs: ' + process.arch
     }
-    if (process.platform == 'win32') {
-        serverOptions = {
-            run: {
-				command: path.join(context.extensionPath, '..', 'server', 'build', 'libs', 'language-server-liquidjava.jar')
-                // command: path.join(context.extensionPath , 'lsp-images', 'archie-lsp-winx64', 'bin', 'archie-lsp.bat')
-            },
-            debug: {
-                command: path.join(context.extensionPath , '..', 'server', 'build', 'libs', 'language-server-liquidjava.jar')
-            }
-        };
-    }
+	serverOptions = {
+		run: {
+			command: path.join(context.extensionPath, '..', 'server', 'build', 'libs', 'language-server-liquidjava.jar')
+		},
+		debug: {
+			command: path.join(context.extensionPath , '..', 'server', 'build', 'libs', 'language-server-liquidjava.jar')
+		}
+	};
+
     // else if(process.platform == 'darwin') {
     //     serverOptions = {
     //         run: {
@@ -104,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 			
 	// 			let args = [
 	// 				'-jar',
-	// 				path.resolve(context.extensionPath, '..', 'server', 'build', 'libs', 'language-server-liquidjava.jar'),
+	// 				path.resolve(context.extensionPath, '..', 'server', 'language-server-liquidjava.jar'),
 	// 				port
 	// 			]
 
