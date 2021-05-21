@@ -3,7 +3,7 @@
 	"displayName": "LiquidJava",
 	"description": "Samples for VSCode's view API",
 	"version": "0.0.1",
-	"publisher": "fcul",
+	"publisher": "cgamboa",
 	"enableProposedApi": true,
 	"engines": {
 		"vscode": "^1.52.0"
