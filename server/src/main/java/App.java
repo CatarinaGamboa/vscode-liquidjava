@@ -53,13 +53,13 @@ public class App {
 			LanguageClient client = launcher.getRemoteProxy();
 			//		server.connect(client);
 			server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
-			
+
 			// Start the listener for JsonRPC
 			Future<?> startListening = launcher.startListening();
 
 			// Get the computed result from LS.
 			startListening.get();
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -72,26 +72,26 @@ public class App {
 		try {
 			final ServerSocket serversocket = new ServerSocket(port);
 			new Thread( () -> {
-//				while(true) {
-				try {
-					Socket socket = serversocket.accept();
-					System.out.println("Accepted incoming");
-					if(socket != null) {
-						InputStream in = socket.getInputStream();
-						OutputStream out = socket.getOutputStream();
+				while(true) {
+					try {
+						Socket socket = serversocket.accept();
+						System.out.println("Accepted incoming");
+						if(socket != null) {
+							InputStream in = socket.getInputStream();
+							OutputStream out = socket.getOutputStream();
 
-						LJLanguageServer server = new LJLanguageServer();
-						Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-						server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
+							LJLanguageServer server = new LJLanguageServer();
+							Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+							server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
 
-						launcher.startListening();
+							launcher.startListening();
+						}
+					} catch (IOException e) {
+						System.out.println("Caught error here: " + e.getMessage());
+						e.printStackTrace();
 					}
-				} catch (IOException e) {
-					System.out.println("Caught error here: " + e.getMessage());
-					e.printStackTrace();
 				}
-				//				}
 			}).start();
 
 		} catch (IOException e) {
