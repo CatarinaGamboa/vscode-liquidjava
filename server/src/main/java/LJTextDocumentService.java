@@ -53,6 +53,8 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	
 	
 	public void setWorkspaceRoot(String s) {
+		if(!s.contains("/src"))
+			s = s+"/src";
 		workspaceRoot = s;
 	}
 
