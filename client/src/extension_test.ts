@@ -27,7 +27,6 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
 
-        //#0
         let connectionInfo = {
             port: 50000
         };
@@ -82,10 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Options to control the language client
         let clientOptions: LanguageClientOptions = {
-            documentSelector: ['java']//,
-            // synchronize: {
-            //     fileEvents: workspace.createFileSystemWatcher('**/*.java')
-            // }
+            documentSelector: ['java']
         };
         setTimeout(function () {
             let disposable = new LanguageClient('liquidJavaServer','LiquidJava Server', serverOptions, clientOptions).start();
