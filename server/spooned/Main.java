@@ -1,10 +1,15 @@
 
 
 public class Main {
-    public static void main(java.lang.String[] args) {
-        @repair.regen.specification.Refinement("a > 0")
-        int a = 110;
-        Email e = new Email();
+    public static void main(java.lang.String[] args) throws java.lang.Exception {
+        @repair.regen.specification.Refinement("grade >= 0 && grade <= 100")
+        int grade;
+        grade = 80;
+        grade = 190;
+        java.io.InputStreamReader ir = new java.io.InputStreamReader(java.lang.System.in);
+        ir.read();
+        ir.close();
+        // ir.read();
     }
 }
 

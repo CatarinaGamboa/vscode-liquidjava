@@ -34,21 +34,21 @@
 			"type": "object",
 			"title": "Liquid Java configuration",
 			"properties": {
-			  "liquidJavaServer.maxNumberOfProblems": {
-				"type": "number",
-				"default": 100,
-				"description": "Controls the maximum number of problems produced by the server."
-			  },
-			  "liquidJavaServer.trace.server": {
-				"type": "string",
-				"enum": [
-				  "off",
-				  "messages",
-				  "verbose"
-				],
-				"default": "off",
-				"description": "Traces the communication between VSCode and the liquidJavaServer service."
-			  }
+				"liquidJavaServer.maxNumberOfProblems": {
+					"type": "number",
+					"default": 100,
+					"description": "Controls the maximum number of problems produced by the server."
+				},
+				"liquidJavaServer.trace.server": {
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VSCode and the liquidJavaServer service."
+				}
 			}
 		},
 		"viewsContainers": {

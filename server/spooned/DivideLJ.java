@@ -13,18 +13,18 @@ public class DivideLJ {
     }
 
     public static void main(java.lang.String[] args) {
-        double a;
-        a = DivideLJ.divide(10, 5);
-        a = DivideLJ.divide(50, ((-10) + 5));
-        // a = divide(800, 2*30-60);
-        a = DivideLJ.divide((1952 * 2), (20 - 10));
-        a = DivideLJ.divide(((5 * 5) * 5), ((-5) * (-1)));
-        double b;
-        b = DivideLJ.averagePrice(10, 5);
-        b = DivideLJ.averagePrice(50, ((-10) + 15));
-        b = DivideLJ.averagePrice(800, ((2 * 30) - 60));
-        // b = averagePrice(1952*-2, 20-10);
-        b = DivideLJ.averagePrice(((5 * 5) * 5), ((-5) * (-1)));
+        // double a;
+        // a = divide(10, 5);
+        // a = divide(50, -10+5);
+        // // a = divide(800, 2*30-60);
+        // a = divide(1952*2, 20-10);
+        // a = divide(5*5*5, -5*-1);
+        // double b;
+        // b = averagePrice(10, 5);
+        // b = averagePrice(50, -10+15);
+        // b = averagePrice(800, 2*30-60);
+        // // b = averagePrice(1952*-2, 20-10);
+        // b = averagePrice(5*5*5, -5*-1);
     }
 }
 

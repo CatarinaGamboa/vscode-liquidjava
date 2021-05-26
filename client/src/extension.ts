@@ -12,7 +12,7 @@ import { LiquidJavaProvider } from './liquidJavaProvider';
 import { Executable } from 'vscode-languageclient/lib/client';
 
 export function activate(context: vscode.ExtensionContext) {
-
+    const activeTextEditor = vscode.window.activeTextEditor;
     let glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
     vscode.workspace.findFiles(glob, null, 100).then((uris: vscode.Uri[] ) => { 
         if(uris.length == 0){
@@ -26,86 +26,74 @@ export function activate(context: vscode.ExtensionContext) {
               console.log("Found uri:"+uri);
         });
 
-        //Start server only if api is inside the project
 
-        //#1
-        const { JAVA_HOME } = process.env;
-        const main: string = 'Main';
-        console.log(`Using java from JAVA_HOME: ${JAVA_HOME}`);
-        if (JAVA_HOME) {
-            // Java execution path.
-            let executable: string = path.join(JAVA_HOME,'java');
+        //#0
+        let connectionInfo = {
+            port: 50000
+        };
 
-            // C:\Program Files\Java\jdk1.8.0_231\bin\bin\java
-    
-            // path to the launcher.jar
-            let classPath = path.join(__dirname, '..', 'server', 'language-server-liquidjava.jar');
-            const args: string[] = ['-cp', classPath];
-    
-            // Set the server options 
-            // -- java execution path
-            // -- argument to be pass when executing the java command
-            let serverOptions: ServerOptions = {
-                command: executable,
-                args: [...args, main],
-                options: {}
+        let javaExecutablePath = findJavaExecutable('java');
+        let args = [
+            '-jar',
+            path.resolve(context.extensionPath, 'server', 'language-server-liquidjava.jar'),
+            "network"
+        ]
+        let options = { 
+            cwd: workspace.rootPath
+            // timeout:setTimeout(null, 3000)
+        };
+        let process = child_process.spawn(javaExecutablePath, args, options);
+        console.log("CONNECTED? "+process.connected);
+
+        process.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+        });
+          
+        process.stderr.on('data', (data) => {
+            console.error(`stderr: ${data}`);
+        });
+          
+        // process.on('close', (code) => {
+        //     console.log(`child process exited with code ${code}`);
+        //  });
+
+        // process.on('error', (err) => {
+        //     console.error('Failed to start subprocess.');
+        // }); 
+
+        // process.on('connection', (socket) => {
+        //     console.error('On connection');
+        //   });
+
+
+        console.log("pid for telnet: "+process.pid);
+
+
+        
+        let serverOptions = () => {
+            // Connect to language server via socket
+            let socket = net.connect(connectionInfo);
+            let result: StreamInfo = {
+                writer: socket,
+                reader: socket
             };
-    
-            // Options to control the language client
-            let clientOptions: LanguageClientOptions = {
-                documentSelector: ['java'],
-                synchronize: {
-                    fileEvents: workspace.createFileSystemWatcher('**/*.java')
-                }
-            };
-    
-            // Create the language client and start the client.
-            let disposable = new LanguageClient('LiquidJava Server', serverOptions, clientOptions).start();
-    
+            return Promise.resolve(result);
+        };
+
+        // Options to control the language client
+        let clientOptions: LanguageClientOptions = {
+            documentSelector: ['java']//,
+            // synchronize: {
+            //     fileEvents: workspace.createFileSystemWatcher('**/*.java')
+            // }
+        };
+        setTimeout(function () {
+            let disposable = new LanguageClient('liquidJavaServer','LiquidJava Server', serverOptions, clientOptions).start();
+            console.log("created server");
             // Disposables to remove on deactivation.
             context.subscriptions.push(disposable);
-        }
-
-
-        //#2
-        // let javaExecutablePath = findJavaExecutable('java');
-        // //// let serverCommand = javaExecutablePath + " -jar ";
-        // let extensionDir =  __dirname;//context.extensionPath;
-        // let classPath = path.join(extensionDir, '..', 'server', 'language-server-liquidjava.jar');
-        // const args: string[] = ['-cp', classPath];
-        // const main: string = 'Main';
-
-        // let debugOptions = { execArgv: ["--nolazy", "--debug=6009"] };
-
-        // let serverOptions:ServerOptions = {
-        //     command: javaExecutablePath, 
-        //     args: [...args, main],
-        //     transport: TransportKind.ipc
-        // };
-        // console.log(serverOptions);
-
-      
-
-        // let clientOptions: LanguageClientOptions = {
-        //     documentSelector: ['java'],
-        //     synchronize: {
-        //         fileEvents: workspace.createFileSystemWatcher('**/*.java')
-        //     }
-        // };
-
-        //  // Create the language client and start the client.
-        // let lc = new LanguageClient('LiquidJava Server', serverOptions, clientOptions);
-
-        // lc.trace = Trace.Verbose;
-        
-        // let disposable = lc.start();
-        
-        // // Push the disposable to the context's subscriptions so that the 
-        // // client can be deactivated on extension deactivation
-        // context.subscriptions.push(disposable);
-        
-
-    });
+        }, 4000);
+    }).then(undefined, console.error);
 
 	//side bar extension - info and vcs
 	// const ljProvider = new LiquidJavaProvider(vscode.workspace.rootPath, context);
@@ -115,12 +103,10 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 
-
-
-
-
-
-
+// this method is called when your extension is deactivated
+export function deactivate() { 
+	console.log('Your extension "liquidjava" is now deactivated!');
+}
 
 
 // MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
@@ -159,5 +145,3 @@ function correctBinname(binname: string) {
 	else
 		return binname;
 }
-
-

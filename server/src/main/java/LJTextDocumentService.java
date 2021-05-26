@@ -120,10 +120,9 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	@Override
 	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
 		position.getPosition().getCharacter();
-	
 		System.out.println("on hover");
-		return CompletableFuture.supplyAsync(() -> {
-			return new Hover();
+		return  CompletableFuture.supplyAsync(() -> {
+			return null;//new Hover();
 		});
 	}
 

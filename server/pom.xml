@@ -17,7 +17,7 @@
                      <archive>
 			          <manifest>
 			            <addClasspath>true</addClasspath>
-			            <mainClass>Main</mainClass>
+			            <mainClass>App</mainClass>
 			          </manifest>
 			        </archive>
                 </configuration>
