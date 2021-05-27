@@ -4,6 +4,8 @@ The vscode extension to validate java programs with refinement types.
 
 #### Developer Mode
 1. Run **Client on Visual Studio Code**:
+* Open the client folder on terminal
+* `npm install`
 * Open client folder on Visual Studio Code.
 * Make sure you have the redhat extension for [Language support for Java ™](https://github.com/redhat-developer/vscode-java) installed and enabled.
 * The code in `extension.ts` must be the same as the code in `extension_test.ts`
