@@ -1,9 +1,9 @@
 {
-	"name": "liquid-java",
+	"name": "custom-view-samples",
 	"displayName": "LiquidJava",
-	"description": "LiquidJava - Extending Java with Refinement Types",
+	"description": "Samples for VSCode's view API",
 	"version": "0.0.1",
-	"publisher": "catarinagamboa",
+	"publisher": "cgamboa",
 	"enableProposedApi": true,
 	"engines": {
 		"vscode": "^1.52.0"
@@ -24,7 +24,9 @@
 		"debug"
 	],
 	"activationEvents": [
-		"onLanguage:java"
+		"onLanguage:java",
+		"onView:liquidJava",
+		"onCommand:liquidJavaVCS.reveal"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -51,17 +53,50 @@
 		},
 		"viewsContainers": {
 			"activitybar": [
-				
+				{
+					"id": "package-liquid-java",
+					"title": "Package Liquid Java",
+					"icon": "media/pingo-d'agua.svg"
+				}
 			]
 		},
 		"views": {
-			
+			"package-liquid-java": [
+				{
+					"id": "liquidJava",
+					"name": "Liquid Java",
+					"icon": "media/pingo-d'agua.svg",
+					"contextualTitle": "Package Liquid Java"
+				},
+				{
+					"id": "liquidJavaVCS",
+					"name": "Verification Conditions"
+				}
+			]
 		},
 		"commands": [
-			
+			{
+				"command": "liquidJava.start",
+				"title": "Check",
+				"icon": {
+					"light": "resources/light/round-play-button.svg",
+					"dark": "resources/dark/round-play-button.svg"
+				}
+			},
+			{
+				"command": "liquidJavaVCS.reveal",
+				"title": "Liquid Java: Reveal"
+			}
 		],
 		"menus": {
-
+			"view/title": [
+				{
+					"command": "liquidJava.start",
+					"when": "java:view == liquidJava",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": []
 		}
 	},
 	"scripts": {

@@ -8,6 +8,7 @@ import * as child_process from "child_process";
 import { workspace, Disposable, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, SettingMonitor, StreamInfo, TransportKind  } from 'vscode-languageclient';
 
+
 import { LiquidJavaProvider } from './liquidJavaProvider';
 import { Executable } from 'vscode-languageclient/lib/client';
 
@@ -65,11 +66,9 @@ export function activate(context: vscode.ExtensionContext) {
         //   });
 
 
-        console.log("pid for telnet: "+process.pid);
-
-
         
         let serverOptions = () => {
+            
             // Connect to language server via socket
             let socket = net.connect(connectionInfo);
             let result: StreamInfo = {
@@ -89,6 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
             // Disposables to remove on deactivation.
             context.subscriptions.push(disposable);
         }, 4000);
+
     }).then(undefined, console.error);
 
 	//side bar extension - info and vcs
