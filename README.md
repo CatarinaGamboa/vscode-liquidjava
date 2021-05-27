@@ -2,7 +2,15 @@
 
 The vscode extension to validate java programs with refinement types.
 
-#### Developer Mode
+### Install extension on Visual Studio Code
+1. Open the client folder in terminal
+2. `code --install-extension liquid-java-0.0.1.vsix`
+3. Open Visual Studio Code and open a Java project (with src folder inside). If the project contains the `liquidjava-api.jar` then the extension will be activated, otherwise the LiquidJava verification is not applied. 
+
+The `liquidjava-api.jar` can be found in this project in the path`vscode-liquidjava\server\lib`
+
+
+### Developer Mode
 1. Run **Client on Visual Studio Code**:
 * Open the client folder on terminal
 * `npm install`
@@ -12,7 +20,7 @@ The vscode extension to validate java programs with refinement types.
 * Go to `Run-> Run Extension` (or press `F5`). A new window appears with the liquidjava extension enabled.
 * Open a Java project. If the project contains the `liquid-java-api.jar` then the liquidjava verification will start in a few seconds. 
 
-#### Debugging Mode
+### Debugging Mode
 Server and Client connect through sockets and run in different environments that allow a better debugging
 1. Run **Server** on **Eclipse**:
 * Open Eclipse.
@@ -24,7 +32,7 @@ Server and Client connect through sockets and run in different environments that
 * Copy all the code on file `extension-network.ts` to `extension.ts`.
 * Go to Run-> Run Extension (or press F5). A new vscode appears to use the extension.
 
-##### Create Server Jar
+#### Create Server Jar
 When the server is ready to be exported, export the jar. In Eclipse follow the steps:
 1. Inside eclipse make `File > Export > Runnable JAR file`. 
 2. In lauch configuration choose `main - vscode-liquid-java-server`. 
