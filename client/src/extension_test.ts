@@ -8,6 +8,7 @@ import * as child_process from "child_process";
 import { workspace, Disposable, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, SettingMonitor, StreamInfo, TransportKind  } from 'vscode-languageclient';
 
+
 import { LiquidJavaProvider } from './liquidJavaProvider';
 import { Executable } from 'vscode-languageclient/lib/client';
 
@@ -42,19 +43,44 @@ export function activate(context: vscode.ExtensionContext) {
             // timeout:setTimeout(null, 3000)
         };
         let process = child_process.spawn(javaExecutablePath, args, options);
-        console.log("CONNECTED? "+process.connected);
-
+        
+        let first = true;
         process.stdout.on('data', (data) => {
+            if(first){
+                console.log("Server is ON! Starting Client!");
+
+                let serverOptions = () => {
+                    // Connect to language server via socket
+                    let socket = net.connect(connectionInfo);
+                    let result: StreamInfo = {
+                        writer: socket,
+                        reader: socket
+                    };
+                    return Promise.resolve(result);
+                };
+        
+                // Options to control the language client
+                let clientOptions: LanguageClientOptions = {
+                    documentSelector: ['java']
+                };
+                let disposable = new LanguageClient('liquidJavaServer','LiquidJava Server', serverOptions, clientOptions).start();
+                console.log("Created LanguageClient");
+                // Disposables to remove on deactivation.
+                context.subscriptions.push(disposable);
+                
+                first = !first;
+            }
             console.log(`stdout: ${data}`);
         });
           
         process.stderr.on('data', (data) => {
             console.error(`stderr: ${data}`);
         });
+
           
-        // process.on('close', (code) => {
-        //     console.log(`child process exited with code ${code}`);
-        //  });
+        process.on('close', (code) => {
+            console.log(`Child process exited with code ${code}`);
+         });
 
         // process.on('error', (err) => {
         //     console.error('Failed to start subprocess.');
@@ -64,31 +90,6 @@ export function activate(context: vscode.ExtensionContext) {
         //     console.error('On connection');
         //   });
 
-
-        console.log("pid for telnet: "+process.pid);
-
-
-        
-        let serverOptions = () => {
-            // Connect to language server via socket
-            let socket = net.connect(connectionInfo);
-            let result: StreamInfo = {
-                writer: socket,
-                reader: socket
-            };
-            return Promise.resolve(result);
-        };
-
-        // Options to control the language client
-        let clientOptions: LanguageClientOptions = {
-            documentSelector: ['java']
-        };
-        setTimeout(function () {
-            let disposable = new LanguageClient('liquidJavaServer','LiquidJava Server', serverOptions, clientOptions).start();
-            console.log("created server");
-            // Disposables to remove on deactivation.
-            context.subscriptions.push(disposable);
-        }, 4000);
     }).then(undefined, console.error);
 
 	//side bar extension - info and vcs
