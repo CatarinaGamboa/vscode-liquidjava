@@ -1,6 +1,5 @@
 **/node_modules/
 out
 node_modules
-*.vsix
 .vscode-test
 server/spooned/*

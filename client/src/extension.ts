@@ -46,6 +46,9 @@ export function activate(context: vscode.ExtensionContext) {
         
         let first = true;
         process.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+            console.log("equals to St: ");
+            console.log( data == "Starting listening in Network Server");
             if(first){
                 console.log("Server is ON! Starting Client!");
 
@@ -82,13 +85,13 @@ export function activate(context: vscode.ExtensionContext) {
             console.log(`Child process exited with code ${code}`);
          });
 
-        // process.on('error', (err) => {
-        //     console.error('Failed to start subprocess.');
-        // }); 
+        process.on('error', (err) => {
+            console.error('Failed to start subprocess.');
+        }); 
 
-        // process.on('connection', (socket) => {
-        //     console.error('On connection');
-        //   });
+        process.on('connection', (socket) => {
+            console.error('On connection');
+          });
 
     }).then(undefined, console.error);
 
