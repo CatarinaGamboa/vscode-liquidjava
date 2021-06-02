@@ -28,15 +28,30 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
 
+        
+        // var port;
+        // var server = net.createServer( function (sock) {
+        // });
+        // server.listen(0,function() { //'listening' listener 
+        //     var port = this.address().port;
+        //     console.log('server bound:'+port);
+        // });
+
+        const ports = ["50000", "50101", "50202", "50303", "50404"];
+        const random = Math.floor(Math.random() * ports.length);
+
+        let chosenPort = ports[random];
+        console.log("Port:" + chosenPort);
+
         let connectionInfo = {
-            port: 50000
+            port: parseInt(chosenPort)
         };
 
         let javaExecutablePath = findJavaExecutable('java');
         let args = [
             '-jar',
             path.resolve(context.extensionPath, 'server', 'language-server-liquidjava.jar'),
-            "network"
+            chosenPort
         ]
         let options = { 
             cwd: workspace.rootPath
@@ -45,11 +60,13 @@ export function activate(context: vscode.ExtensionContext) {
         let process = child_process.spawn(javaExecutablePath, args, options);
         
         let first = true;
+        let firstVerification = true;
         process.stdout.on('data', (data) => {
             console.log(`stdout: ${data}`);
-            console.log("equals to St: ");
-            console.log( data == "Starting listening in Network Server");
-            if(first){
+            let st:String = data.toString();
+            st = st.substring(0, 5);
+
+            if(st == "Ready" && first){
                 console.log("Server is ON! Starting Client!");
 
                 let serverOptions = () => {
@@ -73,7 +90,13 @@ export function activate(context: vscode.ExtensionContext) {
                 
                 first = !first;
             }
-            console.log(`stdout: ${data}`);
+
+            let onVerification:String = data.toString();
+            onVerification = onVerification.substring(0,14);
+            if(onVerification == "OnVerification"){
+                vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy");
+            }
+
         });
           
         process.stderr.on('data', (data) => {
@@ -93,6 +116,8 @@ export function activate(context: vscode.ExtensionContext) {
             console.error('On connection');
           });
 
+
+        
     }).then(undefined, console.error);
 
 	//side bar extension - info and vcs

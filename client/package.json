@@ -2,9 +2,8 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "LiquidJava - Extending Java with Refinement Types",
-	"version": "0.0.1",
+	"version": "0.0.4",
 	"publisher": "catarinagamboa",
-	"enableProposedApi": true,
 	"engines": {
 		"vscode": "^1.52.0"
 	},
