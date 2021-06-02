@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage("Not using LiquidJava - Api not in the workspace");
             return; 
         }else{
-            vscode.window.showInformationMessage("Found LiquidJava Api in the workspace - Loading Extension");
+            vscode.window.showInformationMessage("Found LiquidJava Api in the workspace - Loading Extension...");
         }
         uris.forEach((uri: vscode.Uri) => {              
               console.log("Found uri:"+uri);
@@ -93,8 +93,9 @@ export function activate(context: vscode.ExtensionContext) {
 
             let onVerification:String = data.toString();
             onVerification = onVerification.substring(0,14);
-            if(onVerification == "OnVerification"){
-                vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy");
+            if(onVerification == "OnVerification" && firstVerification){
+                vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy!");
+                firstVerification = !firstVerification;
             }
 
         });
