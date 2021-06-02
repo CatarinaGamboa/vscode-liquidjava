@@ -31,6 +31,7 @@ public class LJDiagnostics {
 	public static Optional<PublishDiagnosticsParams> verify(String root, String uri){
 		String u = root.substring(8);
 		u = convertUTFtoCharacters(u);
+		
 		ErrorEmitter ee;
 		try {
 			ee = CommandLineLauncher.launch(u);
@@ -38,6 +39,7 @@ public class LJDiagnostics {
 			System.err.println("Exception:" + e.getMessage());
 			return Optional.empty();
 		}
+		System.out.println("OnVerification");
 		
 		if(!ee.foundError()) {
 			PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
