@@ -31,7 +31,7 @@ public class LJDiagnostics {
 	public static Optional<PublishDiagnosticsParams> verify(String root, String uri){
 		String u = root.substring(8);
 		u = convertUTFtoCharacters(u);
-		
+		System.out.println("url in lsp: "+ u);
 		ErrorEmitter ee;
 		try {
 			ee = CommandLineLauncher.launch(u);
