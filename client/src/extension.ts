@@ -51,7 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
         let args = [
             '-jar',
             path.resolve(context.extensionPath, 'server', 'language-server-liquidjava.jar'),
-            chosenPort
+            chosenPort, "windows"
         ]
         let options = { 
             cwd: workspace.rootPath

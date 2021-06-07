@@ -27,6 +27,7 @@ public class LJLanguageServer implements LanguageServer{
     private LanguageClient remoteProxy;
     private RemoteEndpoint remoteEndpoint;
 
+   
 	
 //
 //	private LanguageClient client = null;

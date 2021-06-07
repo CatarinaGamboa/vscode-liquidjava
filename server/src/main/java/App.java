@@ -14,9 +14,10 @@ import org.eclipse.lsp4j.services.LanguageClient;
 
 public class App {
 
-	public static void main(String[] args) throws InterruptedException, ExecutionException {
+	public static void main(String[] args) throws Exception {
 		if(args.length > 0) {
 			int port = Integer.parseInt(args[0]);
+			String os = args[1];
 			new App().startNetworkedLanguageServer(port);
 		} else {
 			new App().startNetworkedLanguageServer(50000);
@@ -49,6 +50,7 @@ public class App {
 
 	private void startNetworkedLanguageServer(int port) {
 		System.out.println("Starting listening in Network Server in " + port);
+		
 		try {
 			final ServerSocket serversocket = new ServerSocket(port);
 			new Thread( () -> {

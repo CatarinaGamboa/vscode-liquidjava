@@ -49,12 +49,13 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 	private LanguageClient remoteProxy;
 	private RemoteEndpoint remoteEndPoint;
 	private String workspaceRoot;
-//	 private final BroadcastingArchetypeRepository storage = new BroadcastingArchetypeRepository(this);
-	
-	
+
 	public void setWorkspaceRoot(String s) {
 		if(!s.contains("/src"))
-			s = s+"/src";
+			s = "/"+s+"/src";
+//		if(os.equals(os.UNIX))
+//			s = "/"+s;
+		System.out.println("workspace root:"+s);
 		workspaceRoot = s;
 	}
 
