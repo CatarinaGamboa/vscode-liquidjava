@@ -57,8 +57,11 @@ export function activate(context: vscode.ExtensionContext) {
             cwd: workspace.rootPath
             // timeout:setTimeout(null, 3000)
         };
+        console.log("Reached line 60");
         let process = child_process.spawn(javaExecutablePath, args, options);
         
+        console.log("After spawn");
+
         let first = true;
         let firstVerification = true;
         process.stdout.on('data', (data) => {
@@ -101,20 +104,20 @@ export function activate(context: vscode.ExtensionContext) {
         });
           
         process.stderr.on('data', (data) => {
-            console.error(`stderr: ${data}`);
+            console.error(`liquidjava stderr: ${data}`);
         });
 
           
         process.on('close', (code) => {
-            console.log(`Child process exited with code ${code}`);
+            console.log(`liquidjava Child process exited with code ${code}`);
          });
 
         process.on('error', (err) => {
-            console.error('Failed to start subprocess.');
+            console.error('Fliquidjava ailed to start subprocess.');
         }); 
 
         process.on('connection', (socket) => {
-            console.error('On connection');
+            console.error('liquidjava On connection');
           });
 
 

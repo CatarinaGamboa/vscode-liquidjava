@@ -106,8 +106,6 @@
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"extensionDependencies": [
-		"redhat.java",
-		"vscjava.vscode-java-debug"
 	],
 	"devDependencies": {
 		"@types/mkdirp": "^0.5.2",

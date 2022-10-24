@@ -49,19 +49,11 @@
 			}
 		},
 		"viewsContainers": {
-			"activitybar": [
-				
-			]
+			"activitybar": []
 		},
-		"views": {
-			
-		},
-		"commands": [
-			
-		],
-		"menus": {
-
-		}
+		"views": {},
+		"commands": [],
+		"menus": {}
 	},
 	"scripts": {
 		"vscode:prepublish": "tsc",
@@ -70,8 +62,6 @@
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"extensionDependencies": [
-		"redhat.java",
-		"vscjava.vscode-java-debug"
 	],
 	"devDependencies": {
 		"@types/mkdirp": "^0.5.2",
@@ -87,7 +77,7 @@
 		"ftp": "^0.3.10",
 		"get-port": "^5.1.1",
 		"jsonc-parser": "^0.4.2",
-		"minimist": "^0.2.1",
+		"minimist": "^1.2.7",
 		"mkdirp": "^0.5.1",
 		"rimraf": "^2.6.2",
 		"vscode-languageclient": "^3.1.0"
