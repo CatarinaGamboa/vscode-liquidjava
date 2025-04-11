@@ -19,13 +19,12 @@ buildNumber.properties
 hs_err_pid*
 replay_pid*
 
-# VS Code specific files
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+# Exception for libs folder
+!libs/
+!libs/**/*.jar
+
+# VS Code
+.vscode/
 .history/
 *.vsix
 
@@ -50,8 +49,13 @@ Icon
 *.ipr
 out/
 
-# Eclipse (in case you switch)
+# Eclipse
 .settings/
 .classpath
 .project
 .factorypath
+
+# Spooned folders
+spooned/
+**/spooned/
+**/spooned/**

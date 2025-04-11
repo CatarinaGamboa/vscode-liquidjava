@@ -19,7 +19,6 @@ public class LJLanguageServer implements LanguageServer {
 
     private LJTextDocumentService textDocumentService;
 
-
     private int errorCode = 1;
 
     public LJLanguageServer() {
@@ -40,8 +39,8 @@ public class LJLanguageServer implements LanguageServer {
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         // More in:
         // https://github.com/nedap/archetype-languageserver/blob/24b0890c0f046c6c1af8269a5c9770a8860a96b3/src/main/java/com/nedap/openehr/lsp/ADL2LanguageServer.java
-         capabilities.setDocumentLinkProvider(null);//new DocumentLinkOptions(true));
- 
+        capabilities.setDocumentLinkProvider(null);// new DocumentLinkOptions(true));
+
         completableFuture.complete(new InitializeResult(capabilities));
 
         // Primary approach: Use workspace folders

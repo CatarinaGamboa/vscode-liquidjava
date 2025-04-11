@@ -28,7 +28,7 @@ public class LJDiagnostics {
     }
 
     public static Optional<PublishDiagnosticsParams> verify(String root, String uri) {
-        String u = extractPath(uri)+"/";//root.substring(7);
+        String u = extractPath(uri) + "/";// root.substring(7);
         System.out.println("TESTING IN VERIFY");
         System.out.println("uri:" + uri);
         u = convertUTFtoCharacters(u);
@@ -69,20 +69,20 @@ public class LJDiagnostics {
     public static String extractPath(String path) {
         // Remove the file:// prefix
         String withoutPrefix = path.replace("file://", "");
-        
+
         // Find the position of "/src/" in the path
         int srcIndex = withoutPrefix.indexOf("/src/");
         if (srcIndex == -1) {
             return withoutPrefix; // Return the whole path if "/src/" is not found
         }
-        
+
         // Find the position of the next "/" after "/src/"
         int nextSlashIndex = withoutPrefix.indexOf("/", srcIndex + 5); // +5 because "/src/" is 5 characters
-        
+
         if (nextSlashIndex == -1) {
             return withoutPrefix; // Return the whole path if there's no folder after src
         }
-        
+
         // Extract the path from the beginning up to and including the folder after src
         return withoutPrefix.substring(0, nextSlashIndex);
     }

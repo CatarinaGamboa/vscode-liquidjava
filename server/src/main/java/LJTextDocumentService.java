@@ -44,11 +44,9 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 
     }
 
-
     public void setRemoteProxy(LanguageClient remoteProxy) {
         this.remoteProxy = remoteProxy;
     }
-
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {

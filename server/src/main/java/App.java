@@ -13,7 +13,6 @@ public class App {
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
             int port = Integer.parseInt(args[0]);
-            String os = args[1];
             new App().startNetworkedLanguageServer(port);
         } else {
             new App().startNetworkedLanguageServer(50000);
@@ -24,28 +23,29 @@ public class App {
         System.out.println("Starting listening in Network Server in " + port);
 
         try {
-            final ServerSocket serversocket = new ServerSocket(port);
-            new Thread(() -> {
-                while (true) {
-                    try {
-                        System.out.println("Ready");
-                        Socket socket = serversocket.accept();
-                        if (socket != null) {
-                            InputStream in = socket.getInputStream();
-                            OutputStream out = socket.getOutputStream();
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                new Thread(() -> {
+                    while (true) {
+                        try {
+                            System.out.println("Ready");
+                            Socket socket = serverSocket.accept();
+                            if (socket != null) {
+                                InputStream in = socket.getInputStream();
+                                OutputStream out = socket.getOutputStream();
 
-                            LJLanguageServer server = new LJLanguageServer();
-                            Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-                            server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
+                                LJLanguageServer server = new LJLanguageServer();
+                                Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+                                server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
-                            launcher.startListening();
+                                launcher.startListening();
+                            }
+                        } catch (IOException e) {
+                            System.out.println("Caught error here: " + e.getMessage());
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        System.out.println("Caught error here: " + e.getMessage());
-                        e.printStackTrace();
                     }
-                }
-            }).start();
+                }).start();
+            }
         } catch (IOException e) {
             System.out.println("Error:" + e.getMessage());
             e.printStackTrace();
