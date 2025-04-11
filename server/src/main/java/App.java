@@ -23,29 +23,28 @@ public class App {
         System.out.println("Starting listening in Network Server in " + port);
 
         try {
-            try (ServerSocket serverSocket = new ServerSocket(port)) {
-                new Thread(() -> {
-                    while (true) {
-                        try {
-                            System.out.println("Ready");
-                            Socket socket = serverSocket.accept();
-                            if (socket != null) {
-                                InputStream in = socket.getInputStream();
-                                OutputStream out = socket.getOutputStream();
+            final ServerSocket serversocket = new ServerSocket(port);
+            new Thread(() -> {
+                while (true) {
+                    try {
+                        System.out.println("Ready");
+                        Socket socket = serversocket.accept();
+                        if (socket != null) {
+                            InputStream in = socket.getInputStream();
+                            OutputStream out = socket.getOutputStream();
 
-                                LJLanguageServer server = new LJLanguageServer();
-                                Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-                                server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
+                            LJLanguageServer server = new LJLanguageServer();
+                            Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+                            server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
 
-                                launcher.startListening();
-                            }
-                        } catch (IOException e) {
-                            System.out.println("Caught error here: " + e.getMessage());
-                            e.printStackTrace();
+                            launcher.startListening();
                         }
+                    } catch (IOException e) {
+                        System.out.println("Caught error here: " + e.getMessage());
+                        e.printStackTrace();
                     }
-                }).start();
-            }
+                }
+            }).start();
         } catch (IOException e) {
             System.out.println("Error:" + e.getMessage());
             e.printStackTrace();

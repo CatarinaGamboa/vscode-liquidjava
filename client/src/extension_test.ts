@@ -50,7 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
         const  javaExecutablePath = findJavaExecutable('java');
         const args = [
             '-jar',
-            path.resolve(context.extensionPath, 'server', 'language-server-liquidjava.jar'),
+            path.resolve(context.extensionPath, 'server', 'vscode-liquid-java-server-0.0.2-SNAPSHOT-jar-with-dependencies.jar'),
             chosenPort
         ];
         const options = { 
