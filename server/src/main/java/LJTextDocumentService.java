@@ -9,14 +9,12 @@ import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
-import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJTextDocumentService implements TextDocumentService, WorkspaceService {
     private LanguageClient remoteProxy;
-    private RemoteEndpoint remoteEndPoint;
     private String workspaceRoot;
 
     public void setWorkspaceRoot(String s) {
@@ -46,13 +44,8 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 
     }
 
-
     public void setRemoteProxy(LanguageClient remoteProxy) {
         this.remoteProxy = remoteProxy;
-    }
-
-    public void setRemoteEndPoint(RemoteEndpoint remoteEndpoint) {
-        this.remoteEndPoint = remoteEndpoint;
     }
 
     @Override

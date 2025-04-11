@@ -137,7 +137,7 @@
 		<artifactId>verifier</artifactId>
 		<version>5.2-SNAPSHOT</version>
 		<scope>system</scope>
-		<systemPath>${project.basedir}/lib/liquidjava-verifier-5.2-SNAPSHOT.jar</systemPath>
+		<systemPath>${project.basedir}/libs/liquidjava-verifier-5.2-SNAPSHOT.jar</systemPath>
 	</dependency>
 		<dependency>
 			<groupId>tools.aqua</groupId>
