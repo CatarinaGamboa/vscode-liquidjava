@@ -4,7 +4,7 @@ import * as path from 'path';
 import { TreeLiquidJava } from './treeLiquidJava';
 
 
-let tree: { [key: string]: string[] }  = {
+const tree: { [key: string]: string[] }  = {
 	'positive_grade_1 == 55':
 		['Variable: positive_grade_1', 'Created in: int positive grade = 55', 'File: Grade.java:22, 29'],
 	'bonus_2 == op1':
@@ -14,7 +14,7 @@ let tree: { [key: string]: string[] }  = {
 };
 
 export class LiquidJavaProvider implements vscode.TreeDataProvider<Dependency> {
-	n:number = 0;
+	n = 0;
 	private _onDidChangeTreeData: vscode.EventEmitter<Dependency | undefined | void> = new vscode.EventEmitter<Dependency | undefined | void>();
 	readonly onDidChangeTreeData: vscode.Event<Dependency | undefined | void> = this._onDidChangeTreeData.event;
 	private vcs:TreeLiquidJava;
@@ -42,11 +42,11 @@ export class LiquidJavaProvider implements vscode.TreeDataProvider<Dependency> {
 		}
 
 		vscode.window.showInformationMessage('Root Path:'+this.workspaceRoot);
-		let r = [new Dependency("Failed to check refinement at:"), 
+		const r = [new Dependency("Failed to check refinement at:"), 
 			new Dependency("addBonus(positive_grade, (10 + 50)):"), 
 			new Dependency("Type Expected:"), 
 			new Dependency("(Percentage(#bonus_2) && (#bonus_2 < #positive_grade_1))")
-		]
+		];
 		return Promise.resolve(r);
 
 		// if (element) {

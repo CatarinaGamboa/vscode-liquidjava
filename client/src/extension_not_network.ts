@@ -13,7 +13,7 @@ import { Executable } from 'vscode-languageclient/lib/client';
 
 export function activate(context: vscode.ExtensionContext) {
     const activeTextEditor = vscode.window.activeTextEditor;
-    let glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
+    const glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
     vscode.workspace.findFiles(glob, null, 100).then((uris: vscode.Uri[] ) => { 
         if(uris.length == 0){
             console.log("No references to liquidJava api in workspace");
@@ -30,29 +30,29 @@ export function activate(context: vscode.ExtensionContext) {
 
         //#1
         const { JAVA_HOME } = process.env;
-        const main: string = 'App';
+        const main = 'App';
         console.log(`Using java from JAVA_HOME: ${JAVA_HOME}`);
         if (JAVA_HOME) {
             // Java execution path.
-            let executable: string = path.join(JAVA_HOME,'bin', 'java');
+            const executable: string = path.join(JAVA_HOME,'bin', 'java');
 
             // C:\Program Files\Java\jdk1.8.0_231\bin\bin\java
     
             // path to the launcher.jar
-            let classPath = path.join(__dirname, 'server', 'language-server-liquidjava.jar');
+            const classPath = path.join(__dirname, 'server', 'language-server-liquidjava.jar');
             const args: string[] = ['-cp', classPath];
     
             // Set the server options 
             // -- java execution path
             // -- argument to be pass when executing the java command
-            let serverOptions: ServerOptions = {
+            const serverOptions: ServerOptions = {
                 command: executable,
                 args: [...args, main],
                 options: {}
             };
     
             // Options to control the language client
-            let clientOptions: LanguageClientOptions = {
+            const clientOptions: LanguageClientOptions = {
                 documentSelector: ['java']//,
                 // synchronize: {
                 //     fileEvents: workspace.createFileSystemWatcher('**/*.java')
@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
             };
     
             // Create the language client and start the client.
-            let disposable = new LanguageClient('LiquidJava Server','LiquidJava Server', serverOptions, clientOptions).start();
+            const disposable = new LanguageClient('LiquidJava Server','LiquidJava Server', serverOptions, clientOptions).start();
     
             // Disposables to remove on deactivation.
             context.subscriptions.push(disposable);
@@ -133,20 +133,19 @@ function findJavaExecutable(binname: string) {
 
 	// First search each JAVA_HOME bin folder
 	if (process.env['JAVA_HOME']) {
-		let workspaces = process.env['JAVA_HOME'].split(path.delimiter);
+		const workspaces = process.env['JAVA_HOME'].split(path.delimiter);
 		for (let i = 0; i < workspaces.length; i++) {
-			let binpath = path.join(workspaces[i], 'bin', binname);
-			if (fs.existsSync(binpath)) {
+			const binpath = path.join(workspaces[i], 'bin', binname);
+			if (fs.existsSync(binpath)) 
 				return binpath;
-			}
 		}
 	}
 
 	// Then search PATH parts
 	if (process.env['PATH']) {
-		let pathparts = process.env['PATH'].split(path.delimiter);
+		const pathparts = process.env['PATH'].split(path.delimiter);
 		for (let i = 0; i < pathparts.length; i++) {
-			let binpath = path.join(pathparts[i], binname);
+			const binpath = path.join(pathparts[i], binname);
 			if (fs.existsSync(binpath)) {
 				return binpath;
 			}

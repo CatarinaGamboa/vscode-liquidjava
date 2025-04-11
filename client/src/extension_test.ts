@@ -14,7 +14,7 @@ import { Executable } from 'vscode-languageclient/lib/client';
 
 export function activate(context: vscode.ExtensionContext) {
     const activeTextEditor = vscode.window.activeTextEditor;
-    let glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
+    const glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
     vscode.workspace.findFiles(glob, null, 100).then((uris: vscode.Uri[] ) => { 
         if(uris.length == 0){
             console.log("No references to liquidJava api in workspace");
@@ -40,39 +40,39 @@ export function activate(context: vscode.ExtensionContext) {
         const ports = ["50000", "50101", "50202", "50303", "50404"];
         const random = Math.floor(Math.random() * ports.length);
 
-        let chosenPort = ports[random];
+        const chosenPort = ports[random];
         console.log("Port:" + chosenPort);
 
-        let connectionInfo = {
+        const connectionInfo = {
             port: parseInt(chosenPort)
         };
 
-        let javaExecutablePath = findJavaExecutable('java');
-        let args = [
+        const  javaExecutablePath = findJavaExecutable('java');
+        const args = [
             '-jar',
             path.resolve(context.extensionPath, 'server', 'language-server-liquidjava.jar'),
             chosenPort
-        ]
-        let options = { 
+        ];
+        const options = { 
             cwd: workspace.rootPath
             // timeout:setTimeout(null, 3000)
         };
-        let process = child_process.spawn(javaExecutablePath, args, options);
+        const process = child_process.spawn(javaExecutablePath, args, options);
         
         let first = true;
         let firstVerification = true;
         process.stdout.on('data', (data) => {
             console.log(`stdout: ${data}`);
-            let st:String = data.toString();
+            let st = data.toString();
             st = st.substring(0, 5);
 
             if(st == "Ready" && first){
                 console.log("Server is ON! Starting Client!");
 
-                let serverOptions = () => {
+                const serverOptions = () => {
                     // Connect to language server via socket
-                    let socket = net.connect(connectionInfo);
-                    let result: StreamInfo = {
+                    const socket = net.connect(connectionInfo);
+                    const result: StreamInfo = {
                         writer: socket,
                         reader: socket
                     };
@@ -80,10 +80,10 @@ export function activate(context: vscode.ExtensionContext) {
                 };
         
                 // Options to control the language client
-                let clientOptions: LanguageClientOptions = {
+                const clientOptions: LanguageClientOptions = {
                     documentSelector: ['java']
                 };
-                let disposable = new LanguageClient('liquidJavaServer','LiquidJava Server', serverOptions, clientOptions).start();
+                const disposable = new LanguageClient('liquidJavaServer','LiquidJava Server', serverOptions, clientOptions).start();
                 console.log("Created LanguageClient");
                 // Disposables to remove on deactivation.
                 context.subscriptions.push(disposable);
@@ -91,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
                 first = !first;
             }
 
-            let onVerification:String = data.toString();
+            let onVerification = data.toString();
             onVerification = onVerification.substring(0,14);
             if(onVerification == "OnVerification" && firstVerification){
                 vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy!");
@@ -141,9 +141,9 @@ function findJavaExecutable(binname: string) {
 
 	// First search each JAVA_HOME bin folder
 	if (process.env['JAVA_HOME']) {
-		let workspaces = process.env['JAVA_HOME'].split(path.delimiter);
+		const workspaces = process.env['JAVA_HOME'].split(path.delimiter);
 		for (let i = 0; i < workspaces.length; i++) {
-			let binpath = path.join(workspaces[i], 'bin', binname);
+			const binpath = path.join(workspaces[i], 'bin', binname);
 			if (fs.existsSync(binpath)) {
 				return binpath;
 			}
@@ -152,9 +152,9 @@ function findJavaExecutable(binname: string) {
 
 	// Then search PATH parts
 	if (process.env['PATH']) {
-		let pathparts = process.env['PATH'].split(path.delimiter);
+		const pathparts = process.env['PATH'].split(path.delimiter);
 		for (let i = 0; i < pathparts.length; i++) {
-			let binpath = path.join(pathparts[i], binname);
+			const binpath = path.join(pathparts[i], binname);
 			if (fs.existsSync(binpath)) {
 				return binpath;
 			}
