@@ -1,0 +1,19 @@
+{
+    "name": "Latte Extension Dev",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+            "vscjava.vscode-java-pack", // Java Support (Red Hat)
+            "${containerWorkspaceFolder}/client/liquid-java-0.0.15.vsix" // Latte Extension
+        ]
+      }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/java:1": {
+          "version": "21" // Installs Java 21 (Change if needed)
+        }
+      },
+    "postCreateCommand": "code --install-extension .devcontainer/latte-vscode.vsix && npm install"
+}
+  
