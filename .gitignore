@@ -85,6 +85,11 @@ logs
 ehthumbs.db
 Thumbs.db
 
+# Spooned folders
+spooned/
+**/spooned/
+**/spooned/**
+
 # Build and distribution
 dist/
 coverage/
