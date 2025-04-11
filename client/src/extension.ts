@@ -1,20 +1,19 @@
-'use strict';
-
-import * as net from 'net';
-
-import {Trace} from 'vscode-jsonrpc';
-import { window, workspace, commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, StreamInfo, Position as LSPosition, Location as LSLocation } from 'vscode-languageclient';
 import * as vscode from 'vscode';
-import * as fs from 'fs'; 
+import * as fs from "fs";
+import * as path from 'path';
+import {Trace} from 'vscode-jsonrpc';
+import * as net from 'net';
+import * as child_process from "child_process";
 
-let diagnosticCollection: vscode.DiagnosticCollection;
+import { workspace, Disposable, ExtensionContext } from 'vscode';
+import { LanguageClient, LanguageClientOptions, ServerOptions, SettingMonitor, StreamInfo, TransportKind  } from 'vscode-languageclient';
 
-export function activate(context: ExtensionContext) {
-    //Checking if liquid java api is inside workspace,
-    //if yes connect to server, otherwise return
 
-    //https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Glob-Patterns
+import { LiquidJavaProvider } from './liquidJavaProvider';
+import { Executable } from 'vscode-languageclient/lib/client';
+
+export function activate(context: vscode.ExtensionContext) {
+    const activeTextEditor = vscode.window.activeTextEditor;
     const glob = '**/liquidjava-api*.jar';//or +'/{*.png,*.jpeg}';
     vscode.workspace.findFiles(glob, null, 100).then((uris: vscode.Uri[] ) => { 
         if(uris.length == 0){
@@ -22,90 +21,152 @@ export function activate(context: ExtensionContext) {
             vscode.window.showInformationMessage("Not using LiquidJava - Api not in the workspace");
             return; 
         }else{
-            vscode.window.showInformationMessage("Found LiquidJava Api in the workspace - Loading Extension");
+            vscode.window.showInformationMessage("Found LiquidJava Api in the workspace - Loading Extension...");
         }
         uris.forEach((uri: vscode.Uri) => {              
               console.log("Found uri:"+uri);
         });
 
-     
+
         
-        // The server is a started as a separate app and listens on port 50000
+        // var port;
+        // var server = net.createServer( function (sock) {
+        // });
+        // server.listen(0,function() { //'listening' listener 
+        //     var port = this.address().port;
+        //     console.log('server bound:'+port);
+        // });
+
+        const ports = ["50000", "50101", "50202", "50303", "50404"];
+        const random = Math.floor(Math.random() * ports.length);
+
+        const chosenPort = ports[random];
+        console.log("Port:" + chosenPort);
+
         const connectionInfo = {
-            port: 50000
+            port: parseInt(chosenPort)
         };
-        const serverOptions = () => {
-            // Connect to language server via socket
-            const socket = net.connect(connectionInfo);
-            const result: StreamInfo = {
-                writer: socket,
-                reader: socket
-            };
-            return Promise.resolve(result);
+
+        const  javaExecutablePath = findJavaExecutable('java');
+        const args = [
+            '-jar',
+            path.resolve(context.extensionPath, 'server', 'vscode-liquid-java-server-0.0.2-SNAPSHOT-jar-with-dependencies.jar'),
+            chosenPort
+        ];
+        const options = { 
+            cwd: workspace.rootPath
         };
+        const process = child_process.spawn(javaExecutablePath, args, options);
         
-        const clientOptions: LanguageClientOptions = {
-            documentSelector: ['java'],
-            synchronize: {
-                fileEvents: workspace.createFileSystemWatcher('**/*.java')
+        let first = true;
+        let firstVerification = true;
+        process.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+            let st = data.toString();
+            st = st.substring(0, 5);
+
+            if(st == "Ready" && first){
+                console.log("Server is ON! Starting Client!");
+
+                const serverOptions = () => {
+                    // Connect to language server via socket
+                    const socket = net.connect(connectionInfo);
+                    const result: StreamInfo = {
+                        writer: socket,
+                        reader: socket
+                    };
+                    return Promise.resolve(result);
+                };
+        
+                // Options to control the language client
+                const clientOptions: LanguageClientOptions = {
+                    documentSelector: ['java']
+                };
+                const disposable = new LanguageClient('liquidJavaServer','LiquidJava Server', serverOptions, clientOptions).start();
+                console.log("Created LanguageClient");
+                // Disposables to remove on deactivation.
+                context.subscriptions.push(disposable);
+                
+                first = !first;
             }
-        };
+
+            let onVerification = data.toString();
+            onVerification = onVerification.substring(0,14);
+            if(onVerification == "OnVerification" && firstVerification){
+                vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy!");
+                firstVerification = !firstVerification;
+            }
+
+        });
+          
+        process.stderr.on('data', (data) => {
+            console.error(`stderr: ${data}`);
+        });
+
+          
+        process.on('close', (code) => {
+            console.log(`Child process exited with code ${code}`);
+         });
+
+        process.on('error', (err) => {
+            console.error('Failed to start subprocess.');
+        }); 
+
+        process.on('connection', (socket) => {
+            console.error('On connection');
+          });
+
+
         
-        // Create the language client and start the client.
-        const lc = new LanguageClient('LiquidJava Server', serverOptions, clientOptions);
-        lc.trace = Trace.Messages;
-        const disposable = lc.start();
-    }); 
+    }).then(undefined, console.error);
 
-// var disposable2 =commands.registerCommand("adl.a.proxy", async () => {
-//     let activeEditor = window.activeTextEditor;
-//     if (!activeEditor || !activeEditor.document || activeEditor.document.languageId !== 'plaintext') {
-//         return;
-//     }
-
-//     if (activeEditor.document.uri instanceof Uri) {
-//         commands.executeCommand("adl.a", activeEditor.document.uri.toString());
-//     }
-// })
-
-// context.subscriptions.push(disposable2);
-
-// enable tracing (.Off, .Messages, Verbose)
-
-
-// Push the disposable to the context's subscriptions so that the 
-// client can be deactivated on extension deactivation
-// context.subscriptions.push(disposable);
-
-
-// diagnosticCollection = vscode.languages.createDiagnosticCollection('go');
-// context.subscriptions.push(diagnosticCollection);
-
+	//side bar extension - info and vcs
+	// const ljProvider = new LiquidJavaProvider(vscode.workspace.rootPath, context);
+	// vscode.window.registerTreeDataProvider('liquidJava', ljProvider);
+	// vscode.commands.registerCommand('liquidJava.start', () => ljProvider.start());
+	
 }
 
-// export function deactivate(): Thenable<void> | undefined {
-//     if (!client) {
-//       return undefined;
-//     }
-//     return client.stop();
-// }
 
-// function onChange() {
-// 	diagnosticCollection.clear();
-// 	// let uri = document.uri;
-// 	// check(uri.fsPath, goConfig).then(errors => {
-// 	//   diagnosticCollection.clear();
-// 	//   let diagnosticMap: Map<string, vscode.Diagnostic[]> = new Map();
-// 	//   errors.forEach(error => {
-// 	// 	let canonicalFile = vscode.Uri.file(error.file).toString();
-// 	// 	let range = new vscode.Range(error.line-1, error.startColumn, error.line-1, error.endColumn);
-// 	// 	let diagnostics = diagnosticMap.get(canonicalFile);
-// 	// 	if (!diagnostics) { diagnostics = []; }
-// 	// 	diagnostics.push(new vscode.Diagnostic(range, error.msg, error.severity));
-// 	// 	diagnosticMap.set(canonicalFile, diagnostics);
-// 	//   });
-// 	//   diagnosticMap.forEach((diags, file) => {
-// 	// 	diagnosticCollection.set(vscode.Uri.parse(file), diags);
-// 	//   });
-// 	// })
-//   }
+// this method is called when your extension is deactivated
+export function deactivate() { 
+	console.log('Your extension "liquidjava" is now deactivated!');
+}
+
+
+// MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
+function findJavaExecutable(binname: string) {
+	binname = correctBinname(binname);
+
+	// First search each JAVA_HOME bin folder
+	if (process.env['JAVA_HOME']) {
+		const workspaces = process.env['JAVA_HOME'].split(path.delimiter);
+		for (let i = 0; i < workspaces.length; i++) {
+			const binpath = path.join(workspaces[i], 'bin', binname);
+			if (fs.existsSync(binpath)) {
+				return binpath;
+			}
+		}
+	}
+
+	// Then search PATH parts
+	if (process.env['PATH']) {
+		const pathparts = process.env['PATH'].split(path.delimiter);
+		for (let i = 0; i < pathparts.length; i++) {
+			const binpath = path.join(pathparts[i], binname);
+			if (fs.existsSync(binpath)) {
+				return binpath;
+			}
+		}
+	}
+
+	// Else return the binary name directly (this will likely always fail downstream) 
+	return null;
+}
+
+function correctBinname(binname: string) {
+	if (process.platform === 'win32')
+		return binname + '.exe';
+	else
+		return binname;
+}

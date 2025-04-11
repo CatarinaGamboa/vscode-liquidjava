@@ -2,10 +2,14 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "LiquidJava - Extending Java with Refinement Types",
-	"version": "0.0.14",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/CatarinaGamboa/vscode-liquidjava"
+	  },
+	"version": "0.0.15",
 	"publisher": "catarinagamboa",
 	"engines": {
-		"vscode": "^1.52.0"
+		"vscode": "^1.70.0"
 	},
 	"languages": [
 		{
@@ -13,8 +17,10 @@
 		}
 	],
 	"categories": [
-		"Other"
+		"Programming Languages",
+		"Linters"
 	],
+	"license": "MIT",
 	"keywords": [
 		"java",
 		"test",
