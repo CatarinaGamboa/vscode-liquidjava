@@ -4,15 +4,16 @@ import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
 import { Trace } from "vscode-jsonrpc";
-
-import { workspace, Disposable, ExtensionContext } from "vscode";
-import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions } from "vscode-languageclient";
-
-import { LiquidJavaProvider } from "./liquidJavaProvider";
+import { workspace } from "vscode";
+import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, State } from "vscode-languageclient";
 import { Socket } from "net";
 
-const SERVER_JAR_FILENAME = "vscode-liquid-java-server-0.0.2-SNAPSHOT-jar-with-dependencies.jar";
+const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
 const API_JAR_GLOB = "**/liquidjava-api*.jar";
+
+let serverProcess: child_process.ChildProcess;
+let client: LanguageClient;
+let socket: Socket;
 
 export async function activate(context: vscode.ExtensionContext) {
     // only activate if liquidjava api jar is present
@@ -42,24 +43,28 @@ export async function activate(context: vscode.ExtensionContext) {
         cwd: workspace.workspaceFolders[0].uri.fsPath, // root path
     };
     console.log("Starting language server...");
-    const proc = child_process.spawn(javaExecutablePath, args, options);
+    serverProcess = child_process.spawn(javaExecutablePath, args, options);
 
     // listen to process events
-    proc.stdout.on("data", (data) => console.log("LiquidJava stdout: " + data));
-    proc.stderr.on("data", (data) => console.error("LiquidJava stderr: " + data));
-    proc.on("close", (code) => console.log("LiquidJava child process exited with code " + code));
-    proc.on("error", (err) => console.log("LiquidJava failed to start subprocess: " + err));
+    serverProcess.stdout.on("data", (data) => console.log("LiquidJava stdout: " + data));
+    serverProcess.stderr.on("data", (data) => console.error("LiquidJava stderr: " + data));
+    serverProcess.on("error", (err) => console.log("LiquidJava failed to start subprocess: " + err));
+    serverProcess.on("close", (code) => {
+        console.log("LiquidJava child process exited with code " + code);
+        if (client) client.stop();
+    });
 
     // connect to language server
     const serverOptions: ServerOptions = () => {
         return new Promise<StreamInfo>(async (resolve, reject) => {
             try {
-                const socket = await connectWithRetry(port);
+                socket = await connectToServer(port);
                 resolve({
                     writer: socket,
                     reader: socket,
                 });
             } catch (error) {
+                await stopServer("connection failed");
                 reject(error);
             }
         });
@@ -71,10 +76,16 @@ export async function activate(context: vscode.ExtensionContext) {
     };
     const client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     client.trace = Trace.Verbose; // for debugging
+    client.onDidChangeState((e) => {
+        if (e.newState === State.Stopped) {
+            stopServer("client stopped");
+        }
+    });
     const disposable = client.start();
-
-    console.log("Created LanguageClient");
-    context.subscriptions.push(disposable); // removed on deactivation
+    context.subscriptions.push(disposable); // client teardown
+    context.subscriptions.push({
+        dispose: () => stopServer("extension disposed"), // server teardown
+    });
 
     // use LSP lifecycle to confirm startup
     client
@@ -82,8 +93,9 @@ export async function activate(context: vscode.ExtensionContext) {
         .then(() => {
             vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy!");
         })
-        .catch((e) => {
+        .catch(async (e) => {
             vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
+            await stopServer("client failed to initialize");
         });
 
     // side bar extension - info and vcs
@@ -92,8 +104,9 @@ export async function activate(context: vscode.ExtensionContext) {
     // vscode.commands.registerCommand('liquidJava.start', () => ljProvider.start());
 }
 
-export function deactivate() {
+export async function deactivate() {
     console.log("LiquidJava Extension is OFF!");
+    await stopServer("extension deactivated");
 }
 
 // MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
@@ -131,7 +144,7 @@ async function getAvailablePort(): Promise<number> {
 }
 
 // tries to connect to the given port until timeout
-async function connectWithRetry(port: number, timeout = 10000, attemptInterval = 200): Promise<Socket> {
+async function connectToServer(port: number, timeout = 10000, attemptInterval = 200): Promise<Socket> {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
         try {
@@ -162,4 +175,49 @@ async function connectWithRetry(port: number, timeout = 10000, attemptInterval =
         }
     }
     throw new Error(`Server not reachable on port ${port} within ${timeout}ms`);
+}
+
+async function stopServer(reason: string) {
+    console.log("Stopping LiquidJava server: " + reason);
+
+    // stop client
+    try {
+        await client?.stop();
+    } catch (e) {
+        console.error("Error stopping client: " + e);
+    } finally {
+        client = undefined;
+    }
+
+    // close socket
+    try {
+        socket?.end();
+        socket?.destroy();
+    } catch (e) {
+        console.error("Error closing socket: " + e);
+    } finally {
+        socket = undefined;
+    }
+
+    // kill server process
+    await killProcess(serverProcess);
+    serverProcess = undefined;
+}
+
+async function killProcess(proc?: child_process.ChildProcess) {
+    return new Promise<void>((resolve) => {
+        if (!proc || proc.killed) {
+            // already killed
+            resolve();
+            return;
+        }
+        if (process.platform === "win32") {
+            // Windows
+            child_process.exec(`taskkill /pid ${proc.pid} /T /F`, () => resolve());
+        } else {
+            // Unix
+            process.kill(proc.pid, "SIGKILL");
+            resolve();
+        }
+    });
 }
