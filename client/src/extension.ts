@@ -20,13 +20,16 @@ let socket: net.Socket;
 export async function activate(context: vscode.ExtensionContext) {
     // only activate if liquidjava api jar is present
     const jarIsPresent = await isJarPresent();
-    if (!jarIsPresent) return;
-    vscode.window.showInformationMessage("Found LiquidJava API in the Workspace - Loading Extension...");
+    if (!jarIsPresent) {
+        vscode.window.showWarningMessage("LiquidJava API Jar Not Found in Workspace");
+        return;
+    }
+    console.log("Found LiquidJava API in the Workspace - Loading Extension...");
 
     // find java executable path
     const javaExecutablePath = findJavaExecutable("java");
     if (!javaExecutablePath) {
-        vscode.window.showErrorMessage("LiquidJava - Java runtime not found in JAVA_HOME or PATH");
+        vscode.window.showErrorMessage("LiquidJava - Java Runtime Not Found in JAVA_HOME or PATH");
         return;
     }
 
@@ -68,7 +71,6 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     const options = {
         cwd: vscode.workspace.workspaceFolders[0].uri.fsPath, // root path
     };
-
     console.log("Starting language server...");
     serverProcess = child_process.spawn(javaExecutablePath, args, options);
 
@@ -89,7 +91,6 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
  * @param port The port the server is running on
  */
 async function runClient(context: vscode.ExtensionContext, port: number) {
-    // connect to language server
     const serverOptions: ServerOptions = () => {
         return new Promise<StreamInfo>(async (resolve, reject) => {
             try {
@@ -104,12 +105,12 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
             }
         });
     };
-
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
     };
     client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     client.trace = Trace.Verbose; // for debugging
+
     client.onDidChangeState((e) => {
         if (e.newState === State.Stopped) {
             stopServer("client stopped");
@@ -178,9 +179,10 @@ async function getAvailablePort(): Promise<number> {
  * @param port The port to connect to
  * @param timeout The timeout duration in milliseconds
  * @param attemptInterval The interval between connection attempts in milliseconds
+ * @param connectionTimeout The timeout for each individual connection attempt in milliseconds
  * @returns A promise to the connected socket
  */
-async function connectToPort(port: number, timeout = 10000, attemptInterval = 200): Promise<net.Socket> {
+async function connectToPort(port: number, timeout = 10000, attemptInterval = 500, connectionTimeout = 500): Promise<net.Socket> {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
         try {
@@ -191,7 +193,7 @@ async function connectToPort(port: number, timeout = 10000, attemptInterval = 20
                 const t = setTimeout(() => {
                     s.destroy(new Error("connection timeout"));
                     reject(new Error("connection timeout"));
-                }, 250);
+                }, connectionTimeout);
 
                 // success
                 s.once("connect", () => {
@@ -250,7 +252,7 @@ async function stopServer(reason: string) {
  * @returns A promise that resolves when the process has been killed
  */
 async function killProcess(proc?: child_process.ChildProcess) {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>((resolve, reject) => {
         if (!proc || proc.killed) {
             // already killed
             resolve();
@@ -258,11 +260,21 @@ async function killProcess(proc?: child_process.ChildProcess) {
         }
         if (process.platform === "win32") {
             // Windows
-            child_process.exec(`taskkill /pid ${proc.pid} /T /F`, () => resolve());
+            child_process.exec(`taskkill /pid ${proc.pid} /T /F`, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
         } else {
             // Unix
-            process.kill(proc.pid, "SIGKILL");
-            resolve();
+            try {
+                process.kill(proc.pid, "SIGKILL");
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
         }
     });
 }
