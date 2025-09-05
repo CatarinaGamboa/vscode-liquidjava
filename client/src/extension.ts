@@ -21,10 +21,7 @@ let logger: LiquidJavaLogger;
  * @param context The extension context
  */
 export async function activate(context: vscode.ExtensionContext) {
-    outputChannel = vscode.window.createOutputChannel("LiquidJava");
-    logger = createLogger(outputChannel);
-    context.subscriptions.push(outputChannel);
-    context.subscriptions.push(logger);
+    setupLogging(context);
     logger.client.info("Activating LiquidJava extension...");
 
     // only activate if liquidjava api jar is present
@@ -46,7 +43,7 @@ export async function activate(context: vscode.ExtensionContext) {
     logger.client.info("Using Java at: " + javaExecutablePath);
 
     // start server
-    logger.server.info("Starting LiquidJava language server...");
+    logger.client.info("Starting LiquidJava language server...");
     const port = await runLanguageServer(context, javaExecutablePath);
 
     // start client
@@ -69,6 +66,20 @@ export async function deactivate() {
 async function isJarPresent(): Promise<boolean> {
     const uris = await vscode.workspace.findFiles(API_JAR_GLOB, null, 100);
     return uris.length > 0;
+}
+
+/**
+ * Sets up logging for the extension
+ * @param context The extension context
+ */
+function setupLogging(context: vscode.ExtensionContext) {
+    outputChannel = vscode.window.createOutputChannel("LiquidJava");
+    logger = createLogger(outputChannel);
+    context.subscriptions.push(outputChannel);
+    context.subscriptions.push(logger);
+    context.subscriptions.push(
+        vscode.commands.registerCommand("liquidjava.showLogs", () => outputChannel.show(true))
+    );
 }
 
 /**
