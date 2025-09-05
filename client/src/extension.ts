@@ -4,16 +4,14 @@ import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
 import { Trace } from "vscode-jsonrpc";
-import { workspace } from "vscode";
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, State } from "vscode-languageclient";
-import { Socket } from "net";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
 const API_JAR_GLOB = "**/liquidjava-api*.jar";
 
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
-let socket: Socket;
+let socket: net.Socket;
 
 /**
  * Activates the LiquidJava extension
@@ -21,9 +19,10 @@ let socket: Socket;
  */
 export async function activate(context: vscode.ExtensionContext) {
     // only activate if liquidjava api jar is present
-    if (!canBeActivated()) return;
+    const jarIsPresent = await isJarPresent();
+    if (!jarIsPresent) return;
     vscode.window.showInformationMessage("Found LiquidJava API in the Workspace - Loading Extension...");
-    
+
     // find java executable path
     const javaExecutablePath = findJavaExecutable("java");
     if (!javaExecutablePath) {
@@ -45,12 +44,11 @@ export async function deactivate() {
     await stopServer("extension deactivated");
 }
 
-
 /**
  * Checks if the extension can be activated by looking for the LiquidJava API jar in the workspace
  * @returns true if the extension can be activated, false otherwise
  */
-async function canBeActivated(): Promise<boolean> {
+async function isJarPresent(): Promise<boolean> {
     const uris = await vscode.workspace.findFiles(API_JAR_GLOB, null, 100);
     return uris.length > 0;
 }
@@ -64,11 +62,13 @@ async function canBeActivated(): Promise<boolean> {
 async function runLanguageServer(context: vscode.ExtensionContext, javaExecutablePath: string): Promise<number> {
     const port = await getAvailablePort();
     console.log("Running language server on port " + port);
+
     const jarPath = path.resolve(context.extensionPath, "server", SERVER_JAR_FILENAME);
     const args = ["-jar", jarPath, port.toString()];
     const options = {
-        cwd: workspace.workspaceFolders[0].uri.fsPath, // root path
+        cwd: vscode.workspace.workspaceFolders[0].uri.fsPath, // root path
     };
+
     console.log("Starting language server...");
     serverProcess = child_process.spawn(javaExecutablePath, args, options);
 
@@ -78,7 +78,7 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     serverProcess.on("error", (err) => console.log("LiquidJava failed to start subprocess: " + err));
     serverProcess.on("close", (code) => {
         console.log("LiquidJava child process exited with code " + code);
-        if (client) client.stop();
+        client?.stop();
     });
     return port;
 }
@@ -108,7 +108,7 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
     };
-    const client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
+    client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     client.trace = Trace.Verbose; // for debugging
     client.onDidChangeState((e) => {
         if (e.newState === State.Stopped) {
@@ -131,7 +131,6 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
             await stopServer("client failed to initialize");
         });
 }
-
 
 /**
  * Finds the Java executable in the system, either in JAVA_HOME or in PATH
@@ -181,7 +180,7 @@ async function getAvailablePort(): Promise<number> {
  * @param attemptInterval The interval between connection attempts in milliseconds
  * @returns A promise to the connected socket
  */
-async function connectToPort(port: number, timeout = 10000, attemptInterval = 200): Promise<Socket> {
+async function connectToPort(port: number, timeout = 10000, attemptInterval = 200): Promise<net.Socket> {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
         try {
