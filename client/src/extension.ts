@@ -5,6 +5,7 @@ import * as net from "net";
 import * as child_process from "child_process";
 import { Trace } from "vscode-jsonrpc";
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, State } from "vscode-languageclient";
+import { LiquidJavaLogger, createLogger } from "./logging";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
 const API_JAR_GLOB = "**/liquidjava-api*.jar";
@@ -12,31 +13,41 @@ const API_JAR_GLOB = "**/liquidjava-api*.jar";
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
 let socket: net.Socket;
+let outputChannel: vscode.OutputChannel;
+let logger: LiquidJavaLogger;
 
 /**
  * Activates the LiquidJava extension
  * @param context The extension context
  */
 export async function activate(context: vscode.ExtensionContext) {
+    setupLogging(context);
+    logger.client.info("Activating LiquidJava extension...");
+
     // only activate if liquidjava api jar is present
     const jarIsPresent = await isJarPresent();
     if (!jarIsPresent) {
         vscode.window.showWarningMessage("LiquidJava API Jar Not Found in Workspace");
+        logger.client.error("LiquidJava API jar not found in workspace - Not activating extension");
         return;
     }
-    console.log("Found LiquidJava API in the Workspace - Loading Extension...");
+    logger.client.info("Found LiquidJava API in the workspace - Loading extension...");
 
     // find java executable path
     const javaExecutablePath = findJavaExecutable("java");
     if (!javaExecutablePath) {
         vscode.window.showErrorMessage("LiquidJava - Java Runtime Not Found in JAVA_HOME or PATH");
+        logger.client.error("Java Runtime not found in JAVA_HOME or PATH - Not activating extension");
         return;
     }
+    logger.client.info("Using Java at: " + javaExecutablePath);
 
     // start server
+    logger.client.info("Starting LiquidJava language server...");
     const port = await runLanguageServer(context, javaExecutablePath);
 
     // start client
+    logger.client.info("Starting LiquidJava client...");
     await runClient(context, port);
 }
 
@@ -44,6 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
  * Deactivates the LiquidJava extension
  */
 export async function deactivate() {
+    logger.client.info("Deactivating LiquidJava extension...");
     await stopServer("extension deactivated");
 }
 
@@ -57,6 +69,20 @@ async function isJarPresent(): Promise<boolean> {
 }
 
 /**
+ * Sets up logging for the extension
+ * @param context The extension context
+ */
+function setupLogging(context: vscode.ExtensionContext) {
+    outputChannel = vscode.window.createOutputChannel("LiquidJava");
+    logger = createLogger(outputChannel);
+    context.subscriptions.push(outputChannel);
+    context.subscriptions.push(logger);
+    context.subscriptions.push(
+        vscode.commands.registerCommand("liquidjava.showLogs", () => outputChannel.show(true))
+    );
+}
+
+/**
  * Runs the LiquidJava language server
  * @param context The extension context
  * @param javaExecutablePath The path to the Java executable
@@ -64,22 +90,22 @@ async function isJarPresent(): Promise<boolean> {
  */
 async function runLanguageServer(context: vscode.ExtensionContext, javaExecutablePath: string): Promise<number> {
     const port = await getAvailablePort();
-    console.log("Running language server on port " + port);
+    logger.client.info("Running language server on port " + port);
 
     const jarPath = path.resolve(context.extensionPath, "server", SERVER_JAR_FILENAME);
     const args = ["-jar", jarPath, port.toString()];
     const options = {
         cwd: vscode.workspace.workspaceFolders[0].uri.fsPath, // root path
     };
-    console.log("Starting language server...");
+    logger.client.info("Creating language server process...");
     serverProcess = child_process.spawn(javaExecutablePath, args, options);
 
     // listen to process events
-    serverProcess.stdout.on("data", (data) => console.log("LiquidJava stdout: " + data));
-    serverProcess.stderr.on("data", (data) => console.error("LiquidJava stderr: " + data));
-    serverProcess.on("error", (err) => console.log("LiquidJava failed to start subprocess: " + err));
+    serverProcess.stdout.on("data", (data) => logger.server.info(data.toString().trim()));
+    serverProcess.stderr.on("data", (data) => logger.server.error(data.toString().trim()));
+    serverProcess.on("error", (err) => logger.server.error(`Failed to start: ${err}`));
     serverProcess.on("close", (code) => {
-        console.log("LiquidJava child process exited with code " + code);
+        logger.server.info(`Process exited with code ${code}`);
         client?.stop();
     });
     return port;
@@ -126,9 +152,11 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
         .onReady()
         .then(() => {
             vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy!");
+            logger.client.info("Ready");
         })
         .catch(async (e) => {
             vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
+            logger.client.error("Failed to initialize: " + e.toString());
             await stopServer("client failed to initialize");
         });
 }
@@ -182,7 +210,12 @@ async function getAvailablePort(): Promise<number> {
  * @param connectionTimeout The timeout for each individual connection attempt in milliseconds
  * @returns A promise to the connected socket
  */
-async function connectToPort(port: number, timeout = 10000, attemptInterval = 500, connectionTimeout = 500): Promise<net.Socket> {
+async function connectToPort(
+    port: number,
+    timeout = 10000,
+    attemptInterval = 500,
+    connectionTimeout = 500
+): Promise<net.Socket> {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
         try {
@@ -220,13 +253,13 @@ async function connectToPort(port: number, timeout = 10000, attemptInterval = 50
  * @param reason The reason for stopping the server
  */
 async function stopServer(reason: string) {
-    console.log("Stopping LiquidJava server: " + reason);
+    logger.client.info("Stopping LiquidJava server: " + reason);
 
     // stop client
     try {
         await client?.stop();
     } catch (e) {
-        console.error("Error stopping client: " + e);
+        logger.client.error("Error stopping client: " + e);
     } finally {
         client = undefined;
     }
@@ -236,7 +269,7 @@ async function stopServer(reason: string) {
         socket?.end();
         socket?.destroy();
     } catch (e) {
-        console.error("Error closing socket: " + e);
+        logger.client.error("Error closing socket: " + e);
     } finally {
         socket = undefined;
     }

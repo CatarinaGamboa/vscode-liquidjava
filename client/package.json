@@ -58,7 +58,13 @@
 			"activitybar": []
 		},
 		"views": {},
-		"commands": [],
+		"commands": [
+			{
+				"command": "liquidjava.showLogs",
+				"title": "Show Logs",
+				"category": "LiquidJava"
+			}
+		],
 		"menus": {}
 	},
 	"scripts": {
