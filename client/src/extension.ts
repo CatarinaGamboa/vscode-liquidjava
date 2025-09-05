@@ -15,30 +15,57 @@ let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
 let socket: Socket;
 
+/**
+ * Activates the LiquidJava extension
+ * @param context The extension context
+ */
 export async function activate(context: vscode.ExtensionContext) {
     // only activate if liquidjava api jar is present
-    const uris = await vscode.workspace.findFiles(API_JAR_GLOB, null, 100);
-    if (uris.length === 0) {
-        console.log("No references to LiquidJava API in workspace");
-        vscode.window.showInformationMessage("Not using LiquidJava - API not in the workspace");
-        return;
-    } else {
-        vscode.window.showInformationMessage("Found LiquidJava API in the workspace - Loading Extension...");
-    }
-    uris.forEach((uri: vscode.Uri) => {
-        console.log("Found uri: " + uri);
-    });
-
-    // run language server
-    const port = await getAvailablePort();
-    console.log("Running language server on port " + port);
+    if (!canBeActivated()) return;
+    vscode.window.showInformationMessage("Found LiquidJava API in the Workspace - Loading Extension...");
+    
+    // find java executable path
     const javaExecutablePath = findJavaExecutable("java");
     if (!javaExecutablePath) {
-        vscode.window.showErrorMessage("Java runtime not found in JAVA_HOME or PATH");
+        vscode.window.showErrorMessage("LiquidJava - Java runtime not found in JAVA_HOME or PATH");
         return;
     }
+
+    // start server
+    const port = await runLanguageServer(context, javaExecutablePath);
+
+    // start client
+    await runClient(context, port);
+}
+
+/**
+ * Deactivates the LiquidJava extension
+ */
+export async function deactivate() {
+    await stopServer("extension deactivated");
+}
+
+
+/**
+ * Checks if the extension can be activated by looking for the LiquidJava API jar in the workspace
+ * @returns true if the extension can be activated, false otherwise
+ */
+async function canBeActivated(): Promise<boolean> {
+    const uris = await vscode.workspace.findFiles(API_JAR_GLOB, null, 100);
+    return uris.length > 0;
+}
+
+/**
+ * Runs the LiquidJava language server
+ * @param context The extension context
+ * @param javaExecutablePath The path to the Java executable
+ * @returns A promise to the port number the server is running on
+ */
+async function runLanguageServer(context: vscode.ExtensionContext, javaExecutablePath: string): Promise<number> {
+    const port = await getAvailablePort();
+    console.log("Running language server on port " + port);
     const jarPath = path.resolve(context.extensionPath, "server", SERVER_JAR_FILENAME);
-    const args = ["-jar", jarPath, port.toString(), process.platform];
+    const args = ["-jar", jarPath, port.toString()];
     const options = {
         cwd: workspace.workspaceFolders[0].uri.fsPath, // root path
     };
@@ -53,12 +80,20 @@ export async function activate(context: vscode.ExtensionContext) {
         console.log("LiquidJava child process exited with code " + code);
         if (client) client.stop();
     });
+    return port;
+}
 
+/**
+ * Starts the client and connects it to the language server
+ * @param context The extension context
+ * @param port The port the server is running on
+ */
+async function runClient(context: vscode.ExtensionContext, port: number) {
     // connect to language server
     const serverOptions: ServerOptions = () => {
         return new Promise<StreamInfo>(async (resolve, reject) => {
             try {
-                socket = await connectToServer(port);
+                socket = await connectToPort(port);
                 resolve({
                     writer: socket,
                     reader: socket,
@@ -70,7 +105,6 @@ export async function activate(context: vscode.ExtensionContext) {
         });
     };
 
-    // Options to control the language client
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
     };
@@ -87,7 +121,6 @@ export async function activate(context: vscode.ExtensionContext) {
         dispose: () => stopServer("extension disposed"), // server teardown
     });
 
-    // use LSP lifecycle to confirm startup
     client
         .onReady()
         .then(() => {
@@ -97,21 +130,16 @@ export async function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
             await stopServer("client failed to initialize");
         });
-
-    // side bar extension - info and vcs
-    // const ljProvider = new LiquidJavaProvider(vscode.workspace.rootPath, context);
-    // vscode.window.registerTreeDataProvider('liquidJava', ljProvider);
-    // vscode.commands.registerCommand('liquidJava.start', () => ljProvider.start());
 }
 
-export async function deactivate() {
-    console.log("LiquidJava Extension is OFF!");
-    await stopServer("extension deactivated");
-}
 
-// MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
-function findJavaExecutable(binname: string) {
+/**
+ * Finds the Java executable in the system, either in JAVA_HOME or in PATH
+ * MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
+ */
+function findJavaExecutable(binname: string): string | null {
     binname = process.platform === "win32" ? `${binname}.exe` : binname;
+
     // First search each JAVA_HOME bin folder
     if (process.env["JAVA_HOME"]) {
         for (const workspace of process.env["JAVA_HOME"].split(path.delimiter)) {
@@ -130,7 +158,10 @@ function findJavaExecutable(binname: string) {
     return null;
 }
 
-// returns an available port in the OS
+/**
+ * Gets an available port in the OS
+ * @returns A promise to the available port number
+ */
 async function getAvailablePort(): Promise<number> {
     return new Promise((resolve, reject) => {
         const server = net.createServer();
@@ -143,8 +174,14 @@ async function getAvailablePort(): Promise<number> {
     });
 }
 
-// tries to connect to the given port until timeout
-async function connectToServer(port: number, timeout = 10000, attemptInterval = 200): Promise<Socket> {
+/**
+ * Connects to the process on the given port, retrying until timeout
+ * @param port The port to connect to
+ * @param timeout The timeout duration in milliseconds
+ * @param attemptInterval The interval between connection attempts in milliseconds
+ * @returns A promise to the connected socket
+ */
+async function connectToPort(port: number, timeout = 10000, attemptInterval = 200): Promise<Socket> {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
         try {
@@ -177,6 +214,10 @@ async function connectToServer(port: number, timeout = 10000, attemptInterval = 
     throw new Error(`Server not reachable on port ${port} within ${timeout}ms`);
 }
 
+/**
+ * Stops the LiquidJava server
+ * @param reason The reason for stopping the server
+ */
 async function stopServer(reason: string) {
     console.log("Stopping LiquidJava server: " + reason);
 
@@ -204,6 +245,11 @@ async function stopServer(reason: string) {
     serverProcess = undefined;
 }
 
+/**
+ * Kills the given process if it is running
+ * @param proc The process to kill
+ * @returns A promise that resolves when the process has been killed
+ */
 async function killProcess(proc?: child_process.ChildProcess) {
     return new Promise<void>((resolve) => {
         if (!proc || proc.killed) {
