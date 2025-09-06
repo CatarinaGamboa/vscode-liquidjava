@@ -58,8 +58,8 @@ export async function activate(context: vscode.ExtensionContext) {
  * Deactivates the LiquidJava extension
  */
 export async function deactivate() {
-    logger.client.info("Deactivating LiquidJava extension...");
-    await stopServer("Extension was deactivated");
+    logger?.client.info("Deactivating LiquidJava extension...");
+    await stopExtension("Extension was deactivated");
 }
 
 /**
@@ -80,9 +80,7 @@ function initLogging(context: vscode.ExtensionContext) {
     logger = createLogger(outputChannel);
     context.subscriptions.push(outputChannel);
     context.subscriptions.push(logger);
-    context.subscriptions.push(
-        vscode.commands.registerCommand("liquidjava.showLogs", () => outputChannel.show(true))
-    );
+    context.subscriptions.push(vscode.commands.registerCommand("liquidjava.showLogs", () => outputChannel.show(true)));
 }
 
 /**
@@ -94,6 +92,7 @@ function initStatusBar(context: vscode.ExtensionContext) {
     statusBarItem.text = "$(sync~spin) LiquidJava";
     statusBarItem.tooltip = "LiquidJava — Show logs";
     statusBarItem.command = "liquidjava.showLogs";
+    statusBarItem.color = new vscode.ThemeColor("statusBar.foreground");
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 }
@@ -142,7 +141,7 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
                     reader: socket,
                 });
             } catch (error) {
-                await stopServer("Failed to connect to server");
+                await stopExtension("Failed to connect to server");
                 reject(error);
             }
         });
@@ -155,13 +154,13 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
 
     client.onDidChangeState((e) => {
         if (e.newState === State.Stopped) {
-            stopServer("Extension stopped");
+            stopExtension("Extension stopped");
         }
     });
     const disposable = client.start();
     context.subscriptions.push(disposable); // client teardown
     context.subscriptions.push({
-        dispose: () => stopServer("Extension was disposed"), // server teardown
+        dispose: () => stopExtension("Extension was disposed"), // server teardown
     });
 
     client
@@ -173,7 +172,7 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
         .catch(async (e) => {
             vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
             logger.client.error("Failed to initialize: " + e.toString());
-            await stopServer("Failed to initialize");
+            await stopExtension("Failed to initialize");
         });
 }
 
@@ -265,20 +264,20 @@ async function connectToPort(
 }
 
 /**
- * Stops the LiquidJava server
- * @param reason The reason for stopping the server
+ * Stops the LiquidJava extension
+ * @param reason The reason for stopping the extension
  */
-async function stopServer(reason: string) {
+async function stopExtension(reason: string) {
     if (!client && !serverProcess && !socket) {
-        logger.client.info("Server already stopped");
+        logger.client.info("Extension already stopped");
         return;
     }
-    logger.client.info("Stopping LiquidJava server: " + reason);
+    logger.client.info("Stopping LiquidJava extension: " + reason);
 
     // update status bar
     statusBarItem.text = "$(circle-slash) LiquidJava";
     statusBarItem.tooltip = reason;
-    statusBarItem.color = new vscode.ThemeColor('errorForeground');
+    statusBarItem.color = new vscode.ThemeColor("errorForeground");
 
     // stop client
     try {
@@ -291,7 +290,6 @@ async function stopServer(reason: string) {
 
     // close socket
     try {
-        socket?.end();
         socket?.destroy();
     } catch (e) {
         logger.client.error("Error closing socket: " + e);
