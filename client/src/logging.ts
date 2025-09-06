@@ -10,6 +10,14 @@ enum LogSource {
     SERVER = "SERVER",
 }
 
+/**
+ * Logs a message to the specified output channel
+ * @param channel The output channel to log to
+ * @param msg The message to log
+ * @param level The log level
+ * @param source The log source
+ * @returns 
+ */
 function logMessage(channel: OutputChannel, msg: string, level: LogLevel, source: LogSource) {
     if (!channel) return;
     const timestamp = new Date().toISOString().split("T")[1].split(".")[0];
@@ -28,6 +36,11 @@ export type LiquidJavaLogger = {
     dispose: () => void;
 };
 
+/**
+ * Creates a logger for the LiquidJava extension
+ * @param channel The output channel to log to
+ * @returns A LiquidJavaLogger instance with client and server log methods
+ */
 export function createLogger(channel: OutputChannel): LiquidJavaLogger {
     let disposed = false;
 

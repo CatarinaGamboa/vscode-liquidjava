@@ -15,13 +15,16 @@ let client: LanguageClient;
 let socket: net.Socket;
 let outputChannel: vscode.OutputChannel;
 let logger: LiquidJavaLogger;
+let statusBarItem: vscode.StatusBarItem;
 
 /**
  * Activates the LiquidJava extension
  * @param context The extension context
  */
 export async function activate(context: vscode.ExtensionContext) {
-    setupLogging(context);
+    initLogging(context);
+    initStatusBar(context);
+
     logger.client.info("Activating LiquidJava extension...");
 
     // only activate if liquidjava api jar is present
@@ -56,7 +59,7 @@ export async function activate(context: vscode.ExtensionContext) {
  */
 export async function deactivate() {
     logger.client.info("Deactivating LiquidJava extension...");
-    await stopServer("extension deactivated");
+    await stopServer("Extension was deactivated");
 }
 
 /**
@@ -69,10 +72,10 @@ async function isJarPresent(): Promise<boolean> {
 }
 
 /**
- * Sets up logging for the extension
+ * Initializes logging for the extension with an output channel
  * @param context The extension context
  */
-function setupLogging(context: vscode.ExtensionContext) {
+function initLogging(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel("LiquidJava");
     logger = createLogger(outputChannel);
     context.subscriptions.push(outputChannel);
@@ -80,6 +83,19 @@ function setupLogging(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand("liquidjava.showLogs", () => outputChannel.show(true))
     );
+}
+
+/**
+ * Initializes the status bar for the extension
+ * @param context The extension context
+ */
+function initStatusBar(context: vscode.ExtensionContext) {
+    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+    statusBarItem.text = "$(sync~spin) LiquidJava";
+    statusBarItem.tooltip = "LiquidJava — Show logs";
+    statusBarItem.command = "liquidjava.showLogs";
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
 }
 
 /**
@@ -126,7 +142,7 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
                     reader: socket,
                 });
             } catch (error) {
-                await stopServer("connection failed");
+                await stopServer("Failed to connect to server");
                 reject(error);
             }
         });
@@ -139,25 +155,25 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
 
     client.onDidChangeState((e) => {
         if (e.newState === State.Stopped) {
-            stopServer("client stopped");
+            stopServer("Extension stopped");
         }
     });
     const disposable = client.start();
     context.subscriptions.push(disposable); // client teardown
     context.subscriptions.push({
-        dispose: () => stopServer("extension disposed"), // server teardown
+        dispose: () => stopServer("Extension was disposed"), // server teardown
     });
 
     client
         .onReady()
         .then(() => {
-            vscode.window.showInformationMessage("LiquidJava Extension is ON! Enjoy!");
-            logger.client.info("Ready");
+            logger.client.info("Extension is ready");
+            statusBarItem.text = "$(check) LiquidJava";
         })
         .catch(async (e) => {
             vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
             logger.client.error("Failed to initialize: " + e.toString());
-            await stopServer("client failed to initialize");
+            await stopServer("Failed to initialize");
         });
 }
 
@@ -253,7 +269,16 @@ async function connectToPort(
  * @param reason The reason for stopping the server
  */
 async function stopServer(reason: string) {
+    if (!client && !serverProcess && !socket) {
+        logger.client.info("Server already stopped");
+        return;
+    }
     logger.client.info("Stopping LiquidJava server: " + reason);
+
+    // update status bar
+    statusBarItem.text = "$(circle-slash) LiquidJava";
+    statusBarItem.tooltip = reason;
+    statusBarItem.color = new vscode.ThemeColor('errorForeground');
 
     // stop client
     try {
