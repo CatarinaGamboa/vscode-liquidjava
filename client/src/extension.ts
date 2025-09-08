@@ -101,7 +101,7 @@ function initStatusBar(context: vscode.ExtensionContext) {
 function updateStatusBar(active: boolean) {
     if (active) {
         statusBarItem.text = "$(check) LiquidJava";
-        statusBarItem.color = new vscode.ThemeColor("foreground");
+        statusBarItem.color = new vscode.ThemeColor("statusBar.foreground");
     } else {
         statusBarItem.text = "$(circle-slash) LiquidJava";
         statusBarItem.color = new vscode.ThemeColor("errorForeground");
