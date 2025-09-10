@@ -32,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
     if (!jarIsPresent) {
         vscode.window.showWarningMessage("LiquidJava API Jar Not Found in Workspace");
         logger.client.error("LiquidJava API jar not found in workspace - Not activating extension");
-        updateStatusBar(false);
+        updateStatusBar("stopped");
         return;
     }
     logger.client.info("Found LiquidJava API in the workspace - Loading extension...");
@@ -42,7 +42,7 @@ export async function activate(context: vscode.ExtensionContext) {
     if (!javaExecutablePath) {
         vscode.window.showErrorMessage("LiquidJava - Java Runtime Not Found in JAVA_HOME or PATH");
         logger.client.error("Java Runtime not found in JAVA_HOME or PATH - Not activating extension");
-        updateStatusBar(false);
+        updateStatusBar("stopped");
         return;
     }
     logger.client.info("Using Java at: " + javaExecutablePath);
@@ -91,21 +91,27 @@ function initLogging(context: vscode.ExtensionContext) {
  */
 function initStatusBar(context: vscode.ExtensionContext) {
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
-    statusBarItem.text = "$(sync~spin) LiquidJava";
     statusBarItem.tooltip = "Show Logs";
     statusBarItem.command = "liquidjava.showLogs";
+    updateStatusBar("loading")
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 }
 
-function updateStatusBar(active: boolean) {
-    if (active) {
-        statusBarItem.text = "$(check) LiquidJava";
-        statusBarItem.color = new vscode.ThemeColor("statusBar.foreground");
-    } else {
-        statusBarItem.text = "$(circle-slash) LiquidJava";
-        statusBarItem.color = new vscode.ThemeColor("errorForeground");
-    }
+/**
+ * Updates the status bar with the current state
+ * @param state The state of the status bar: "loading", "stopped", "passed" or "failed"
+ */
+function updateStatusBar(state: "loading" | "stopped" | "passed" | "failed") {
+    const icons = {
+        loading: "$(sync~spin)",
+        stopped: "$(circle-slash)",
+        passed: "$(check)",
+        failed: "$(error)",
+    };
+    const color = state === "stopped" ? "errorForeground" : "statusBar.foreground";
+    statusBarItem.color = new vscode.ThemeColor(color);
+    statusBarItem.text = icons[state] + " LiquidJava";
 }
 
 /**
@@ -127,9 +133,21 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     serverProcess = child_process.spawn(javaExecutablePath, args, options);
 
     // listen to process events
-    serverProcess.stdout.on("data", (data) => logger.server.info(data.toString().trim()));
-    serverProcess.stderr.on("data", (data) => logger.server.error(data.toString().trim()));
-    serverProcess.on("error", (err) => logger.server.error(`Failed to start: ${err}`));
+    serverProcess.stdout.on("data", (data) => {
+        const message = data.toString().trim();
+        logger.server.info(message);
+        if (message.includes("error found")) {
+            updateStatusBar("failed");
+        } else if (message.includes("error not found")) {
+            updateStatusBar("passed");
+        }
+    });
+    serverProcess.stderr.on("data", (data) => {
+        logger.server.error(data.toString().trim())
+    });
+    serverProcess.on("error", (err) => {
+        logger.server.error(`Failed to start: ${err}`)
+    });
     serverProcess.on("close", (code) => {
         logger.server.info(`Process exited with code ${code}`);
         client?.stop();
@@ -178,13 +196,21 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
         .onReady()
         .then(() => {
             logger.client.info("Extension is ready");
-            updateStatusBar(true);
         })
         .catch(async (e) => {
             vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
             logger.client.error("Failed to initialize: " + e.toString());
             await stopExtension("Failed to initialize");
         });
+
+    // update status bar on file save
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(() => {
+            if (client) {
+                updateStatusBar("loading");
+            }
+        })
+    );
 }
 
 /**
@@ -284,7 +310,7 @@ async function stopExtension(reason: string) {
         return;
     }
     logger.client.info("Stopping LiquidJava extension: " + reason);
-    updateStatusBar(false);
+    updateStatusBar("stopped");
 
     // stop client
     try {
