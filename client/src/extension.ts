@@ -107,7 +107,7 @@ function updateStatusBar(state: "loading" | "stopped" | "passed" | "failed") {
         loading: "$(sync~spin)",
         stopped: "$(circle-slash)",
         passed: "$(check)",
-        failed: "$(error)",
+        failed: "$(x)",
     };
     const color = state === "stopped" ? "errorForeground" : "statusBar.foreground";
     statusBarItem.color = new vscode.ThemeColor(color);
