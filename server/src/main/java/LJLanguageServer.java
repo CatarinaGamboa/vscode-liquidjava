@@ -1,4 +1,3 @@
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -19,8 +18,6 @@ public class LJLanguageServer implements LanguageServer {
 
     private LJTextDocumentService textDocumentService;
 
-    private int errorCode = 1;
-
     public LJLanguageServer() {
         this.textDocumentService = new LJTextDocumentService();
     }
@@ -37,32 +34,18 @@ public class LJLanguageServer implements LanguageServer {
         capabilities.setWorkspace(workspaceServerCapabilities);
         capabilities.setDocumentSymbolProvider(false);
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
-        // More in:
-        // https://github.com/nedap/archetype-languageserver/blob/24b0890c0f046c6c1af8269a5c9770a8860a96b3/src/main/java/com/nedap/openehr/lsp/ADL2LanguageServer.java
-        capabilities.setDocumentLinkProvider(null);// new DocumentLinkOptions(true));
+        capabilities.setDocumentLinkProvider(null); // new DocumentLinkOptions(true));
+        // More in: https://github.com/nedap/archetype-languageserver/blob/24b0890c0f046c6c1af8269a5c9770a8860a96b3/src/main/java/com/nedap/openehr/lsp/ADL2LanguageServer.java
 
         completableFuture.complete(new InitializeResult(capabilities));
 
-        // Primary approach: Use workspace folders
+        // Workspace folders
         List<WorkspaceFolder> workspaceFolders = params.getWorkspaceFolders();
         if (workspaceFolders != null && !workspaceFolders.isEmpty()) {
             String rootUri = workspaceFolders.get(0).getUri();
             System.err.println("rootUri:" + rootUri);
             textDocumentService.setWorkspaceRoot(rootUri);
-        } else {
-            // Fallback: Use rootPath and convert to URI if needed
-            String rootPath = params.getRootPath();
-            if (rootPath != null) {
-                try {
-                    String rootUri = new File(rootPath).toURI().toString();
-                    System.err.println("rootUri:" + rootUri);
-                    textDocumentService.setWorkspaceRoot(rootUri);
-                } catch (Exception e) {
-                    System.err.println("Failed to convert rootPath to URI: " + e.getMessage());
-                }
-            }
         }
-
         return completableFuture;
     }
 
@@ -72,7 +55,7 @@ public class LJLanguageServer implements LanguageServer {
 
     public void exit() {
         // TODO Auto-generated method stub
-        System.exit(errorCode);
+        System.exit(1);
     }
 
     public TextDocumentService getTextDocumentService() {
@@ -84,6 +67,6 @@ public class LJLanguageServer implements LanguageServer {
     }
 
     public void connect(LanguageClient remoteProxy, RemoteEndpoint remoteEndpoint) {
-        textDocumentService.setRemoteProxy(remoteProxy);
+        textDocumentService.setClient(remoteProxy);
     }
 }

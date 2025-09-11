@@ -9,6 +9,8 @@ import { LiquidJavaLogger, createLogger } from "./logging";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
 const API_JAR_GLOB = "**/liquidjava-api*.jar";
+const DEBUG = true;
+const DEBUG_PORT = 50000;
 
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
@@ -89,7 +91,11 @@ function setupLogging(context: vscode.ExtensionContext) {
  * @returns A promise to the port number the server is running on
  */
 async function runLanguageServer(context: vscode.ExtensionContext, javaExecutablePath: string): Promise<number> {
-    const port = await getAvailablePort();
+    const port = DEBUG ? DEBUG_PORT : await getAvailablePort();
+    if (DEBUG) {
+        logger.client.info("DEBUG MODE: Using fixed port " + port);
+        return port;
+    }
     logger.client.info("Running language server on port " + port);
 
     const jarPath = path.resolve(context.extensionPath, "server", SERVER_JAR_FILENAME);
