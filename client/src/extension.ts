@@ -9,7 +9,7 @@ import { LiquidJavaLogger, createLogger } from "./logging";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
 const API_JAR_GLOB = "**/liquidjava-api*.jar";
-const DEBUG = true;
+const DEBUG = false;
 const DEBUG_PORT = 50000;
 
 let serverProcess: child_process.ChildProcess;

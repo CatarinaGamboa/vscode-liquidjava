@@ -1,3 +1,4 @@
+import java.util.Collections;
 import java.util.Optional;
 
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
@@ -26,13 +27,16 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 
     public void checkDiagnostics(TextDocumentItem textDocumentItem) {
         Optional<PublishDiagnosticsParams> optParams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocumentItem);
-        final PublishDiagnosticsParams params = optParams.orElse(new PublishDiagnosticsParams());
-        this.client.publishDiagnostics(params);
+        publishDiagnostics(optParams, textDocumentItem.getUri());
     }
 
     private void checkDiagnostics(VersionedTextDocumentIdentifier textDocument) {
         Optional<PublishDiagnosticsParams> optParams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocument);
-        final PublishDiagnosticsParams params = optParams.orElse(null);
+        publishDiagnostics(optParams, textDocument.getUri());
+    }
+
+    private void publishDiagnostics(Optional<PublishDiagnosticsParams> optParams, String uri) {
+        final PublishDiagnosticsParams params = optParams.orElse(new PublishDiagnosticsParams(uri, Collections.emptyList()));
         this.client.publishDiagnostics(params);
     }
 
