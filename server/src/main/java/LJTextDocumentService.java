@@ -1,3 +1,4 @@
+import java.util.Collections;
 import java.util.Optional;
 
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
@@ -14,38 +15,33 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJTextDocumentService implements TextDocumentService, WorkspaceService {
-    private LanguageClient remoteProxy;
+    private LanguageClient client;
     private String workspaceRoot;
 
-    public void setWorkspaceRoot(String s) {
-        if (!s.contains("/src"))
-            s = "/" + s + "src";
-        // if(os.equals(os.UNIX))
-        // s = "/"+s;
-        System.out.println("workspace root:" + s);
-        workspaceRoot = s;
+    public void setWorkspaceRoot(String root) {
+        if (!root.contains("/src")) root = "/" + root + "src";
+        // if(os.equals(os.UNIX)) s = "/"+s;
+        System.out.println("workspace root:" + root);
+        workspaceRoot = root;
     }
 
     public void checkDiagnostics(TextDocumentItem textDocumentItem) {
-        Optional<PublishDiagnosticsParams> oparams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocumentItem);
-        if (oparams.isPresent())
-            remoteProxy.publishDiagnostics(oparams.get());
-        else
-            remoteProxy.publishDiagnostics(new PublishDiagnosticsParams());
-
+        Optional<PublishDiagnosticsParams> optParams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocumentItem);
+        publishDiagnostics(optParams, textDocumentItem.getUri());
     }
 
     private void checkDiagnostics(VersionedTextDocumentIdentifier textDocument) {
-        Optional<PublishDiagnosticsParams> oparams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocument);
-        if (oparams.isPresent())
-            remoteProxy.publishDiagnostics(oparams.get());
-        else
-            remoteProxy.publishDiagnostics(null);
-
+        Optional<PublishDiagnosticsParams> optParams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocument);
+        publishDiagnostics(optParams, textDocument.getUri());
     }
 
-    public void setRemoteProxy(LanguageClient remoteProxy) {
-        this.remoteProxy = remoteProxy;
+    private void publishDiagnostics(Optional<PublishDiagnosticsParams> optParams, String uri) {
+        final PublishDiagnosticsParams params = optParams.orElse(new PublishDiagnosticsParams(uri, Collections.emptyList()));
+        this.client.publishDiagnostics(params);
+    }
+
+    public void setClient(LanguageClient client) {
+        this.client = client;
     }
 
     @Override
@@ -86,7 +82,5 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
     public void didSave(DidSaveTextDocumentParams params) {
         // TODO Auto-generated method stub
         System.out.println("DEBUG:on didSave ");
-
     }
-
 }
