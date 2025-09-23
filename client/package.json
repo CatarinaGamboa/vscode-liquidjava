@@ -5,7 +5,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/CatarinaGamboa/vscode-liquidjava"
-	  },
+	},
 	"version": "0.0.15",
 	"publisher": "catarinagamboa",
 	"engines": {
@@ -65,7 +65,14 @@
 				"category": "LiquidJava"
 			}
 		],
-		"menus": {}
+		"menus": {},
+		"grammars": [
+			{
+				"path": "./syntaxes/liquidjava.json",
+				"scopeName": "source.liquidjava",
+				"injectTo": ["source.java"]
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "tsc",
