@@ -5,7 +5,7 @@
   "injectionSelector": "L:source.java",
   "patterns": [
     {
-      "begin": "@ExternalRefinementsFor\\s*\\(",
+      "begin": "@(liquidjava\\.specification\\.)?ExternalRefinementsFor\\s*\\(",
       "end": "\\)",
       "name": "meta.annotation.externalrefinement.liquidjava",
       "patterns": [
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "begin": "@(Refinement|RefinementMultiple|RefinementAlias|RefinementAliasMultiple|RefinementPredicate|RefinementPredicateMultiple|StateSet|StateSets|Ghost|ExternalRefinementsFor)\\s*\\(",
+      "begin": "@(liquidjava\\.specification\\.)?(Refinement|RefinementMultiple|RefinementAlias|RefinementAliasMultiple|RefinementPredicate|RefinementPredicateMultiple|StateSet|StateSets|Ghost|ExternalRefinementsFor)\\s*\\(",
       "end": "\\)",
       "name": "meta.annotation.refinement.liquidjava",
       "patterns": [
@@ -36,7 +36,7 @@
       ]
     },
     {
-      "begin": "@(StateRefinement|StateRefinementMultiple)\\s*\\(",
+      "begin": "@(liquidjava\\.specification\\.)?(StateRefinement|StateRefinementMultiple)\\s*\\(",
       "end": "\\)",
       "name": "meta.annotation.refinement.liquidjava",
       "patterns": [
