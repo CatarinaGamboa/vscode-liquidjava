@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "LiquidJava",
   "scopeName": "source.liquidjava",
-  "injectionSelector": "L:source.java",
+  "injectionSelector": "L:source.java - (comment, string)",
   "patterns": [
     {
       "begin": "@(liquidjava\\.specification\\.)?(Refinement|RefinementMultiple|RefinementAlias|RefinementAliasMultiple|RefinementPredicate|RefinementPredicateMultiple|StateSet|StateSets|Ghost)\\s*\\(",
