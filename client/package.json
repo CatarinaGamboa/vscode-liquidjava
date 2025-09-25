@@ -51,6 +51,11 @@
 					],
 					"default": "off",
 					"description": "Traces the communication between VSCode and the liquidJavaServer service."
+				},
+				"liquidjava.applyItalicOverlay": {
+					"type": "boolean",
+					"default": true,
+					"description": "Apply italic style to LiquidJava injected tokens on top of any active theme"
 				}
 			}
 		},
