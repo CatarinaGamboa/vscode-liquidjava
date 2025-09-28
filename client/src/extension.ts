@@ -6,6 +6,7 @@ import * as child_process from "child_process";
 import { Trace } from "vscode-jsonrpc";
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, State } from "vscode-languageclient";
 import { LiquidJavaLogger, createLogger } from "./logging";
+import { applyItalicOverlay } from "./decorators";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
 const API_JAR_GLOB = "**/liquidjava-api*.jar";
@@ -28,6 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
     initStatusBar(context);
 
     logger.client.info("Activating LiquidJava extension...");
+    await applyItalicOverlay();
 
     // only activate if liquidjava api jar is present
     const jarIsPresent = await isJarPresent();
