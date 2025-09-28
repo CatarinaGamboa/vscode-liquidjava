@@ -10,45 +10,38 @@ import org.eclipse.lsp4j.services.LanguageClient;
 
 public class App {
 
+    final static int DEFAULT_PORT = 50000;
+
     public static void main(String[] args) throws Exception {
-        if (args.length > 0) {
-            int port = Integer.parseInt(args[0]);
-            new App().startNetworkedLanguageServer(port);
-        } else {
-            new App().startNetworkedLanguageServer(50000);
-        }
+        final int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+        System.out.println("Starting server on port: " + port);
+        new App().startNetworkedLanguageServer(port);
     }
 
     private void startNetworkedLanguageServer(int port) {
-        System.out.println("Starting listening in Network Server in " + port);
-
-        try {
-            final ServerSocket serversocket = new ServerSocket(port);
-            new Thread(() -> {
+        new Thread(() -> {
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
                 while (true) {
                     try {
                         System.out.println("Ready");
-                        Socket socket = serversocket.accept();
+                        Socket socket = serverSocket.accept();
                         if (socket != null) {
                             InputStream in = socket.getInputStream();
                             OutputStream out = socket.getOutputStream();
-
                             LJLanguageServer server = new LJLanguageServer();
                             Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
                             server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
-
                             launcher.startListening();
                         }
                     } catch (IOException e) {
-                        System.out.println("Caught error here: " + e.getMessage());
+                        System.out.println("Error: " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
-            }).start();
-        } catch (IOException e) {
-            System.out.println("Error:" + e.getMessage());
-            e.printStackTrace();
-        }
-
+            } catch (IOException e) {
+                System.out.println("Error: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
     }
 }

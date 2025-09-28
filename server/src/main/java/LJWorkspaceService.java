@@ -15,5 +15,4 @@ public class LJWorkspaceService implements WorkspaceService {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'didChangeWatchedFiles'");
     }
-
 }
