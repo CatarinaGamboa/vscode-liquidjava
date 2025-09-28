@@ -1,17 +1,12 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
 import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
-import { Trace } from "vscode-jsonrpc";
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, State } from "vscode-languageclient";
 import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
-
-const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
-const API_JAR_GLOB = "**/liquidjava-api*.jar";
-const DEBUG = false;
-const DEBUG_PORT = 50000;
+import { connectToPort, findJavaExecutable, getAvailablePort, isJarPresent, killProcess } from "./utils";
+import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT } from "./constants";
 
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
@@ -69,15 +64,6 @@ export async function deactivate() {
 }
 
 /**
- * Checks if the extension can be activated by looking for the LiquidJava API jar in the workspace
- * @returns true if the extension can be activated, false otherwise
- */
-async function isJarPresent(): Promise<boolean> {
-    const uris = await vscode.workspace.findFiles(API_JAR_GLOB, null, 100);
-    return uris.length > 0;
-}
-
-/**
  * Initializes logging for the extension with an output channel
  * @param context The extension context
  */
@@ -125,8 +111,8 @@ function updateStatusBar(state: "loading" | "stopped" | "passed" | "failed") {
  * @returns A promise to the port number the server is running on
  */
 async function runLanguageServer(context: vscode.ExtensionContext, javaExecutablePath: string): Promise<number> {
-    const port = DEBUG ? DEBUG_PORT : await getAvailablePort();
-    if (DEBUG) {
+    const port = DEBUG_MODE ? DEBUG_PORT : await getAvailablePort();
+    if (DEBUG_MODE) {
         logger.client.info("DEBUG MODE: Using fixed port " + port);
         return port;
     }
@@ -187,8 +173,6 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
         documentSelector: [{ language: "java" }],
     };
     client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
-    client.trace = Trace.Verbose; // for debugging
-
     client.onDidChangeState((e) => {
         if (e.newState === State.Stopped) {
             stopExtension("Extension stopped");
@@ -219,93 +203,6 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
             }
         })
     );
-}
-
-/**
- * Finds the Java executable in the system, either in JAVA_HOME or in PATH
- * MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
- */
-function findJavaExecutable(binname: string): string | null {
-    binname = process.platform === "win32" ? `${binname}.exe` : binname;
-
-    // First search each JAVA_HOME bin folder
-    if (process.env["JAVA_HOME"]) {
-        for (const workspace of process.env["JAVA_HOME"].split(path.delimiter)) {
-            const binpath = path.join(workspace, "bin", binname);
-            if (fs.existsSync(binpath)) return binpath;
-        }
-    }
-    // Then search PATH parts
-    if (process.env["PATH"]) {
-        for (const part of process.env["PATH"].split(path.delimiter)) {
-            const binpath = path.join(part, binname);
-            if (fs.existsSync(binpath)) return binpath;
-        }
-    }
-    // Else return null
-    return null;
-}
-
-/**
- * Gets an available port in the OS
- * @returns A promise to the available port number
- */
-async function getAvailablePort(): Promise<number> {
-    return new Promise((resolve, reject) => {
-        const server = net.createServer();
-        server.listen(0, "localhost", () => {
-            const port = (server.address() as net.AddressInfo).port;
-            server.close();
-            resolve(port);
-        });
-        server.on("error", reject);
-    });
-}
-
-/**
- * Connects to the process on the given port, retrying until timeout
- * @param port The port to connect to
- * @param timeout The timeout duration in milliseconds
- * @param attemptInterval The interval between connection attempts in milliseconds
- * @param connectionTimeout The timeout for each individual connection attempt in milliseconds
- * @returns A promise to the connected socket
- */
-async function connectToPort(
-    port: number,
-    timeout = 10000,
-    attemptInterval = 500,
-    connectionTimeout = 500
-): Promise<net.Socket> {
-    const deadline = Date.now() + timeout;
-    while (Date.now() < deadline) {
-        try {
-            return await new Promise((resolve, reject) => {
-                const s = net.connect({ port });
-
-                // connection timeout
-                const t = setTimeout(() => {
-                    s.destroy(new Error("connection timeout"));
-                    reject(new Error("connection timeout"));
-                }, connectionTimeout);
-
-                // success
-                s.once("connect", () => {
-                    clearTimeout(t);
-                    resolve(s);
-                });
-
-                // failure
-                s.once("error", (e) => {
-                    clearTimeout(t);
-                    reject(e);
-                });
-            });
-        } catch {
-            // wait and retry
-            await new Promise((r) => setTimeout(r, attemptInterval));
-        }
-    }
-    throw new Error(`Server not reachable on port ${port} within ${timeout}ms`);
 }
 
 /**
@@ -341,37 +238,4 @@ async function stopExtension(reason: string) {
     // kill server process
     await killProcess(serverProcess);
     serverProcess = undefined;
-}
-
-/**
- * Kills the given process if it is running
- * @param proc The process to kill
- * @returns A promise that resolves when the process has been killed
- */
-async function killProcess(proc?: child_process.ChildProcess) {
-    return new Promise<void>((resolve, reject) => {
-        if (!proc || proc.killed) {
-            // already killed
-            resolve();
-            return;
-        }
-        if (process.platform === "win32") {
-            // Windows
-            child_process.exec(`taskkill /pid ${proc.pid} /T /F`, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        } else {
-            // Unix
-            try {
-                process.kill(proc.pid, "SIGKILL");
-                resolve();
-            } catch (err) {
-                reject(err);
-            }
-        }
-    });
 }

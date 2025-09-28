@@ -1,25 +1,10 @@
 import * as vscode from "vscode";
+import { LIQUIDJAVA_SCOPES } from "./constants";
 
 type TMRule = {
     scope: string | string[];
     settings: { fontStyle?: string; foreground?: string }
 };
-
-const LIQUIDJAVA_SCOPES = [
-    "source.liquidjava keyword.other.liquidjava",
-    "source.liquidjava entity.name.function.liquidjava",
-    "source.liquidjava storage.type.primitive.liquidjava",
-    "source.liquidjava entity.name.type.liquidjava",
-    "source.liquidjava entity.name.type.class.liquidjava",
-    "source.liquidjava entity.name.type.externalref.liquidjava",
-    "source.liquidjava variable.other.liquidjava",
-    "source.liquidjava keyword.operator.liquidjava",
-    "source.liquidjava constant.language.boolean.liquidjava",
-    "source.liquidjava constant.numeric.liquidjava",
-    "keyword.operator.liquidjava",
-    "constant.language.boolean.liquidjava",
-    "constant.numeric.liquidjava",
-];
 
 /**
  * Apply italic fontStyle to LiquidJava TextMate scopes
