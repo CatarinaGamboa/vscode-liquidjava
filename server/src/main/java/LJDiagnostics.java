@@ -20,10 +20,12 @@ public class LJDiagnostics {
     public static class DiagnosticData {
         public String titleMessage;
         public String fullMessage;
+        public String errorKind;
 
-        public DiagnosticData(String titleMessage, String fullMessage) {
+        public DiagnosticData(String titleMessage, String fullMessage, String errorKind) {
             this.titleMessage = titleMessage;
             this.fullMessage = fullMessage;
+            this.errorKind = errorKind;
         }
     }
 
@@ -64,9 +66,10 @@ public class LJDiagnostics {
             new Position(pos.getLineStart() - 1, pos.getColStart() - 1),
             new Position(pos.getLineEnd() - 1, pos.getColEnd() - 1)
         );
-        String msg = String.format("Refinement Type Error\n%s", ee.getTitleMessage());
-        Diagnostic diagnostic = new Diagnostic(range, msg, DiagnosticSeverity.Error, source);
-        DiagnosticData data = new DiagnosticData(ee.getTitleMessage(), ee.getFullMessage());
+        String errorKind = "Type Check Error"; // TODO: get from ee
+        String message = String.format("%s: %s", errorKind, ee.getTitleMessage());
+        Diagnostic diagnostic = new Diagnostic(range, message, DiagnosticSeverity.Error, source);
+        DiagnosticData data = new DiagnosticData(ee.getTitleMessage(), ee.getFullMessage(), errorKind);
         diagnostic.setData(data);
         diagnostics.add(diagnostic);
         diagnosticsParams.setDiagnostics(diagnostics);

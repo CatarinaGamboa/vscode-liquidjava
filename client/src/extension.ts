@@ -6,7 +6,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vsc
 import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
 import { connectToPort, findJavaExecutable, getAvailablePort, isJarPresent, killProcess } from "./utils";
-import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT, EXAMPLE_DERIVATION_NODE, EXAMPLE_EXPECTED } from "./constants";
+import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT, EXAMPLE_DERIVATION_NODE, EXAMPLE_EXPECTED, EXAMPLE_TRANSLATION_TABLE } from "./constants";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import { LJDiagnostic, RefinementError } from "./types";
 
@@ -295,13 +295,15 @@ function handleDiagnostics(uri: vscode.Uri, diagnostics: vscode.Diagnostic[]) {
         return; // no diagnostics
     }
     const error: RefinementError = {
-        message: diagnostic.data.titleMessage,
+        message: diagnostic.message,
         range: diagnostic.range,
         severity: diagnostic.severity,
         file: uri.fsPath,
+        kind: diagnostic.data.errorKind,
         // hardcoded values for testing
         expected: EXAMPLE_EXPECTED,
         found: EXAMPLE_DERIVATION_NODE,
+        translationTable: EXAMPLE_TRANSLATION_TABLE,
     }
     webviewProvider.sendMessage({ type: "refinement-error", error });
     updateStatusBar("failed");

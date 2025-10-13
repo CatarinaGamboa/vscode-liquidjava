@@ -20,57 +20,62 @@ export const LIQUIDJAVA_SCOPES = [
     "constant.numeric.liquidjava",
 ];
 export const EXAMPLE_EXPECTED = "#x_10 < 0"
-export const EXAMPLE_DERIVATION_NODE: ValDerivationNode = {
-  val: "#x_10 == -2 + x",
+export const EXAMPLE_DERIVATION_NODE: ValDerivationNode ={
+  val: "#result_12 == 3",
   origin: {
     op: "==",
     left: {
-      val: "#x_10"
+      val: "#result_12",
     },
     right: {
-      val: "-2 + x",
+      val: 3,
       origin: {
-        op: "+",
+        op: "/",
         left: {
-          val: -2,
+          val: 6,
           origin: {
-            op: "+",
-            left: {
-              val: 3,
-              origin: {
-                op: "/",
-                left: {
-                  val: 6,
-                  origin: {
-                    var: "#a_8"
-                  }
-                },
-                right: {
-                  val: 2,
-                  origin: {
-                    var: "#b_7"
-                  }
-                }
-              }
-            },
-            right: {
-              val: -5,
-              origin: {
-                op: "-",
-                operand: {
-                  val: 5
-                }
-              }
-            }
+            var: "#a_10",
           }
         },
         right: {
-          val: "x",
+          val: 2,
           origin: {
-            var: "#x_9"
+            var: "#b_11",
           }
         }
       }
     }
+  }
+};
+export const EXAMPLE_TRANSLATION_TABLE = {
+  "#result_12": {
+    created: "int result = a / b",
+    file: "/Users/rcosta/GitHub/liquidjava-examples/examples/demo/src/main/java/com/example/project/Example.java",
+    line: 11,
+    column: 12
+  },
+  "#a_8": {
+    created: "int a = 6",
+    file: "/Users/rcosta/GitHub/liquidjava-examples/examples/demo/src/main/java/com/example/project/Example.java",
+    line: 9,
+    column: 12
+  },
+  "#b_9": {
+    created: "int b = 2",
+    file: "/Users/rcosta/GitHub/liquidjava-examples/examples/demo/src/main/java/com/example/project/Example.java",
+    line: 10,
+    column: 12
+  },
+  "#a_10": {
+    created: "a",
+    file: "/Users/rcosta/GitHub/liquidjava-examples/examples/demo/src/main/java/com/example/project/Example.java",
+    line: 11,
+    column: 21
+  },
+  "#b_11": {
+    created: "b",
+    file: "/Users/rcosta/GitHub/liquidjava-examples/examples/demo/src/main/java/com/example/project/Example.java",
+    line: 11,
+    column: 25
   }
 }

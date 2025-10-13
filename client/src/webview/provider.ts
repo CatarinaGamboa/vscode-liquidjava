@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getWebviewHtml } from './ui';
+import { getHtml } from './ui';
 
 export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "liquidJavaView";
@@ -49,6 +49,6 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   private getHtml(webview: vscode.Webview): string {
-    return getWebviewHtml(webview.cspSource);
+    return getHtml(webview.cspSource);
   }
 }

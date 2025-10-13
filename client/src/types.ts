@@ -7,6 +7,8 @@ export type RefinementError = {
     file: string;
     expected: string;
     found: ValDerivationNode;
+    kind: string;
+    translationTable: Record<string, TranslationEntry>;
 }
 
 export type DerivationNode = ValDerivationNode | VarDerivationNode | BinaryDerivationNode | UnaryDerivationNode;
@@ -36,7 +38,13 @@ export type LJDiagnostic = Diagnostic & {
     data: {
         titleMessage: string;
         fullMessage: string;
-        
-
+        errorKind: string;
     }
 };
+
+export type TranslationEntry = {
+    created: string;
+    file: string;
+    line: number;
+    column: number;
+}
