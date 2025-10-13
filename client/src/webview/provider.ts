@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getHtml } from './ui';
+import { getHtml } from './html';
 
 export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "liquidJavaView";
