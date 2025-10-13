@@ -19,11 +19,55 @@ export function getWebviewHtml(webviewCspSource: string): string {
                 const vscode = acquireVsCodeApi();
                 const root = document.getElementById('root')
                 let currentErrorId = null;
+                let rootDerivationNode = null;
+                let expandedPaths = new Set(); // track which node paths are expanded
 
                 // html template functions
                 const getErrorHtml = ${getErrorHtml.toString()};
                 const getOkHtml = ${getOkHtml.toString()};
                 const renderJsonTree = ${renderJsonTree.toString()};
+
+                function updateDerivationView() {
+                    const container = document.getElementById('derivation-container');
+                    if (container && rootDerivationNode) { // re-render derivation tree
+                        const nodeToRender = rootDerivationNode.origin || rootDerivationNode;
+                        container.innerHTML = renderJsonTree(nodeToRender, '', expandedPaths);
+                    }
+                    // update reset button state
+                    document.getElementById('derivation-reset-btn').disabled = expandedPaths.size === 0;
+                }
+
+                // attach click event listener to root so when replacing innerHTML we don't lose the listeners
+                root.addEventListener('click', e => {
+                    const target = e.target;
+                    
+                    // derivation node click
+                    if (target.classList.contains('derivation-clickable')) {
+                        e.stopPropagation();
+                        const nodePath = target.getAttribute('data-node-path');
+                        if (nodePath) {
+                            expandedPaths.add(nodePath);
+                            updateDerivationView();
+                        }
+                    }
+                    
+                    // reset button click
+                    if (target.id === 'derivation-reset-btn') {
+                        expandedPaths.clear();
+                        updateDerivationView();
+                    }
+
+                    // location link click
+                    if (target.id === 'location-link') {
+                        e.preventDefault();
+                        vscode.postMessage({
+                            type: 'openFile',
+                            filePath: target.getAttribute('data-filepath'),
+                            line: parseInt(target.getAttribute('data-line')),
+                            character: parseInt(target.getAttribute('data-character'))
+                        });
+                    }
+                });
 
                 root.innerHTML = getOkHtml();
                 vscode.postMessage({ type: 'ready' });    
@@ -34,32 +78,14 @@ export function getWebviewHtml(webviewCspSource: string): string {
                         if (currentErrorId === errorId) return; // duplicate error
                         currentErrorId = errorId;
 
+                        // store new root derivation node and reset expanded paths
+                        if (msg.error) {
+                            rootDerivationNode = msg.error.found;
+                            expandedPaths.clear();
+                        }
+
                         // update ui
                         root.innerHTML = msg.error !== null ? getErrorHtml(msg.error) : getOkHtml();
-
-                        // event listener for clicking the location link
-                        const link = document.getElementById('location-link')
-                        link?.addEventListener('click', e => {
-                            e.preventDefault();
-                            vscode.postMessage({
-                                type: 'openFile',
-                                filePath: link.getAttribute('data-filepath'),
-                                line: parseInt(link.getAttribute('data-line')),
-                                character: parseInt(link.getAttribute('data-character'))
-                            });
-                        });
-                        
-                        // event listeners for toggling json nodes
-                        document.querySelectorAll('.json-toggle').forEach(toggle => {
-                            toggle.addEventListener('click', e => {
-                                const container = e.target.parentElement.nextElementSibling;
-                                if (container && container.classList.contains('json-node')) {
-                                    const isCollapsed = container.classList.contains('json-collapsed');
-                                    container.classList.toggle('json-collapsed');
-                                    e.target.textContent = isCollapsed ? '▼' : '▶';
-                                }
-                            });
-                        });
                     }
                 });
             </script>
@@ -69,10 +95,6 @@ export function getWebviewHtml(webviewCspSource: string): string {
 }
 
 function getErrorHtml(error: RefinementError): string {
-    const foundHtml = typeof error.found === 'string' 
-        ? `<pre>${error.found}</pre>`
-        : `<div class="json-container">${renderJsonTree(error.found)}</div>`;
-    
     return /*html*/`
         <div>
             <h2>Refinement Type Error</h2>
@@ -84,12 +106,16 @@ function getErrorHtml(error: RefinementError): string {
                 </div>
                 <div class="section">
                     <strong>Found:</strong>
-                    ${foundHtml}
+                    <div class="json-container" id="derivation-container">
+                        ${renderJsonTree(error.found.origin || error.found, '', new Set())}
+                        <span class="json-expand-indicator">&nbsp;(click to expand)</span>
+                    </div>
+                    <button id="derivation-reset-btn" class="reset-btn" disabled="true">Reset</button>
                 </div>
                 <div class="section">
                     <strong>Location:</strong> 
-                   
-                        <a href="#" 
+                        <a
+                        href="#" 
                         id="location-link"
                         class="link"
                         data-filepath="${error.file}"
@@ -105,52 +131,39 @@ function getErrorHtml(error: RefinementError): string {
     `;
 }
 
-function renderJsonTree(node: DerivationNode, indent: number = 0): string { 
+function renderJsonTree(node: DerivationNode, path: string = '', expandedPaths: Set<string> = new Set()): string { 
     // var
     if ('var' in node) {
-        return `<div class="json-line"><span class="json-var">${node.var}</span></div>`;
+        return `<span class="json-var">${node.var}</span>`;
     }
     
     // val
     if ('val' in node) {
-        return `<div>
-            <div class="json-line">
-                <span class="json-toggle" style="${node.origin ? '' : 'visibility: hidden;'}">▶</span>
-                <span
-                    class="${typeof node.val === 'number' ? 'json-number' : 'json-value'}"
-                >${node.val}</span><span class="json-node-type">${node.type ? `&nbsp;(${node.type})` : ''}</span>
-            </div>
-            ${node.origin ? `<div class="json-node json-collapsed">
-                <div class="json-line"></div>${renderJsonTree(node.origin, indent + 1)}
-            </div>` : ''}
-        </div>`;
+        const hasOrigin = node.origin !== undefined;
+        const isExpanded = expandedPaths.has(path);
+        const valClass = typeof node.val === 'number' ? 'json-number' : 'json-value';
+        
+        // if expanded and has origin, render the origin instead
+        if (isExpanded && hasOrigin) {
+            return renderJsonTree(node.origin, path, expandedPaths);
+        }
+        // otherwise render the value (clickable if it has origin)
+        const clickableClass = hasOrigin ? 'derivation-clickable' : '';
+        const pathAttr = hasOrigin ? `data-node-path='${path}'` : '';
+        return `<span class="${valClass} ${clickableClass}" ${pathAttr}>${node.val}</span>`;
     }
     
     // binary
     if ('left' in node && 'right' in node) {
-        return `<div>
-            <div class="json-line">
-                <span class="json-toggle">▶</span>
-                ${node.op}
-            </div>
-            <div class="json-node json-collapsed">
-                ${renderJsonTree(node.left, indent + 1)}
-                ${renderJsonTree(node.right, indent + 1)}
-            </div>
-        </div>`;
+        const leftHtml = renderJsonTree(node.left, path + '.left', expandedPaths);
+        const rightHtml = renderJsonTree(node.right, path + '.right', expandedPaths);
+        return `${leftHtml} ${node.op} ${rightHtml}`;
     }
     
     // unary
     if ('operand' in node) {
-        return `<div>
-            <div class="json-line">
-                <span class="json-toggle">▶</span>
-                ${node.op}
-            </div>
-            <div class="json-node json-collapsed">
-                ${renderJsonTree(node.operand, indent + 1)}
-            </div>
-        </div>`;
+        const operandHtml = renderJsonTree(node.operand, path + '.operand', expandedPaths);
+        return node.op === '-' ? `(${node.op}${operandHtml})` : `${node.op}${operandHtml}`;
     }
     
     return `<span class="json-value">${JSON.stringify(node)}</span>`;
@@ -212,12 +225,29 @@ function getStyles(): string {
         }
         .json-container {
             max-width: 100%;
+            padding: 1rem;
+            line-height: 1.6;
         }
-        .json-node {
-            padding-left: 2ch;
+        .reset-btn {
+            margin: 0.5rem 0;
+            padding: 0.4rem 0.8rem;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+        }
+        .reset-btn:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        .reset-btn:disabled {
+            opacity: 0.5;
         }
         .json-var {
             color: #9CDCFE;
+            font-weight: 500;
         }
         .json-value {
             color: #CE9178;
@@ -225,27 +255,20 @@ function getStyles(): string {
         .json-number {
             color: #B5CEA8;
         }
-        .json-toggle {
+        .derivation-clickable {
             cursor: pointer;
-            user-select: none;
-            display: inline-block;
-            min-width: 1rem;
-            width: 1rem;
-            color: var(--vscode-foreground);
-            flex-shrink: 0;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 2px;
         }
-        .json-toggle:hover {
-            opacity: 0.7;
+        .derivation-clickable:hover {
+            opacity: 0.8;
+            background-color: var(--vscode-editor-selectionBackground);
+            border-radius: 2px;
         }
-        .json-line {
-            display: flex;
-            align-items: baseline;
-        }
-        .json-collapsed {
-            display: none;
-        }
-        .json-node-type {
-            opacity: 0.6;
+        .json-expand-indicator {
+            opacity: 0.5;
+            font-style: italic;
         }
     `;
 }
