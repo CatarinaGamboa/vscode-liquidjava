@@ -8,8 +8,6 @@ import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.TextDocumentItem;
-import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
@@ -25,14 +23,9 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
         workspaceRoot = root;
     }
 
-    public void checkDiagnostics(TextDocumentItem textDocumentItem) {
-        Optional<PublishDiagnosticsParams> optParams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocumentItem);
-        publishDiagnostics(optParams, textDocumentItem.getUri());
-    }
-
-    private void checkDiagnostics(VersionedTextDocumentIdentifier textDocument) {
-        Optional<PublishDiagnosticsParams> optParams = LJDiagnostics.checkDiagnostics(workspaceRoot, textDocument);
-        publishDiagnostics(optParams, textDocument.getUri());
+    public void checkDiagnostics(String uri) {
+        Optional<PublishDiagnosticsParams> optParams = LJDiagnostics.checkDiagnostics(workspaceRoot, uri);
+        publishDiagnostics(optParams, uri);
     }
 
     private void publishDiagnostics(Optional<PublishDiagnosticsParams> optParams, String uri) {
@@ -47,40 +40,32 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
         System.out.println("DEBUG:on didOpen - checking Diagnostics");
-        // TODO Auto-generated method stub
-        checkDiagnostics(params.getTextDocument());
-
-    }
-
-    @Override
-    public void didChange(DidChangeTextDocumentParams params) {
-        System.out.println("DEBUG:on didOpen - checking Diagnostics");
-        System.out.println();
-        checkDiagnostics(params.getTextDocument());
-    }
-
-    // ---------------- All TODO after this line -----------------
-    @Override
-    public void didChangeConfiguration(DidChangeConfigurationParams params) {
-        System.out.println("DEBUG:on didChangeConfiguration");
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-        System.out.println("DEBUG:on didChangeWatchedFiles ");
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void didClose(DidCloseTextDocumentParams params) {
-        // TODO Auto-generated method stub
-        System.out.println("DEBUG:on didClose ");
+        checkDiagnostics(params.getTextDocument().getUri());
     }
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
-        // TODO Auto-generated method stub
-        System.out.println("DEBUG:on didSave ");
+        System.out.println("DEBUG:on didSave - checking Diagnostics");
+        checkDiagnostics(params.getTextDocument().getUri());
+    }
+
+    @Override
+    public void didClose(DidCloseTextDocumentParams params) {
+        // do nothing
+    }
+
+    @Override
+    public void didChange(DidChangeTextDocumentParams params) {
+        // do nothing
+    }
+
+    @Override
+    public void didChangeConfiguration(DidChangeConfigurationParams params) {
+        // do nothing
+    }
+
+    @Override
+    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+        // do nothing
     }
 }

@@ -9,21 +9,26 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.TextDocumentItem;
-
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.diagnostics.ErrorEmitter;
 import liquidjava.diagnostics.ErrorPosition;
 
 public class LJDiagnostics {
 
-    public static Optional<PublishDiagnosticsParams> checkDiagnostics(String root, TextDocumentItem textDocumentItem) {
-        return verify(root, textDocumentItem.getUri());
+    private static final String source = "liquidjava";
+
+    public static class DiagnosticData {
+        public String titleMessage;
+        public String fullMessage;
+
+        public DiagnosticData(String titleMessage, String fullMessage) {
+            this.titleMessage = titleMessage;
+            this.fullMessage = fullMessage;
+        }
     }
 
-    public static Optional<PublishDiagnosticsParams> checkDiagnostics(String root, TextDocumentIdentifier textDocumentItem) {
-        return verify(root, textDocumentItem.getUri());
+    public static Optional<PublishDiagnosticsParams> checkDiagnostics(String root, String uri) {
+        return verify(root, uri);
     }
 
     public static Optional<PublishDiagnosticsParams> verify(String root, String uri) {
@@ -48,8 +53,7 @@ public class LJDiagnostics {
     private static Optional<PublishDiagnosticsParams> generateDiagnostics(ErrorEmitter ee, String uri) {
         if (!ee.foundError()) {
             PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
-            List<Diagnostic> diagnostics = new ArrayList<>();
-            diagnosticsParams.setDiagnostics(diagnostics);
+            diagnosticsParams.setDiagnostics(new ArrayList<>()); // empty
             diagnosticsParams.setUri(uri);
             return Optional.of(diagnosticsParams);
         }
@@ -60,9 +64,11 @@ public class LJDiagnostics {
             new Position(pos.getLineStart() - 1, pos.getColStart() - 1),
             new Position(pos.getLineEnd() - 1, pos.getColEnd() - 1)
         );
-        String msg = ee.getTitleMessage() + "\n" + ee.getFullMessage();
-        // String posss = String.format("(%d,%d) (%d,%d)", pos.getLineStart(), pos.getColStart(), pos.getLineEnd(), pos.getColEnd());
-        diagnostics.add(new Diagnostic(range, "Refinement Type Error", DiagnosticSeverity.Error, msg));
+        String msg = String.format("Refinement Type Error\n%s", ee.getTitleMessage());
+        Diagnostic diagnostic = new Diagnostic(range, msg, DiagnosticSeverity.Error, source);
+        DiagnosticData data = new DiagnosticData(ee.getTitleMessage(), ee.getFullMessage());
+        diagnostic.setData(data);
+        diagnostics.add(diagnostic);
         diagnosticsParams.setDiagnostics(diagnostics);
         diagnosticsParams.setUri(ee.getFilePath().toString());
         return Optional.of(diagnosticsParams);
