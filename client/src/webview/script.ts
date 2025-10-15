@@ -15,21 +15,21 @@ export function getScript(vscode: any, document: any, window: any) {
             const fileAttr = file ? `data-filepath="${file}"` : '';
             const lineAttr = line !== undefined ? `data-line="${line}"` : '';
             const charAttr = `data-character="${column}"`;
-            return `<span class="json-var json-var-tooltip json-var-clickable" data-tooltip="${tooltipData}" ${fileAttr} ${lineAttr} ${charAttr}>${node.var}</span>`;
+            return `<span class="node-var tooltip clickable" data-tooltip="${tooltipData}" ${fileAttr} ${lineAttr} ${charAttr}>${node.var}</span>`;
         }
         
         // val
         if ('val' in node) {
             const hasOrigin = node.origin !== undefined;
             const isExpanded = expandedPaths.has(path);
-            const valClass = typeof node.val === 'number' ? 'json-number' : 'json-value';
+            const valClass = typeof node.val === 'number' ? 'node-number' : 'node-value';
             
             // if expanded and has origin, render the origin instead
             if (isExpanded && hasOrigin) {
                 return renderJsonTree(node.origin, path, expandedPaths);
             }
             // otherwise render the value (clickable if it has origin)
-            const clickableClass = hasOrigin ? 'derivation-clickable' : '';
+            const clickableClass = hasOrigin ? 'derivable-node clickable' : '';
             const pathAttr = hasOrigin ? `data-node-path='${path}'` : '';
             return `<span class="${valClass} ${clickableClass}" ${pathAttr}>${node.val}</span>`;
         }
@@ -46,8 +46,9 @@ export function getScript(vscode: any, document: any, window: any) {
             const operandHtml = renderJsonTree(node.operand, path + '.operand', expandedPaths);
             return node.op === '-' ? `(${node.op}${operandHtml})` : `${node.op}${operandHtml}`;
         }
-        
-        return `<span class="json-value">${JSON.stringify(node)}</span>`;
+
+        // fallback
+        return `<span class="node-value">${JSON.stringify(node)}</span>`;
     }
 
     function getErrorHtml(): string {
@@ -59,13 +60,13 @@ export function getScript(vscode: any, document: any, window: any) {
                     <h3>${error.kind}</h3>
                     <div class="section">      
                         <strong>Expected:</strong>
-                        <pre><span class="json-value">${error.expected}</span></pre>
+                        <pre><span class="node-value">${error.expected}</span></pre>
                     </div>
                     <div class="section">
                         <strong>Found:</strong>
-                        <div class="json-container" id="derivation-container">
+                        <div class="node-container" id="derivation-container">
                             ${renderJsonTree(error.found.origin || error.found, '', new Set())}
-                            <span class="json-expand-indicator">&nbsp;(click to expand)</span>
+                            <span class="node-expand-indicator">&nbsp;(click to expand)</span>
                         </div>
                         <button id="derivation-reset-btn" class="reset-btn" disabled="true">Reset</button>
                     </div>
@@ -113,7 +114,7 @@ export function getScript(vscode: any, document: any, window: any) {
         const target = e.target;
         
         // var node click - open file location
-        if (target.classList.contains('json-var')) {
+        if (target.classList.contains('node-var')) {
             e.stopPropagation();
             const filePath = target.getAttribute('data-filepath');
             const line = target.getAttribute('data-line');
@@ -130,7 +131,7 @@ export function getScript(vscode: any, document: any, window: any) {
         }
         
         // derivation node click
-        if (target.classList.contains('derivation-clickable')) {
+        if (target.classList.contains('derivable-node')) {
             e.stopPropagation();
             const nodePath = target.getAttribute('data-node-path');
             if (nodePath) {

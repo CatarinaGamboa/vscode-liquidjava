@@ -12,7 +12,7 @@ export function getStyles(): string {
             display: block;
             margin-bottom: 0.5rem;
         }
-        pre, .json-container, #location-link {
+        pre, .node-container, #location-link {
             margin: 0;
             padding: 0.5rem;
             background-color: var(--vscode-editor-background);
@@ -45,12 +45,36 @@ export function getStyles(): string {
             display: inline-block;
             max-width: 100%;
         }
-        .json-container {
+        .link:hover {
+            text-decoration: underline;
+        }
+        .node-container {
             max-width: 100%;
             padding: 1rem;
             line-height: 1.6;
             overflow: visible;
             position: relative;
+        }
+        .node-var {
+            color: #9CDCFE;
+            position: relative;
+        }
+        .node-value {
+            color: #CE9178;
+        }
+        .node-number {
+            color: #B5CEA8;
+        }
+        .node-expand-indicator {
+            opacity: 0.5;
+            font-style: italic;
+        }
+        .clickable {
+            cursor: pointer;
+        }
+        .clickable:hover {
+            text-decoration: underline;
+            text-decoration-style: dotted;
         }
         .reset-btn {
             margin: 0.5rem 0;
@@ -69,7 +93,7 @@ export function getStyles(): string {
         .reset-btn:disabled {
             opacity: 0.5;
         }
-        .json-var-tooltip:hover::after {
+        .tooltip:hover::after {
             content: attr(data-tooltip);
             position: absolute;
             bottom: 100%;
@@ -86,7 +110,7 @@ export function getStyles(): string {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             pointer-events: none;
         }
-        .json-var-tooltip:hover::before {
+        .tooltip:hover::before {
             content: '';
             position: absolute;
             bottom: 100%;
@@ -97,41 +121,6 @@ export function getStyles(): string {
             margin-bottom: -0.25rem;
             z-index: 1000;
             pointer-events: none;
-        }
-        .json-var {
-            color: #9CDCFE;
-            font-weight: 500;
-            position: relative;
-            z-index: 1;
-        }
-        .json-var-clickable {
-            cursor: pointer;
-        }
-        .json-var-clickable:hover {
-            text-decoration: underline;
-            text-decoration-style: dotted;
-            text-underline-offset: 2px;
-        }
-        .json-value {
-            color: #CE9178;
-        }
-        .json-number {
-            color: #B5CEA8;
-        }
-        .derivation-clickable {
-            cursor: pointer;
-            text-decoration: underline;
-            text-decoration-style: dotted;
-            text-underline-offset: 2px;
-        }
-        .derivation-clickable:hover {
-            opacity: 0.8;
-            background-color: var(--vscode-editor-selectionBackground);
-            border-radius: 2px;
-        }
-        .json-expand-indicator {
-            opacity: 0.5;
-            font-style: italic;
         }
     `;
 }
