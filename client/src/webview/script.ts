@@ -163,13 +163,11 @@ export function getScript(vscode: any, document: any, window: any) {
         const msg = event.data;
         if (msg.type === 'refinement-error') {
             if (JSON.stringify(error) === JSON.stringify(msg.error)) return; // duplicate error
-           
-            // store new root derivation node and reset expanded paths
-            if (msg.error) {
-                error = msg.error;
-                expandedPaths.clear();
-            }
-
+            
+            // update state
+            error = msg.error;
+            expandedPaths.clear();
+            
             // update ui
             root.innerHTML = msg.error !== null ? getErrorHtml() : getOkHtml();
         }
