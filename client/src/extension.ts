@@ -28,6 +28,7 @@ export async function activate(context: vscode.ExtensionContext) {
     initStatusBar(context);
     initCommandPalette(context);
     initWebview(context);
+    initCodeLens(context);
 
     logger.client.info("Activating LiquidJava extension...");
     await applyItalicOverlay();
@@ -126,6 +127,37 @@ function initWebview(context: vscode.ExtensionContext) {
             if (message.type === "ready" && errorDiagnostic) {
                 webviewProvider.sendMessage({ type: "refinement-error", error: errorDiagnostic });
             }
+        })
+    );
+}
+
+/**
+ * Initializes code lens with clickable "View Details" button
+ * @param context The extension context
+ */
+function initCodeLens(context: vscode.ExtensionContext) {
+    const codeLensProvider: vscode.CodeLensProvider = {
+        provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
+            const diagnostics = vscode.languages.getDiagnostics(document.uri);
+            return diagnostics
+                .filter(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error)
+                .map(d => {
+                    const range = new vscode.Range(d.range.start.line, 0, d.range.start.line, 0);
+                    return new vscode.CodeLens(range, {
+                        title: "View Details",
+                        command: "liquidjava.showView",
+                        tooltip: "Open LiquidJava View",
+                    });
+                });
+        }
+    };
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider({ language: "java" }, codeLensProvider)
+    );
+    // update when diagnostics change
+    context.subscriptions.push(
+        vscode.languages.onDidChangeDiagnostics(() => {
+            vscode.commands.executeCommand("editor.action.refresh");
         })
     );
 }
