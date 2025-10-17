@@ -12,7 +12,7 @@ export function getStyles(): string {
             display: block;
             margin-bottom: 0.5rem;
         }
-        pre, .node-container, #location-link {
+        .container {
             margin: 0;
             padding: 0.5rem;
             background-color: var(--vscode-editor-background);
@@ -20,6 +20,10 @@ export function getStyles(): string {
             overflow-x: auto;
             font-family: var(--vscode-editor-font-family);
             font-size: var(--vscode-editor-font-size);
+            max-width: 100%;
+            line-height: 1.6;
+            overflow: visible;
+            position: relative;
         }
         .content {
             background-color: var(--vscode-textBlockQuote-background);
@@ -47,13 +51,6 @@ export function getStyles(): string {
         }
         .link:hover {
             text-decoration: underline;
-        }
-        .node-container {
-            max-width: 100%;
-            padding: 1rem;
-            line-height: 1.6;
-            overflow: visible;
-            position: relative;
         }
         .node-var {
             color: #9CDCFE;

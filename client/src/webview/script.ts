@@ -60,11 +60,11 @@ export function getScript(vscode: any, document: any, window: any) {
                     <h3>${error.kind}</h3>
                     <div class="section">      
                         <strong>Expected:</strong>
-                        <pre><span class="node-value">${error.expected}</span></pre>
+                        <div class="container"><span class="node-value">${error.expected}</span></div>
                     </div>
                     <div class="section">
                         <strong>Found:</strong>
-                        <div class="node-container" id="derivation-container">
+                        <div class="container" id="derivation-container">
                             ${renderJsonTree(error.found.origin || error.found, '', new Set())}
                             <span class="node-expand-indicator">&nbsp;(click to expand)</span>
                         </div>
@@ -75,7 +75,7 @@ export function getScript(vscode: any, document: any, window: any) {
                             <a
                             href="#" 
                             id="location-link"
-                            class="link"
+                            class="container link"
                             data-filepath="${error.file}"
                             data-line="${error.range[0].line}"
                             data-character="${error.range[0].character}">
