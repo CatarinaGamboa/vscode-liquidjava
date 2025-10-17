@@ -136,30 +136,33 @@ function initWebview(context: vscode.ExtensionContext) {
  * @param context The extension context
  */
 function initCodeLens(context: vscode.ExtensionContext) {
+    const codeLensEventEmitter = new vscode.EventEmitter<void>();
     const codeLensProvider: vscode.CodeLensProvider = {
         provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
             const diagnostics = vscode.languages.getDiagnostics(document.uri);
             return diagnostics
                 .filter(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error)
                 .map(d => {
-                    const range = new vscode.Range(d.range.start.line, 0, d.range.start.line, 0);
+                    const range = new vscode.Range(d.range.start.line, 0, d.range.end.line, 0);
                     return new vscode.CodeLens(range, {
-                        title: "View Details",
+                        title: "View LiquidJava Error",
                         command: "liquidjava.showView",
                         tooltip: "Open LiquidJava View",
                     });
                 });
-        }
+        },
+        onDidChangeCodeLenses: codeLensEventEmitter.event
     };
     context.subscriptions.push(
         vscode.languages.registerCodeLensProvider({ language: "java" }, codeLensProvider)
     );
-    // update when diagnostics change
+    // update code lenses when diagnostics change
     context.subscriptions.push(
         vscode.languages.onDidChangeDiagnostics(() => {
-            vscode.commands.executeCommand("editor.action.refresh");
+            codeLensEventEmitter.fire();
         })
     );
+    context.subscriptions.push(codeLensEventEmitter);
 }
 
 /**
