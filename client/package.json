@@ -1,13 +1,14 @@
 {
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
-	"description": "LiquidJava - Extending Java with Refinement Types",
+	"description": "LiquidJava - Extending Java with Liquid Types",
+	"version": "0.0.18",
+	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/CatarinaGamboa/vscode-liquidjava"
 	},
-	"version": "0.0.15",
-	"publisher": "catarinagamboa",
+	"homepage": "https://catarinagamboa.github.io/liquidjava",
 	"engines": {
 		"vscode": "^1.70.0"
 	},
@@ -18,15 +19,20 @@
 	],
 	"categories": [
 		"Programming Languages",
-		"Linters"
+		"Debuggers",
+		"Testing"
 	],
+	"icon": "./media/lj-icon.png",
 	"license": "MIT",
 	"keywords": [
 		"java",
-		"test",
-		"junit",
-		"testng",
-		"debug"
+		"liquidjava",
+		"liquid types",
+		"refinement types",
+		"verification",
+		"static analysis",
+		"type checking",
+		"software verification"
 	],
 	"activationEvents": [
 		"onLanguage:java"
@@ -80,7 +86,7 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "tsc",
+		"build": "tsc",
 		"compile": "tsc -watch -p ./",
 		"watch": "tsc -watch -p ./",
 		"lint": "eslint . --ext .ts,.tsx"
