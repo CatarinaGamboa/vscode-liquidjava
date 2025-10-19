@@ -22,14 +22,10 @@ jobs:
         working-directory: ./client
         run: |
           npm ci
-          npm run build
+          npm run package
 
       - name: Install vsce
         run: npm install -g @vscode/vsce
-
-      - name: Package extension
-        working-directory: ./client
-        run: vsce package
 
       - name: Publish to Marketplace
         working-directory: ./client

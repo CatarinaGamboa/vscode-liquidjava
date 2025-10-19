@@ -1,9 +1,38 @@
+# Development files
 .vscode/**
 .vscode-test/**
-out/test/**
-test/**
 src/**
-**/*.map
+.eslintrc.json
 .gitignore
 tsconfig.json
+webpack.config.js
 vsc-extension-quickstart.md
+
+# Build artifacts
+out/**
+node_modules/**
+*.vsix
+
+# Test files
+test/**
+**/test/**
+
+# Documentation
+*.md
+!README.md
+!USAGE.md
+
+# Source maps (comment out if you want to include them)
+**/*.map
+
+# Git
+.git/**
+.github/**
+
+# Server artifacts (Java project)
+../server/**
+server/**
+
+# Misc
+.DS_Store
+*.log
