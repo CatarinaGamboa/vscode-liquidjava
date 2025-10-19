@@ -22,7 +22,7 @@
 		"Debuggers",
 		"Testing"
 	],
-	"icon": "./media/lj-icon.png",
+	"icon": "media/lj-icon.png",
 	"license": "MIT",
 	"keywords": [
 		"java",
