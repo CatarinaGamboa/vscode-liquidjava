@@ -18,6 +18,8 @@ Liquid types, or refinement types, extend a language with **logical predicates**
 
 ### Usage
 
+#### Refinements
+
 To refine a variable, parameter or return value, use the annotation `@Refinement` with a predicate as argument. The predicate must be a boolean expression that uses the name of the variable being refined (or `_`) to refer to its value. Some examples include:
 
 ```java
@@ -34,6 +36,18 @@ int y;
 int z;
 ```
 
+Refinements can also be applied to method parameters and return values:
+
+```java
+@Refinement("_ >= 0")
+int absDiv(int a, @Refinement("b != 0") int b) {
+    int res = a / b;
+    return res >= 0 ? res : -res;
+}
+```
+
+#### Refinement Aliases
+
 To simplify the usage of refinements, you can create **predicate aliases** using the `@RefinementAlias` annotation, and apply them inside other refinements:
 
 ```java
@@ -46,15 +60,7 @@ public class MyClass {
 }
 ```
 
-Refinements can also be applied to method parameters and return values:
-
-```java
-@Refinement("_ >= 0")
-int absDiv(int a, @Refinement("b != 0") int b) {
-    int res = a / b;
-    return res >= 0 ? res : -res;
-}
-```
+#### Object State Modeling with Typestates
 
 Beyond basic refinements, LiquidJava also supports **object state modeling** through typestates, which allows developers to specify when a method can or cannot be called based on the state of the object. For example:
 
@@ -77,6 +83,8 @@ f.read();  // state(f) == "open" (unchanged)
 f.close(); // state(f) == "closed"
 f.read();  // type error!
 ```
+
+#### Ghost Variables and External Refinements
 
 Finally, LiquidJava also provides **ghost variables**, which are used to track additional information about the program state when states aren't enough, with the `@Ghost` annotation. Additionally, you can also refine external libraries using the `@ExternalRefinementsFor` annotation. Here is an example of the `java.util.Stack` class refined with LiquidJava, using a `size` ghost variable to track the number of elements in the stack:
 
@@ -109,3 +117,7 @@ You can find more examples of how to use LiquidJava on the [LiquidJava Website](
 - [vscode-liquidjava](https://github.com/CatarinaGamboa/vscode-liquidjava): Source code of this VS Code extension
 - [liquidjava-examples](https://github.com/CatarinaGamboa/liquidjava-examples): Repository with more usage examples of LiquidJava
 - [liquid-java-external-libs](https://github.com/CatarinaGamboa/liquid-java-external-libs): Examples of how to use LiquidJava with external libraries
+
+<br/>
+
+> This extension depends on the Red Hat Java extension for VS Code. Make sure you have it installed to use LiquidJava! You can find it [here](https://marketplace.visualstudio.com/items?itemName=redhat.java).
