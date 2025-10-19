@@ -32,6 +32,8 @@ test/**
 # Server artifacts (Java project)
 ../server/**
 server/**
+# But include the built JAR
+!server/language-server-liquidjava.jar
 
 # Misc
 .DS_Store
