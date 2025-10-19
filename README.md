@@ -16,19 +16,29 @@ The codespace will open in your browser and automatically install the LiquidJava
 
    [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CatarinaGamboa/liquidjava-examples)
 
-### Install Locally
+### Local Setup
 
-To install the extension on your local VS Code:
-1. Clone this repository
-2. Make sure you have [Git LFS](https://git-lfs.com/) installed to pull the VSIX installation file
-3. Run the installation script:
-   - Linux/macOS: `./install.sh`
-   - Windows: `install.bat`
-4. Open a Java project in VS Code
-5. Copy the `lib` folder (containing the `liquidjava-api.jar` required for the extension to activate) into the root of your project
-6. Reload VS Code (`Ctrl+Shift+P` > `Reload Window`)
-7. The extension should activate within a few seconds
-8. Click on the status indicator at the bottom left to view the logs
+To set up the extension locally, install the [LiquidJava Extension](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) from the VS Code Marketplace and add the `liquidjava-api` dependency to your Java project.
+
+#### Maven
+```xml
+<dependency>
+    <groupId>io.github.rcosta358</groupId>
+    <artifactId>liquidjava-api</artifactId>
+    <version>0.0.2</version>
+</dependency>
+```
+
+#### Gradle
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.github.rcosta358:liquidjava-api:0.0.2'
+}
+```
 
 ## Development
 
