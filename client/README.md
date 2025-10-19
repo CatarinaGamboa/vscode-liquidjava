@@ -12,6 +12,31 @@ int a = 3; // okay
 a = -8; // type error!
 ```
 
+### Installation
+
+This extension depends on the [Language Support for Java(TM) by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) VS Code extension.
+Additionally, to use LiquidJava in your project, you'll need the following dependency, which includes the LiquidJava API annotations:
+
+#### Maven
+```xml
+<dependency>
+    <groupId>io.github.rcosta358</groupId>
+    <artifactId>liquidjava-api</artifactId>
+    <version>0.0.2</version>
+</dependency>
+```
+
+#### Gradle
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.github.rcosta358:liquidjava-api:0.0.2'
+}
+```
+
 ### What are Liquid Types?
 
 Liquid types, or refinement types, extend a language with **logical predicates** over the basic types. They allow developers to restrict the values that a variable, parameter or return value can have. These kinds of constraints help to catch more bugs before the program is executed — for example array index out-of-bounds or division by zero.
@@ -117,7 +142,3 @@ You can find more examples of how to use LiquidJava on the [LiquidJava Website](
 - [vscode-liquidjava](https://github.com/CatarinaGamboa/vscode-liquidjava): Source code of this VS Code extension
 - [liquidjava-examples](https://github.com/CatarinaGamboa/liquidjava-examples): Repository with more usage examples of LiquidJava
 - [liquid-java-external-libs](https://github.com/CatarinaGamboa/liquid-java-external-libs): Examples of how to use LiquidJava with external libraries
-
-<br/>
-
-> This extension depends on the Red Hat Java extension for VS Code. Make sure you have it installed to use LiquidJava! You can find it [here](https://marketplace.visualstudio.com/items?itemName=redhat.java).
