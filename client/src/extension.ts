@@ -9,7 +9,6 @@ import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
-const API_JAR_GLOB = "**/liquidjava-api*.jar";
 const DEBUG = false;
 const DEBUG_PORT = 50000;
 
