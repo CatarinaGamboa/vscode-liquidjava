@@ -1,13 +1,14 @@
 {
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
-	"description": "LiquidJava - Extending Java with Refinement Types",
+	"description": "LiquidJava - Extending Java with Liquid Types",
+	"version": "0.0.23",
+	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/CatarinaGamboa/vscode-liquidjava"
 	},
-	"version": "0.0.15",
-	"publisher": "catarinagamboa",
+	"homepage": "https://catarinagamboa.github.io/liquidjava",
 	"engines": {
 		"vscode": "^1.70.0"
 	},
@@ -18,20 +19,24 @@
 	],
 	"categories": [
 		"Programming Languages",
-		"Linters"
+		"Debuggers",
+		"Testing"
 	],
+	"icon": "media/lj-icon.png",
 	"license": "MIT",
 	"keywords": [
 		"java",
-		"test",
-		"junit",
-		"testng",
-		"debug"
+		"liquidjava",
+		"liquid types",
+		"refinement types",
+		"static analysis",
+		"type checking",
+		"software verification"
 	],
 	"activationEvents": [
 		"onLanguage:java"
 	],
-	"main": "./out/extension.js",
+	"main": "./dist/extension.js",
 	"contributes": {
 		"configuration": {
 			"type": "object",
@@ -75,18 +80,25 @@
 			{
 				"path": "./syntaxes/liquidjava.json",
 				"scopeName": "source.liquidjava",
-				"injectTo": ["source.java"]
+				"injectTo": [
+					"source.java"
+				]
 			}
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "tsc",
-		"compile": "tsc -watch -p ./",
-		"watch": "tsc -watch -p ./",
-		"lint": "eslint . --ext .ts,.tsx"
+		"vscode:prepublish": "npm run package",
+		"compile": "webpack",
+		"watch": "webpack --watch",
+		"package": "webpack --mode production --devtool hidden-source-map",
+		"build:server": "cd ../server && mvn clean package && mkdir -p ../client/server && cp target/language-server-liquidjava.jar ../client/server/",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "npm run compile-tests && npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
 	},
-	"extensionDependencies": [
-	],
+	"extensionDependencies": [],
 	"devDependencies": {
 		"@types/mkdirp": "^0.5.2",
 		"@types/node": "^12.12.0",
@@ -95,7 +107,10 @@
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
 		"eslint": "^7.21.0",
-		"typescript": "^4.2.2"
+		"typescript": "^4.2.2",
+		"ts-loader": "^9.5.4",
+		"webpack": "^5.102.1",
+		"webpack-cli": "^5.1.4"
 	},
 	"dependencies": {
 		"ftp": "^0.3.10",
