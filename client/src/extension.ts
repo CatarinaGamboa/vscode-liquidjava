@@ -9,6 +9,7 @@ import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
+const API_JAR_GLOB = "**/liquidjava-api*.jar";
 const DEBUG = false;
 const DEBUG_PORT = 50000;
 
@@ -29,6 +30,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     logger.client.info("Activating LiquidJava extension...");
     await applyItalicOverlay();
+
+    // only activate if liquidjava api jar is present
+    const jarIsPresent = await isJarPresent();
+    if (!jarIsPresent) {
+        vscode.window.showWarningMessage("LiquidJava API Jar Not Found in Workspace");
+        logger.client.error("LiquidJava API jar not found in workspace - Not activating extension");
+        updateStatusBar("stopped");
+        return;
+    }
+    logger.client.info("Found LiquidJava API in the workspace - Loading extension...");
 
     // find java executable path
     const javaExecutablePath = findJavaExecutable("java");
@@ -55,6 +66,15 @@ export async function activate(context: vscode.ExtensionContext) {
 export async function deactivate() {
     logger?.client.info("Deactivating LiquidJava extension...");
     await stopExtension("Extension was deactivated");
+}
+
+/**
+ * Checks if the extension can be activated by looking for the LiquidJava API jar in the workspace
+ * @returns true if the extension can be activated, false otherwise
+ */
+async function isJarPresent(): Promise<boolean> {
+    const uris = await vscode.workspace.findFiles(API_JAR_GLOB, null, 100);
+    return uris.length > 0;
 }
 
 /**
