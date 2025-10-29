@@ -1,46 +1,100 @@
-# vscode-liquidjava
+# LiquidJava VS Code Extension
 
-The vscode extension to validate java programs with refinement types.
+The **LiquidJava VS Code extension** adds support for **refinement types**, extending the Java standard type system directly inside VS Code, using the [LiquidJava](https://github.com/CatarinaGamboa/liquidjava) verifier. It provides error diagnostics and syntax highlighting for refinements.
 
-### Install extension on Visual Studio Code
-1. Open the client folder in terminal
-2. `code --install-extension liquid-java-0.0.1.vsix`
-3. Open Visual Studio Code and open a Java project (with src folder inside). If the project contains the `liquidjava-api.jar` then the extension will be activated, otherwise the LiquidJava verification is not applied. 
+## Getting Started
 
-The `liquidjava-api.jar` can be found in this project in the path`vscode-liquidjava\server\lib`
+### GitHub Codespaces
 
+To try out the extension on an example project without setting up your local environment:
+1. Log in to GitHub
+2. Click the button below
+3. Select the `4-core` option
+4. Press `Create codespace`
+
+The codespace will open in your browser and automatically install the LiquidJava extension shortly.
+
+   [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CatarinaGamboa/liquidjava-examples)
+
+### Local Setup
+
+To set up the extension locally, install the [LiquidJava Extension](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) from the VS Code Marketplace and add the `liquidjava-api` dependency to your Java project.
+
+#### Maven
+```xml
+<dependency>
+    <groupId>io.github.rcosta358</groupId>
+    <artifactId>liquidjava-api</artifactId>
+    <version>0.0.2</version>
+</dependency>
+```
+
+#### Gradle
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.github.rcosta358:liquidjava-api:0.0.2'
+}
+```
+
+## Development
 
 ### Developer Mode
-1. Run **Client on Visual Studio Code**:
-* Open the client folder on terminal
-* `npm install`
-* Open client folder on Visual Studio Code.
-* Make sure you have the redhat extension for [Language support for Java ™](https://github.com/redhat-developer/vscode-java) installed and enabled.
-* The code in `extension.ts` must be the same as the code in `extension_test.ts`
-* Go to `Run-> Run Extension` (or press `F5`). A new window appears with the liquidjava extension enabled.
-* Open a Java project. If the project contains the `liquid-java-api.jar` then the liquidjava verification will start in a few seconds. 
+
+To run the extension in developer mode, which automatically spawns the server in a separate process:
+
+1. Open the `client` folder in VS Code
+2. Run `npm install`
+3. Make sure you have the Red Hat extension for [Language Support for Java™](https://github.com/redhat-developer/vscode-java) installed and enabled
+4. Go to `Run` > `Run Extension` (or press `F5`)
+5. A new VS Code instance will start with the LiquidJava extension enabled
+6. Open a Java project containing the `liquid-java-api.jar` in the `lib` folder
 
 ### Debugging Mode
-Server and Client connect through sockets and run in different environments that allow a better debugging
-1. Run **Server** on **Eclipse**:
-* Open Eclipse.
-* Import the Maven project that is in the server folder. 
-* Run `App.java` with a port as argument.
 
-2. Run **Client** on **Visual Studio Code**:
-* Open client folder on VSCode
-* Copy all the code on file `extension-network.ts` to `extension.ts`.
-* Go to Run-> Run Extension (or press F5). A new vscode appears to use the extension.
+To run the extension in debugging mode by manually starting the server and connecting the client to it:
 
-#### Create Server Jar
-When the server is ready to be exported, export the jar. In Eclipse follow the steps:
-1. Inside eclipse make `File > Export > Runnable JAR file`. 
-2. In lauch configuration choose `main - vscode-liquid-java-server`. 
-3. In the output path choose the `client/server` folder of this extension. It should look like: `$USER$\vscode-liquidjava\client\server\language-server-liquidjava.jar`
-4. The name of the jar must be `language-server-liquidjava.jar` for the client to be able to call it on Developer Mode.
+* Run the server:
+    - Open the `server` folder in your IDE
+    - Run `App.java`, which will start the server on port `50000`
+    - View the server logs in the console
 
-### Project 
-**Server** - implements an [LSP](https://microsoft.github.io/language-server-protocol/) in Java for the LiquidJava language, using the library [LSP4J](https://github.com/eclipse/lsp4j). 
+* Run the client:
+    - Open the `client` folder in VS Code
+    - Set the `DEBUG` variable to `true` in [`client/src/extension.ts`](./client/src/extension.ts)
+    - Go to `Run` > `Run Extension` (or press `F5`)
+    - A new VS Code instance will open with the LiquidJava extension enabled, which will connect to the server on port `50000`
+    - Open a Java project containing the `liquid-java-api.jar` in the `lib` folder
+    - View the client logs in the `LiquidJava` output channel or by clicking the status indicator
 
-**Client** - implements the vscode client for the LiquidJava Server.
-The client depends on [Language support for Java ™ for Visual Studio Code](https://github.com/redhat-developer/vscode-java) to enable all the Java errors outside the scope of LiquidJava.
+### Create Server JAR
+
+To build the language server, export it as a runnable JAR file named `language-server-liquidjava.jar` and place it in `/client/server`.
+
+- In **Eclipse**:
+    - Open the `server` folder
+    - Select `File > Export > Runnable JAR file`
+    - In the launch configuration, choose `main - vscode-liquid-java-server`
+    - In the output path, choose the `/client/server` folder of this extension
+- In **VS Code**:
+    - Open the `server` folder
+    - Use the Export Jar feature (`Ctrl+Shift+P` > `Java: Export Jar`)
+    - Select `App` as the main class
+    - Select `OK`
+    - Copy the generated JAR from the root directory to the `/client/server` folder
+- In **IntelliJ**:
+    - Open the `server` folder
+    - Go to `File` > `Project Structure` > `Artifacts`
+    - Select `Add a new Jar` > `From modules with dependencies`
+    - Select `App` as the main class
+    - Build the artifact via `Build` > `Build Artifacts` > `Build`
+    - Copy the generated JAR from the `out/artifacts` folder to the `/client/server` folder
+
+### Project Structure
+- `/server` - Implements the [Language Server Protocol (LSP)](https://microsoft.github.io/language-server-protocol/) in Java using the [LSP4J](https://github.com/eclipse/lsp4j) library
+- `/client` - Implements the VS Code extension in TypeScript that connects to the language server using LSP
+    - It depends on [Language Support for Java™](https://github.com/redhat-developer/vscode-java) for regular Java errors
+- `/lib` - Contains the `liquidjava-api.jar` required for the extension to be activated in a Java project
