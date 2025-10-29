@@ -26,16 +26,6 @@ export async function activate(context: vscode.ExtensionContext) {
     logger.client.info("Activating LiquidJava extension...");
     await applyItalicOverlay();
 
-    // only activate if liquidjava api jar is present
-    const jarIsPresent = await isJarPresent();
-    if (!jarIsPresent) {
-        vscode.window.showWarningMessage("LiquidJava API Jar Not Found in Workspace");
-        logger.client.error("LiquidJava API jar not found in workspace - Not activating extension");
-        updateStatusBar("stopped");
-        return;
-    }
-    logger.client.info("Found LiquidJava API in the workspace - Loading extension...");
-
     // find java executable path
     const javaExecutablePath = findJavaExecutable("java");
     if (!javaExecutablePath) {
