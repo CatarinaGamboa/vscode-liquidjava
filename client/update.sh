@@ -1,4 +1,4 @@
 #!/bin/bash
-version="0.0.23"
+VERSION=$1
 vsce package
-code --install-extension liquid-java-$version.vsix
+code --install-extension liquid-java-$VERSION.vsix
