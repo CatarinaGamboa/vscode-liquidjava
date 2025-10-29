@@ -9,7 +9,7 @@ import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
 
 const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
-const API_JAR_GLOB = "**/liquidjava-api*.jar";
+const API_JAR_GLOB= "lib/liquidjava-api*.jar";
 const DEBUG = false;
 const DEBUG_PORT = 50000;
 
@@ -73,7 +73,7 @@ export async function deactivate() {
  * @returns true if the extension can be activated, false otherwise
  */
 async function isJarPresent(): Promise<boolean> {
-    const uris = await vscode.workspace.findFiles(API_JAR_GLOB, null, 100);
+    const uris = await vscode.workspace.findFiles(API_JAR_GLOB);
     return uris.length > 0;
 }
 
