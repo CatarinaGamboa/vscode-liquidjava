@@ -9,6 +9,7 @@ import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
 import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
+import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -68,5 +69,10 @@ public class LJLanguageServer implements LanguageServer {
 
     public void connect(LanguageClient remoteProxy, RemoteEndpoint remoteEndpoint) {
         textDocumentService.setClient(remoteProxy);
+    }
+
+    @JsonNotification("$/setTraceNotification")
+    public void setTrace(Object params) {
+        // suppress notification
     }
 }
