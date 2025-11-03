@@ -2,7 +2,7 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "LiquidJava - Extending Java with Liquid Types",
-	"version": "0.0.25",
+	"version": "0.0.26",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
