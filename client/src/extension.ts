@@ -108,7 +108,7 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     }
     logger.client.info("Running language server on port " + port);
 
-    const jarPath = path.resolve(context.extensionPath, "server", SERVER_JAR_FILENAME);
+    const jarPath = path.resolve(context.extensionPath, "dist", "server", SERVER_JAR_FILENAME);
     const args = ["-jar", jarPath, port.toString()];
     const options = {
         cwd: vscode.workspace.workspaceFolders[0].uri.fsPath, // root path

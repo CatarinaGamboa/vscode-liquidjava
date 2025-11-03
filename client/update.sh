@@ -1,4 +1,10 @@
 #!/bin/bash
-version="0.0.15"
+VERSION=$1
+
+if [ -z "$VERSION" ]; then
+    echo "Usage: $0 <version>"
+    exit 1
+fi
+
 vsce package
-code --install-extension liquid-java-$version.vsix
+code --install-extension liquid-java-$VERSION.vsix
