@@ -13,8 +13,8 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
 
 import liquidjava.api.CommandLineLauncher;
-import liquidjava.errors.ErrorEmitter;
-import liquidjava.errors.ErrorPosition;
+import liquidjava.diagnostics.ErrorEmitter;
+import liquidjava.diagnostics.ErrorPosition;
 
 public class LJDiagnostics {
 
