@@ -23,7 +23,6 @@ public class App {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
                 while (true) {
                     try {
-                        System.out.println("Ready");
                         Socket socket = serverSocket.accept();
                         if (socket != null) {
                             InputStream in = socket.getInputStream();
