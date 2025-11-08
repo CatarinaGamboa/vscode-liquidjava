@@ -17,6 +17,11 @@ public class LJDiagnostics {
     private static final String FILE_PREFIX = "file://";
     private static final String SRC_SUFFIX = "/src/";
 
+    /**
+     * Generates diagnostics for the given URI
+     * @param uri
+     * @return PublishDiagnosticsParams
+     */
     public static PublishDiagnosticsParams generateDiagnostics(String uri) {
         try {
             String path = convertUTFtoCharacters(extractBasePath(uri));
@@ -35,6 +40,12 @@ public class LJDiagnostics {
         }
     }
 
+    /**
+     * Generates error diagnostics from the given ErrorEmitter
+     * @param ee
+     * @param uri
+     * @return PublishDiagnosticsParams
+     */
     public static PublishDiagnosticsParams getErrorDiagnostics(ErrorEmitter ee, String uri) {
         PublishDiagnosticsParams diagnosticsParams = new PublishDiagnosticsParams();
         Range range = getRangeFromErrorPosition(ee.getPosition());
@@ -46,10 +57,21 @@ public class LJDiagnostics {
         return diagnosticsParams;
     }
 
+    /**
+     * Generates empty diagnostics for the given URI
+     * @param uri
+     * @return PublishDiagnosticsParams
+     */
     public static PublishDiagnosticsParams getEmptyDiagnostics(String uri) {
         return new PublishDiagnosticsParams(uri, Collections.emptyList());
     }
 
+    /**
+     * Extracts the base path from the given full path
+     * file://path/to/project/src/main/path/to/File.java => /path/to/project/src/main
+     * @param fullPath
+     * @return base path
+     */
     private static String extractBasePath(String fullPath) {
         fullPath = fullPath.replace(FILE_PREFIX, "");
         int suffixIndex = fullPath.indexOf(SRC_SUFFIX);
@@ -58,6 +80,11 @@ public class LJDiagnostics {
         return fullPath.substring(0, nextSlashIndex); // up to and including the next slash after /src/
     }
 
+    /**
+     * Converts a UTF-8 encoded string to a regular string
+     * @param source
+     * @return converted string
+     */
     private static String convertUTFtoCharacters(String source) {
         try {
             return java.net.URLDecoder.decode(source, StandardCharsets.UTF_8.name());
@@ -67,6 +94,12 @@ public class LJDiagnostics {
         }
     }
 
+    /**
+     * Gets the Range from the given ErrorPosition
+     * If the position is null, returns a default Range at (0,0)-(0,0)
+     * @param pos
+     * @return Range
+     */
     private static Range getRangeFromErrorPosition(ErrorPosition pos) {
         if (pos == null) {
             // no location information available

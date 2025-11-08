@@ -18,6 +18,10 @@ public class App {
         new App().startNetworkedLanguageServer(port);
     }
 
+    /**
+     * Starts the language server on the given port in a new thread
+     * @param port
+     */
     private void startNetworkedLanguageServer(int port) {
         new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
