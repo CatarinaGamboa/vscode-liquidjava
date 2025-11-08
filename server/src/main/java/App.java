@@ -22,16 +22,13 @@ public class App {
         new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
                 while (true) {
-                    try {
-                        Socket socket = serverSocket.accept();
-                        if (socket != null) {
-                            InputStream in = socket.getInputStream();
-                            OutputStream out = socket.getOutputStream();
-                            LJLanguageServer server = new LJLanguageServer();
-                            Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-                            server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
-                            launcher.startListening();
-                        }
+                    try (Socket socket = serverSocket.accept()) {
+                        InputStream in = socket.getInputStream();
+                        OutputStream out = socket.getOutputStream();
+                        LJLanguageServer server = new LJLanguageServer();
+                        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+                        server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
+                        launcher.startListening();
                     } catch (IOException e) {
                         System.out.println("Error: " + e.getMessage());
                         e.printStackTrace();

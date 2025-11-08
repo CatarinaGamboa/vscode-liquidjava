@@ -18,7 +18,7 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
 
     public void checkDiagnostics(String uri) {
         if (this.client == null) {
-            System.out.println("Language client not set yet — cannot publish diagnostics");
+            System.out.println("Language client not initialized — cannot publish diagnostics");
             return;
         }
         // clear previous diagnostics
