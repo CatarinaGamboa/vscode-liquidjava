@@ -15,10 +15,10 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJLanguageServer implements LanguageServer {
 
-    private LJTextDocumentService textDocumentService;
+    private LJDiagnosticsService diagnosticsService;
 
     public LJLanguageServer() {
-        this.textDocumentService = new LJTextDocumentService();
+        this.diagnosticsService = new LJDiagnosticsService();
     }
 
     /**
@@ -55,15 +55,15 @@ public class LJLanguageServer implements LanguageServer {
     }
 
     public TextDocumentService getTextDocumentService() {
-        return textDocumentService;
+        return diagnosticsService;
     }
 
     public WorkspaceService getWorkspaceService() {
-        return textDocumentService;
+        return diagnosticsService;
     }
 
     public void connect(LanguageClient remoteProxy, RemoteEndpoint remoteEndpoint) {
-        textDocumentService.setClient(remoteProxy);
+        diagnosticsService.setClient(remoteProxy);
     }
 
     @JsonNotification("$/setTraceNotification")

@@ -12,7 +12,7 @@ import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
-public class LJTextDocumentService implements TextDocumentService, WorkspaceService {
+public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
     private LanguageClient client;
     private Set<String> checkedUris = new HashSet<>();
 
