@@ -31,6 +31,6 @@ jobs:
         working-directory: ./client
         run: vsce publish -p ${{ secrets.VSCE_TOKEN }}
 
-      - name: Publish to Open VSX
+      - name: Publish to Open VSX Marketplace
         working-directory: ./client
         run: npx ovsx publish --pat ${{ secrets.OVSX_TOKEN }}

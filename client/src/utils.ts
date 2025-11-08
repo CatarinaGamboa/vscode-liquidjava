@@ -1,18 +1,7 @@
-import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
-import { API_JAR_GLOB } from "./constants";
-
-/**
- * Checks if the extension can be activated by looking for the LiquidJava API jar in the workspace
- * @returns true if the extension can be activated, false otherwise
- */
-export async function isJarPresent(): Promise<boolean> {
-    const uris = await vscode.workspace.findFiles(API_JAR_GLOB);
-    return uris.length > 0;
-}
 
 /**
  * Finds the Java executable in the system, either in JAVA_HOME or in PATH
