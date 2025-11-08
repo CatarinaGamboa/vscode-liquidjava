@@ -40,7 +40,8 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      * Clears all published diagnostics
      */
     public void clearDiagnostics() {
-        this.checkedUris.forEach(this::clearDiagnostic);
+        this.checkedUris.forEach(uri -> this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri)));
+        this.checkedUris.clear();
     }
 
     /**
