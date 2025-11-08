@@ -18,7 +18,7 @@ The codespace will open in your browser and automatically install the LiquidJava
 
 ### Local Setup
 
-To set up the extension locally, install the [LiquidJava Extension](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) from the VS Code Marketplace and add the `liquidjava-api` dependency to your Java project.
+To set up the extension locally, install the LiquidJava extension in the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) or the [Open VSX Marketplace](https://open-vsx.org/extension/AlcidesFonseca/liquid-java) and add the `liquidjava-api` dependency to your Java project.
 
 #### Maven
 ```xml
