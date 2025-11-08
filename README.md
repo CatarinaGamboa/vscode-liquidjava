@@ -23,7 +23,7 @@ To set up the extension locally, install the [LiquidJava Extension](https://mark
 #### Maven
 ```xml
 <dependency>
-    <groupId>io.github.rcosta358</groupId>
+    <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
     <version>0.0.2</version>
 </dependency>
@@ -36,7 +36,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.rcosta358:liquidjava-api:0.0.2'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.2'
 }
 ```
 

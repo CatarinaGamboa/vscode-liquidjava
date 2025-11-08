@@ -20,7 +20,7 @@ Additionally, to use LiquidJava in your project, you'll need the following depen
 #### Maven
 ```xml
 <dependency>
-    <groupId>io.github.rcosta358</groupId>
+    <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
     <version>0.0.3</version>
 </dependency>
@@ -33,7 +33,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.rcosta358:liquidjava-api:0.0.3'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.3'
 }
 ```
 
