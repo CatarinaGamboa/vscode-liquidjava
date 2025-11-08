@@ -26,7 +26,9 @@ public class App {
         new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
                 while (true) {
-                    try (Socket socket = serverSocket.accept()) {
+                    Socket socket = null;
+                    try {
+                        socket = serverSocket.accept();
                         InputStream in = socket.getInputStream();
                         OutputStream out = socket.getOutputStream();
                         LJLanguageServer server = new LJLanguageServer();
@@ -36,6 +38,13 @@ public class App {
                     } catch (IOException e) {
                         System.out.println("Error: " + e.getMessage());
                         e.printStackTrace();
+                        if (socket != null && !socket.isClosed()) {
+                            try {
+                                socket.close();
+                            } catch (IOException closeException) {
+                                System.out.println("Error closing socket: " + closeException.getMessage());
+                            }
+                        }
                     }
                 }
             } catch (IOException e) {
