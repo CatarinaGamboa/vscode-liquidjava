@@ -1,3 +1,5 @@
+import java.io.File;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -64,29 +66,21 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
         System.out.println("Document saved — checking diagnostics");
         checkDiagnostics(params.getTextDocument().getUri());
     }
-    
-    /**
-     * Checks diagnostics when watched files change
-     * This is useful for cases when files are changed outside of the editor,
-     * either by another editor or by a build process (e.g., formatter)
-     * @param params
-     */
-    @Override
-    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-        System.out.println("Watched files changed — checking diagnostics");
-        params.getChanges().forEach(change -> checkDiagnostics(change.getUri()));
-    }
 
-    /**
-     * Clears diagnostics when a document is closed
-     * @param params
-     */
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
-        System.out.println("Document closed — clearing diagnostics");
         String uri = params.getTextDocument().getUri();
-        this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri));
-        this.checkedUris.remove(uri);
+        try {
+            // check if the file still exists on disk
+            File file = new File(new URI(uri));
+            if (!file.exists()) {
+                System.out.println("File deleted — clearing diagnostics");
+                this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri));
+                this.checkedUris.remove(uri);
+            }
+        } catch (Exception e) {
+            System.out.println("Error checking if file exists: " + e.getMessage());
+        }
     }
 
     @Override
@@ -96,6 +90,11 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     @Override
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
+        // do nothing, ignore
+    }
+
+    @Override
+    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
         // do nothing, ignore
     }
 }
