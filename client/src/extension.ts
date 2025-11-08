@@ -5,7 +5,7 @@ import * as child_process from "child_process";
 import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vscode-languageclient/node";
 import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
-import { connectToPort, findJavaExecutable, getAvailablePort, isJarPresent, killProcess } from "./utils";
+import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from "./utils";
 import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT, EXAMPLE_DERIVATION_NODE, EXAMPLE_EXPECTED, EXAMPLE_TRANSLATION_TABLE } from "./constants";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import { LJDiagnostic, RefinementError } from "./types";
