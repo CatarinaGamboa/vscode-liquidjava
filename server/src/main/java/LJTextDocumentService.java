@@ -14,10 +14,13 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJTextDocumentService implements TextDocumentService, WorkspaceService {
     private LanguageClient client;
+    private Set<String> checkedUris = new HashSet<>();
 
     public void checkDiagnostics(String uri) {
-        System.out.println("checkDiagnostics for: " + uri);
-
+        if (this.client == null) {
+            System.out.println("Language client not set yet — cannot publish diagnostics");
+            return;
+        }
         // clear previous diagnostics
         for (String checkedUri : this.checkedUris) {
             this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(checkedUri));
@@ -65,13 +68,10 @@ public class LJTextDocumentService implements TextDocumentService, WorkspaceServ
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
         // do nothing
-        System.out.println("Document changed");
     }
 
     @Override
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
         // do nothing
-        System.out.println("Configuration changed");
     }
-
 }
