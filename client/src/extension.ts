@@ -120,9 +120,9 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     serverProcess.stdout.on("data", (data) => {
         const message = data.toString().trim();
         logger.server.info(message);
-        if (message.includes("error found")) {
+        if (message.includes("Failed")) {
             updateStatusBar("failed");
-        } else if (message.includes("error not found")) {
+        } else if (message.includes("Passed")) {
             updateStatusBar("passed");
         }
     });

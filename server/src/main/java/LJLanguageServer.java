@@ -1,11 +1,9 @@
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
-import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
 import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
@@ -17,18 +15,24 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJLanguageServer implements LanguageServer {
 
-    private LJTextDocumentService textDocumentService;
+    private LJDiagnosticsService diagnosticsService;
 
     public LJLanguageServer() {
-        this.textDocumentService = new LJTextDocumentService();
+        this.diagnosticsService = new LJDiagnosticsService();
     }
 
+    /**
+     * Initializes the language server with the given parameters
+     * @param params
+     * @return CompletableFuture with the InitializeResult
+     */
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-
         CompletableFuture<InitializeResult> completableFuture = new CompletableFuture<InitializeResult>();
         ServerCapabilities capabilities = new ServerCapabilities();
         WorkspaceServerCapabilities workspaceServerCapabilities = new WorkspaceServerCapabilities();
         WorkspaceFoldersOptions workspaceFoldersOptions = new WorkspaceFoldersOptions();
+
+        // set options
         workspaceFoldersOptions.setChangeNotifications(true);
         workspaceFoldersOptions.setSupported(true);
         workspaceServerCapabilities.setWorkspaceFolders(workspaceFoldersOptions);
@@ -39,14 +43,6 @@ public class LJLanguageServer implements LanguageServer {
         // More in: https://github.com/nedap/archetype-languageserver/blob/24b0890c0f046c6c1af8269a5c9770a8860a96b3/src/main/java/com/nedap/openehr/lsp/ADL2LanguageServer.java
 
         completableFuture.complete(new InitializeResult(capabilities));
-
-        // Workspace folders
-        List<WorkspaceFolder> workspaceFolders = params.getWorkspaceFolders();
-        if (workspaceFolders != null && !workspaceFolders.isEmpty()) {
-            String rootUri = workspaceFolders.get(0).getUri();
-            System.err.println("rootUri:" + rootUri);
-            textDocumentService.setWorkspaceRoot(rootUri);
-        }
         return completableFuture;
     }
 
@@ -55,20 +51,19 @@ public class LJLanguageServer implements LanguageServer {
     }
 
     public void exit() {
-        // TODO Auto-generated method stub
         System.exit(1);
     }
 
     public TextDocumentService getTextDocumentService() {
-        return textDocumentService;
+        return diagnosticsService;
     }
 
     public WorkspaceService getWorkspaceService() {
-        return textDocumentService;
+        return diagnosticsService;
     }
 
     public void connect(LanguageClient remoteProxy, RemoteEndpoint remoteEndpoint) {
-        textDocumentService.setClient(remoteProxy);
+        diagnosticsService.setClient(remoteProxy);
     }
 
     @JsonNotification("$/setTraceNotification")

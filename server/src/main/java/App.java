@@ -18,24 +18,33 @@ public class App {
         new App().startNetworkedLanguageServer(port);
     }
 
+    /**
+     * Starts the language server on the given port in a new thread
+     * @param port
+     */
     private void startNetworkedLanguageServer(int port) {
         new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
                 while (true) {
+                    Socket socket = null;
                     try {
-                        System.out.println("Ready");
-                        Socket socket = serverSocket.accept();
-                        if (socket != null) {
-                            InputStream in = socket.getInputStream();
-                            OutputStream out = socket.getOutputStream();
-                            LJLanguageServer server = new LJLanguageServer();
-                            Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-                            server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
-                            launcher.startListening();
-                        }
+                        socket = serverSocket.accept();
+                        InputStream in = socket.getInputStream();
+                        OutputStream out = socket.getOutputStream();
+                        LJLanguageServer server = new LJLanguageServer();
+                        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+                        server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
+                        launcher.startListening();
                     } catch (IOException e) {
                         System.out.println("Error: " + e.getMessage());
                         e.printStackTrace();
+                        if (socket != null && !socket.isClosed()) {
+                            try {
+                                socket.close();
+                            } catch (IOException closeException) {
+                                System.out.println("Error closing socket: " + closeException.getMessage());
+                            }
+                        }
                     }
                 }
             } catch (IOException e) {
