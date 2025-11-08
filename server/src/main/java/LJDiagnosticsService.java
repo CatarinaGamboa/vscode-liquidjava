@@ -19,32 +19,37 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     private Set<String> checkedUris = new HashSet<>();
 
     /**
-     * Checks diagnostics for the given URI and publishes them to the client
-     * Before publishing new diagnostics, it clears previous diagnostics to
-     * avoid inconsistent diagnostics in the editor
+     * Sets the language client
+     * @param client
+     */
+    public void setClient(LanguageClient client) {
+        this.client = client;
+    }
+
+    /**
+     * Generates diagnostics for the given URI and publishes them to the client
      * @param uri
      */
-    public void checkDiagnostics(String uri) {
-        if (this.client == null) {
-            System.out.println("Language client not initialized — cannot publish diagnostics");
-            return;
-        }
-        // clear previous diagnostics
-        this.checkedUris.forEach(checkedUri -> this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(checkedUri)));
-        this.checkedUris.clear();
-
-        // generate new diagnostics
+    public void generateDiagnostics(String uri) {
         PublishDiagnosticsParams params = LJDiagnostics.generateDiagnostics(uri);
         this.client.publishDiagnostics(params);
         this.checkedUris.add(params.getUri());
     }
 
     /**
-     * Sets the language client
-     * @param client
+     * Clears all published diagnostics
      */
-    public void setClient(LanguageClient client) {
-        this.client = client;
+    public void clearDiagnostics() {
+        this.checkedUris.forEach(this::clearDiagnostic);
+    }
+
+    /**
+     * Clear a diagnostic for a specific URI
+     * @param uri
+     */
+    public void clearDiagnostic(String uri) {
+        this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri));
+        this.checkedUris.remove(uri);
     }
 
     /**
@@ -54,7 +59,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
         System.out.println("Document opened — checking diagnostics");
-        checkDiagnostics(params.getTextDocument().getUri());
+        generateDiagnostics(params.getTextDocument().getUri());
     }
 
     /**
@@ -64,9 +69,14 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
         System.out.println("Document saved — checking diagnostics");
-        checkDiagnostics(params.getTextDocument().getUri());
+        clearDiagnostics();
+        generateDiagnostics(params.getTextDocument().getUri());
     }
 
+    /**
+     * Clears diagnostics when a document is deleted
+     * @param params
+     */
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
@@ -74,9 +84,8 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
             // check if the file still exists on disk
             File file = new File(new URI(uri));
             if (!file.exists()) {
-                System.out.println("File deleted — clearing diagnostics");
-                this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri));
-                this.checkedUris.remove(uri);
+                System.out.println("File deleted — clearing diagnostic");
+                clearDiagnostic(uri);
             }
         } catch (Exception e) {
             System.out.println("Error checking if file exists: " + e.getMessage());
