@@ -5,7 +5,7 @@ import * as child_process from "child_process";
 import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, State } from "vscode-languageclient";
 import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
-import { connectToPort, findJavaExecutable, getAvailablePort, isJarPresent, killProcess } from "./utils";
+import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from "./utils";
 import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT } from "./constants";
 
 let serverProcess: child_process.ChildProcess;
