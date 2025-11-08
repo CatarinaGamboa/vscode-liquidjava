@@ -75,7 +75,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     }
 
     /**
-     * Clears diagnostics when a document is deleted
+     * Clears diagnostics for a deleted document
      * @param params
      */
     @Override
