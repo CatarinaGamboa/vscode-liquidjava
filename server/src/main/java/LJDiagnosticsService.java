@@ -1,7 +1,5 @@
 import java.io.File;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -15,12 +13,10 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
     private LanguageClient client;
-    private Set<String> checkedUris = new HashSet<>();
 
     /**
      * Sets the language client
-     * 
-     * @param client
+     * @param client the language client
      */
     public void setClient(LanguageClient client) {
         this.client = client;
@@ -28,38 +24,25 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Generates diagnostics for the given URI and publishes them to the client
-     * 
-     * @param uri
+     * @param uri the URI of the document
      */
     public void generateDiagnostics(String uri) {
         var paramsList = LJDiagnostics.generateDiagnostics(uri);
         paramsList.forEach(params -> {
             this.client.publishDiagnostics(params);
-            this.checkedUris.add(params.getUri());
         });
     }
 
     /**
-     * Clears all published diagnostics
-     */
-    public void clearDiagnostics() {
-        this.checkedUris.forEach(uri -> this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri)));
-        this.checkedUris.clear();
-    }
-
-    /**
      * Clear a diagnostic for a specific URI
-     * 
-     * @param uri
+     * @param uri the URI of the document
      */
     public void clearDiagnostic(String uri) {
         this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri));
-        this.checkedUris.remove(uri);
     }
 
     /**
      * Checks diagnostics when a document is opened
-     * 
      * @param params
      */
     @Override
@@ -70,19 +53,18 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Checks diagnostics when a document is saved
-     * 
      * @param params
      */
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
         System.out.println("Document saved — checking diagnostics");
-        clearDiagnostics();
-        generateDiagnostics(params.getTextDocument().getUri());
+        String uri = params.getTextDocument().getUri();
+        clearDiagnostic(uri);
+        generateDiagnostics(uri);
     }
 
     /**
      * Clears diagnostics for a deleted document
-     * 
      * @param params
      */
     @Override

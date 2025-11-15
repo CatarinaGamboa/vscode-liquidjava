@@ -1,6 +1,6 @@
 # LiquidJava VS Code Extension
 
-The **LiquidJava VS Code extension** adds support for **refinement types**, extending the Java standard type system directly inside VS Code, using the [LiquidJava](https://github.com/CatarinaGamboa/liquidjava) verifier. It provides error diagnostics and syntax highlighting for refinements.
+The **LiquidJava VS Code extension** adds support for **refinement types**, extending the Java standard type system directly inside VS Code, using the [LiquidJava](https://github.com/liquid-java/liquidjava) verifier. It provides error diagnostics and syntax highlighting for refinements.
 
 ## Getting Started
 
@@ -14,7 +14,7 @@ To try out the extension on an example project without setting up your local env
 
 The codespace will open in your browser and automatically install the LiquidJava extension shortly.
 
-   [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CatarinaGamboa/liquidjava-examples)
+   [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/liquid-java/liquidjava-examples)
 
 ### Local Setup
 

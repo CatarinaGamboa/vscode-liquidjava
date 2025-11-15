@@ -1,4 +1,3 @@
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,13 +33,13 @@ public class LJDiagnostics {
             if (diagnostics.foundError()) {
                 System.out.println("Failed verification");
                 List<LJDiagnostic> errors = new ArrayList<>(diagnostics.getErrors());
-                result.addAll(getDiagnostics(uri, errors, DiagnosticSeverity.Error));
+                result.addAll(getDiagnostics(errors, DiagnosticSeverity.Error));
             } else {
                 System.out.println("Passed verification");
             }
             if (diagnostics.foundWarning()) {
                 List<LJDiagnostic> warnings = new ArrayList<>(diagnostics.getWarnings());
-                result.addAll(getDiagnostics(uri, warnings, DiagnosticSeverity.Warning));
+                result.addAll(getDiagnostics(warnings, DiagnosticSeverity.Warning));
             }
             return result.isEmpty() ? List.of(getEmptyDiagnostics(uri)) : result;
         } catch (Exception e) {
@@ -51,10 +50,9 @@ public class LJDiagnostics {
 
     /**
      * Generates error and warning diagnostics
-     * @param uri the uri used for the verification
      * @return diagnostics
      */
-    public static List<PublishDiagnosticsParams> getDiagnostics(String uri, List<LJDiagnostic> diagnostics,
+    public static List<PublishDiagnosticsParams> getDiagnostics(List<LJDiagnostic> diagnostics,
             DiagnosticSeverity severity) {
         return diagnostics.stream().map(d -> {
             String filePath = FILE_PREFIX + d.getFile();
@@ -77,7 +75,7 @@ public class LJDiagnostics {
     /**
      * Extracts the base path from the given full path
      * e.g. file://path/to/project/src/main/path/to/File.java => /path/to/project/src/main
-     * @param fullPath
+     * @param fullPath the full path
      * @return base path
      */
     private static String extractBasePath(String fullPath) {
@@ -91,21 +89,16 @@ public class LJDiagnostics {
 
     /**
      * Converts a UTF-8 encoded string to a regular string
-     * @param source
+     * @param source the UTF-8 encoded string
      * @return converted string
      */
     private static String convertUTFtoCharacters(String source) {
-        try {
-            return java.net.URLDecoder.decode(source, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            // not going to happen - value came from JDK's own StandardCharsets
-            return null;
-        }
+        return java.net.URLDecoder.decode(source, StandardCharsets.UTF_8);
     }
 
     /**
      * Gets the Range from the given ErrorPosition If the position is null, returns a default Range at (0,0)-(0,0)
-     * @param pos
+     * @param pos the ErrorPosition
      * @return Range
      */
     private static Range getRangeFromErrorPosition(ErrorPosition pos) {

@@ -6,7 +6,6 @@ import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
 import org.eclipse.lsp4j.WorkspaceServerCapabilities;
-import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -15,7 +14,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class LJLanguageServer implements LanguageServer {
 
-    private LJDiagnosticsService diagnosticsService;
+    private final LJDiagnosticsService diagnosticsService;
 
     public LJLanguageServer() {
         this.diagnosticsService = new LJDiagnosticsService();
@@ -23,13 +22,11 @@ public class LJLanguageServer implements LanguageServer {
 
     /**
      * Initializes the language server with the given parameters
-     * 
-     * @param params
-     * 
+     * @param params the initialize parameters
      * @return CompletableFuture with the InitializeResult
      */
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-        CompletableFuture<InitializeResult> completableFuture = new CompletableFuture<InitializeResult>();
+        CompletableFuture<InitializeResult> completableFuture = new CompletableFuture<>();
         ServerCapabilities capabilities = new ServerCapabilities();
         WorkspaceServerCapabilities workspaceServerCapabilities = new WorkspaceServerCapabilities();
         WorkspaceFoldersOptions workspaceFoldersOptions = new WorkspaceFoldersOptions();
@@ -65,10 +62,11 @@ public class LJLanguageServer implements LanguageServer {
         return diagnosticsService;
     }
 
-    public void connect(LanguageClient remoteProxy, RemoteEndpoint remoteEndpoint) {
+    public void connect(LanguageClient remoteProxy) {
         diagnosticsService.setClient(remoteProxy);
     }
 
+    @SuppressWarnings("unused")
     @JsonNotification("$/setTraceNotification")
     public void setTrace(Object params) {
         // suppress notification

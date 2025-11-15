@@ -1,6 +1,6 @@
 # LiquidJava - Extending Java with Liquid Types
 
-![](https://raw.githubusercontent.com/CatarinaGamboa/liquidjava/refs/heads/main/docs/design/figs/banner.gif)
+![](https://raw.githubusercontent.com/liquid-java/liquidjava/refs/heads/main/docs/design/figs/banner.gif)
 
 ### Extend your Java code with Liquid Types and catch bugs earlier!
 
@@ -15,7 +15,7 @@ a = -8; // type error!
 ### Installation
 
 This extension depends on the [Language Support for Java(TM) by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) VS Code extension.
-Additionally, to use LiquidJava in your project, you'll need the following dependency, which includes the LiquidJava API annotations:
+Additionally, to use LiquidJava in your project, you'll need the following dependency, which includes the LiquidJava annotations:
 
 #### Maven
 ```xml
@@ -45,7 +45,7 @@ Liquid types, or refinement types, extend a language with **logical predicates**
 
 #### Refinements
 
-To refine a variable, parameter or return value, use the annotation `@Refinement` with a predicate as argument. The predicate must be a boolean expression that uses the name of the variable being refined (or `_`) to refer to its value. Some examples include:
+To refine a variable, parameter or return value, use the `@Refinement` annotation with a predicate as an argument. The predicate must be a boolean expression that uses the name of the variable being refined (or `_`) to refer to its value. Some examples include:
 
 ```java
 // x must be greater than 0
@@ -137,8 +137,10 @@ s.pop(); // type error!
 
 ```
 
-You can find more examples of how to use LiquidJava on the [LiquidJava Website](https://catarinagamboa.github.io/liquidjava.html). For more information, check the following repositories:
-- [liquidjava](https://github.com/CatarinaGamboa/liquidjava): Main repository with API, verifier and some examples
-- [vscode-liquidjava](https://github.com/CatarinaGamboa/vscode-liquidjava): Source code of this VS Code extension
-- [liquidjava-examples](https://github.com/CatarinaGamboa/liquidjava-examples): Repository with more usage examples of LiquidJava
-- [liquid-java-external-libs](https://github.com/CatarinaGamboa/liquid-java-external-libs): Examples of how to use LiquidJava with external libraries
+You can find more examples of how to use LiquidJava on the [LiquidJava Website](https://liquid-java.github.io). To learn how to use LiquidJava, you can also follow the [LiquidJava tutorial](https://github.com/liquid-java/liquidjava-tutorial).
+
+For more information, check the following repositories:
+- [liquidjava](https://github.com/liquid-java/liquidjava): Includes the API, verifier and some examples
+- [vscode-liquidjava](https://github.com/liquid-java/vscode-liquidjava): Source code of this VS Code extension
+- [liquidjava-examples](https://github.com/liquid-java/liquidjava-examples): Examples of how to use LiquidJava
+- [liquid-java-external-libs](https://github.com/liquid-java/liquid-java-external-libs): Examples of how to use LiquidJava to refine external libraries
