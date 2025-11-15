@@ -20,6 +20,7 @@ public class App {
 
     /**
      * Starts the language server on the given port in a new thread
+     * 
      * @param port
      */
     private void startNetworkedLanguageServer(int port) {

@@ -23,7 +23,9 @@ public class LJLanguageServer implements LanguageServer {
 
     /**
      * Initializes the language server with the given parameters
+     * 
      * @param params
+     * 
      * @return CompletableFuture with the InitializeResult
      */
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
@@ -40,7 +42,8 @@ public class LJLanguageServer implements LanguageServer {
         capabilities.setDocumentSymbolProvider(false);
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         capabilities.setDocumentLinkProvider(null); // new DocumentLinkOptions(true));
-        // More in: https://github.com/nedap/archetype-languageserver/blob/24b0890c0f046c6c1af8269a5c9770a8860a96b3/src/main/java/com/nedap/openehr/lsp/ADL2LanguageServer.java
+        // More in:
+        // https://github.com/nedap/archetype-languageserver/blob/24b0890c0f046c6c1af8269a5c9770a8860a96b3/src/main/java/com/nedap/openehr/lsp/ADL2LanguageServer.java
 
         completableFuture.complete(new InitializeResult(capabilities));
         return completableFuture;

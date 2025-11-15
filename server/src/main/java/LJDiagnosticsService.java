@@ -9,7 +9,6 @@ import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
@@ -20,6 +19,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Sets the language client
+     * 
      * @param client
      */
     public void setClient(LanguageClient client) {
@@ -28,12 +28,15 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Generates diagnostics for the given URI and publishes them to the client
+     * 
      * @param uri
      */
     public void generateDiagnostics(String uri) {
-        PublishDiagnosticsParams params = LJDiagnostics.generateDiagnostics(uri);
-        this.client.publishDiagnostics(params);
-        this.checkedUris.add(params.getUri());
+        var paramsList = LJDiagnostics.generateDiagnostics(uri);
+        paramsList.forEach(params -> {
+            this.client.publishDiagnostics(params);
+            this.checkedUris.add(params.getUri());
+        });
     }
 
     /**
@@ -46,6 +49,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Clear a diagnostic for a specific URI
+     * 
      * @param uri
      */
     public void clearDiagnostic(String uri) {
@@ -55,6 +59,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Checks diagnostics when a document is opened
+     * 
      * @param params
      */
     @Override
@@ -65,6 +70,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Checks diagnostics when a document is saved
+     * 
      * @param params
      */
     @Override
@@ -76,6 +82,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     /**
      * Clears diagnostics for a deleted document
+     * 
      * @param params
      */
     @Override
