@@ -25,28 +25,27 @@ public class LJDiagnostics {
      * @return diagnostics
      */
     public static List<PublishDiagnosticsParams> generateDiagnostics(String uri) {
+        List<PublishDiagnosticsParams> result = new ArrayList<>();
         try {
             String path = convertUTFtoCharacters(extractBasePath(uri));
             CommandLineLauncher.launch(path);
             Diagnostics diagnostics = Diagnostics.getInstance();
+            
             if (diagnostics.foundError()) {
                 System.out.println("Failed verification");
                 List<LJDiagnostic> errors = new ArrayList<>(diagnostics.getErrors());
-                return getDiagnostics(uri, errors, DiagnosticSeverity.Error);
+                result.addAll(getDiagnostics(uri, errors, DiagnosticSeverity.Error));
             } else {
                 System.out.println("Passed verification");
-                if (diagnostics.foundWarning()) {
-                    System.out.println("Found warnings");
-                    List<LJDiagnostic> warnings = new ArrayList<>(diagnostics.getWarnings());
-                    return getDiagnostics(uri, warnings, DiagnosticSeverity.Warning);
-                } else {
-                    System.out.println("No errors or warnings found");
-                    return List.of(getEmptyDiagnostics(uri));
-                }
             }
+            if (diagnostics.foundWarning()) {
+                List<LJDiagnostic> warnings = new ArrayList<>(diagnostics.getWarnings());
+                result.addAll(getDiagnostics(uri, warnings, DiagnosticSeverity.Warning));
+            }
+            return result.isEmpty() ? List.of(getEmptyDiagnostics(uri)) : result;
         } catch (Exception e) {
             System.err.println("Exception:" + e.getMessage());
-            return List.of(getEmptyDiagnostics(uri));
+            return result;
         }
     }
 
