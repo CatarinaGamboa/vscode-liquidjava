@@ -2,6 +2,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
@@ -54,13 +56,21 @@ public class LJDiagnostics {
      */
     public static List<PublishDiagnosticsParams> getDiagnostics(List<LJDiagnostic> diagnostics,
             DiagnosticSeverity severity) {
-        return diagnostics.stream().map(d -> {
-            String filePath = FILE_PREFIX + d.getFile();
-            Range range = getRangeFromErrorPosition(d.getPosition());
-            String message = String.format("%s: %s", d.getTitle(), d.getMessage());
-            Diagnostic diagnostic = new Diagnostic(range, message, severity, SOURCE);
-            return new PublishDiagnosticsParams(filePath, List.of(diagnostic));
-        }).toList();
+        // group diagnostics by file
+        Map<String, List<Diagnostic>> diagnosticsByFile = diagnostics.stream()
+            .collect(Collectors.groupingBy(
+                d -> FILE_PREFIX + d.getFile(),
+                Collectors.mapping(d -> {
+                    Range range = getRangeFromErrorPosition(d.getPosition());
+                    String message = String.format("%s: %s", d.getTitle(), d.getMessage());
+                    return new Diagnostic(range, message, severity, SOURCE);
+                }, Collectors.toList())
+            ));
+        
+        // create a PublishDiagnosticsParams per file with all its diagnostics
+        return diagnosticsByFile.entrySet().stream()
+            .map(entry -> new PublishDiagnosticsParams(entry.getKey(), entry.getValue()))
+            .toList();
     }
 
     /**
