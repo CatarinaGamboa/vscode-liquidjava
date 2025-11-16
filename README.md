@@ -1,6 +1,6 @@
 # LiquidJava VS Code Extension
 
-The **LiquidJava VS Code extension** adds support for **refinement types**, extending the Java standard type system directly inside VS Code, using the [LiquidJava](https://github.com/CatarinaGamboa/liquidjava) verifier. It provides error diagnostics and syntax highlighting for refinements.
+The **LiquidJava VS Code extension** adds support for **refinement types**, extending the Java standard type system directly inside VS Code, using the [LiquidJava](https://github.com/liquid-java/liquidjava) verifier. It provides error diagnostics and syntax highlighting for refinements.
 
 ## Getting Started
 
@@ -14,16 +14,16 @@ To try out the extension on an example project without setting up your local env
 
 The codespace will open in your browser and automatically install the LiquidJava extension shortly.
 
-   [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/CatarinaGamboa/liquidjava-examples)
+   [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/liquid-java/liquidjava-examples)
 
 ### Local Setup
 
-To set up the extension locally, install the [LiquidJava Extension](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) from the VS Code Marketplace and add the `liquidjava-api` dependency to your Java project.
+To set up the extension locally, install the LiquidJava extension in the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) or the [Open VSX Marketplace](https://open-vsx.org/extension/AlcidesFonseca/liquid-java) and add the `liquidjava-api` dependency to your Java project.
 
 #### Maven
 ```xml
 <dependency>
-    <groupId>io.github.rcosta358</groupId>
+    <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
     <version>0.0.2</version>
 </dependency>
@@ -36,7 +36,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.rcosta358:liquidjava-api:0.0.2'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.2'
 }
 ```
 

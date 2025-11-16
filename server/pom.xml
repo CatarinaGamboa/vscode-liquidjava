@@ -163,13 +163,18 @@
 	</dependencyManagement>
 	
 	<dependencies>
-	<dependency>
-		<groupId>liquidjava</groupId>
-		<artifactId>verifier</artifactId>
-		<version>5.2-SNAPSHOT</version>
-		<scope>system</scope>
-		<systemPath>${project.basedir}/libs/liquidjava-verifier.jar</systemPath>
-	</dependency>
+		<!-- <dependency>
+			<groupId>liquidjava</groupId>
+			<artifactId>verifier</artifactId>
+			<version>0.0.1</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/liquidjava-verifier.jar</systemPath>
+		</dependency> -->
+		<dependency>
+			<groupId>io.github.liquid-java</groupId>
+			<artifactId>liquidjava-verifier</artifactId>
+			<version>0.0.2</version>
+		</dependency>
 		<dependency>
 			<groupId>tools.aqua</groupId>
 			<artifactId>z3-turnkey</artifactId>
@@ -205,5 +210,5 @@
 
 	</dependencies>
     
-  <name>vscode-liquid-java-server</name>
+  <name>language-server-liquidjava</name>
 </project>

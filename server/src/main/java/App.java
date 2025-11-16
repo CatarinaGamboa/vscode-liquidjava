@@ -12,7 +12,7 @@ public class App {
 
     final static int DEFAULT_PORT = 50000;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         final int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
         System.out.println("Starting server on port: " + port);
         new App().startNetworkedLanguageServer(port);
@@ -20,7 +20,7 @@ public class App {
 
     /**
      * Starts the language server on the given port in a new thread
-     * @param port
+     * @param port the port to start the server on
      */
     private void startNetworkedLanguageServer(int port) {
         new Thread(() -> {
@@ -33,7 +33,7 @@ public class App {
                         OutputStream out = socket.getOutputStream();
                         LJLanguageServer server = new LJLanguageServer();
                         Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
-                        server.connect(launcher.getRemoteProxy(), launcher.getRemoteEndpoint());
+                        server.connect(launcher.getRemoteProxy());
                         launcher.startListening();
                     } catch (IOException e) {
                         System.out.println("Error: " + e.getMessage());

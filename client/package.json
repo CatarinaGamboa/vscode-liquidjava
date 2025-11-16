@@ -1,14 +1,14 @@
 {
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
-	"description": "LiquidJava - Extending Java with Liquid Types",
-	"version": "0.0.31",
+	"description": "Extending Java with Liquid Types",
+	"version": "0.0.39",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/CatarinaGamboa/vscode-liquidjava"
+		"url": "https://github.com/liquid-java/vscode-liquidjava"
 	},
-	"homepage": "https://catarinagamboa.github.io/liquidjava",
+	"homepage": "https://liquid-java.github.io",
 	"engines": {
 		"vscode": "^1.82.0"
 	},
@@ -27,6 +27,8 @@
 	"keywords": [
 		"java",
 		"liquidjava",
+		"liquid java",
+		"liquid-java",
 		"liquid types",
 		"refinement types",
 		"static analysis",
