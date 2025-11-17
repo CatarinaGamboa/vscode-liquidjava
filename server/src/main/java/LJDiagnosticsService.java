@@ -1,5 +1,8 @@
 import java.io.File;
 import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -7,19 +10,34 @@ import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
-import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
+import liquidjava.diagnostics.LJDiagnostic;
+
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
-    private LanguageClient client;
+    
+    private LJLanguageClient client;
 
     /**
      * Sets the language client
      * @param client the language client
      */
-    public void setClient(LanguageClient client) {
+    public void setClient(LJLanguageClient client) {
         this.client = client;
+    }
+
+    /**
+     * Sends diagnostics notification to the client
+     * @param diagnostics the diagnostics to send
+     */
+    public void sendDiagnosticsNotification(List<LJDiagnostic> diagnostics) {
+        if (this.client == null)
+            return;
+            
+        System.out.println("Sending diagnostics notification with " + diagnostics.size() + " diagnostics");
+        this.client.sendDiagnostics(diagnostics);
     }
 
     /**
@@ -27,10 +45,13 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      * @param uri the URI of the document
      */
     public void generateDiagnostics(String uri) {
-        var paramsList = LJDiagnostics.generateDiagnostics(uri);
-        paramsList.forEach(params -> {
+        LJDiagnostics ljDiagnostics = LJDiagnosticsHandler.getLJDiagnostics(uri);
+        List<PublishDiagnosticsParams> nativeDiagnostics = LJDiagnosticsHandler.getNativeDiagnostics(ljDiagnostics, uri);
+        nativeDiagnostics.forEach(params -> {
             this.client.publishDiagnostics(params);
         });
+        List<LJDiagnostic> diagnosticsList = Stream.concat(ljDiagnostics.errors().stream(), ljDiagnostics.warnings().stream()).collect(Collectors.toList());
+        sendDiagnosticsNotification(diagnosticsList);
     }
 
     /**
@@ -38,7 +59,8 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      * @param uri the URI of the document
      */
     public void clearDiagnostic(String uri) {
-        this.client.publishDiagnostics(LJDiagnostics.getEmptyDiagnostics(uri));
+        this.client.publishDiagnostics(LJDiagnosticsHandler.getEmptyDiagnostics(uri));
+        sendDiagnosticsNotification(List.of());
     }
 
     /**

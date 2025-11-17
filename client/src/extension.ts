@@ -6,9 +6,9 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vsc
 import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
 import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from "./utils";
-import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT, EXAMPLE_DERIVATION_NODE, EXAMPLE_EXPECTED, EXAMPLE_TRANSLATION_TABLE } from "./constants";
+import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT } from "./constants";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
-import { LJDiagnostic, RefinementError } from "./types";
+import { LJDiagnostic } from "./types";
 
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
@@ -16,7 +16,7 @@ let socket: net.Socket;
 let outputChannel: vscode.OutputChannel;
 let logger: LiquidJavaLogger;
 let statusBarItem: vscode.StatusBarItem;
-let errorDiagnostic: vscode.Diagnostic;
+let currentDiagnostics: LJDiagnostic[];
 let webviewProvider: LiquidJavaWebviewProvider;
 
 /**
@@ -124,8 +124,8 @@ function initWebview(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         webviewProvider.onDidReceiveMessage(message => {
             console.log("received message", message);
-            if (message.type === "ready" && errorDiagnostic) {
-                webviewProvider.sendMessage({ type: "refinement-error", error: errorDiagnostic });
+            if (message.type === "ready" && currentDiagnostics.length > 0) {
+                webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
             }
         })
     );
@@ -245,7 +245,7 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
         documentSelector: [{ language: "java" }],
         middleware: {
             handleDiagnostics(uri, diagnostics, next) {
-                handleDiagnostics(uri, diagnostics)
+                handleNativeDiagnostics(diagnostics)
                 next(uri, diagnostics);
             },
         }
@@ -265,6 +265,11 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
     try {
         await client.start();
         logger.client.info("Extension is ready");
+        
+        client.onNotification("liquidjava/diagnostics", (diagnostics: LJDiagnostic[]) => {
+            console.log(diagnostics);
+            handleLJDiagnostics(diagnostics);
+        });
     } catch (e) {
         vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
         logger.client.error("Failed to initialize: " + e.toString());
@@ -317,30 +322,24 @@ async function stopExtension(reason: string) {
 }
 
 /**
- * Looks for a LiquidJava diagnostic, and if found, sends it to the webview and updates the status bar
- * @param uri The URI of the document
+ * Looks for diagnostics in the editor and updates the status bar
  * @param diagnostics The diagnostics to handle
  */
-function handleDiagnostics(uri: vscode.Uri, diagnostics: vscode.Diagnostic[]) {
-    const diagnostic = diagnostics.find(d => d.severity === vscode.DiagnosticSeverity.Error && d.source === "liquidjava") as LJDiagnostic;
-    if (!diagnostic) {
-        webviewProvider?.sendMessage({ type: "refinement-error", error: null });
+function handleNativeDiagnostics(diagnostics: vscode.Diagnostic[]) {
+    const ljError = diagnostics.find(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error);
+    if (ljError) {
+        updateStatusBar("failed");
+    } else {
         updateStatusBar("passed");
-        errorDiagnostic = null;
-        return; // no diagnostics
     }
-    const error: RefinementError = {
-        message: diagnostic.message,
-        range: diagnostic.range,
-        severity: diagnostic.severity,
-        file: uri.fsPath,
-        kind: diagnostic.data.errorKind,
-        // hardcoded values for testing
-        expected: EXAMPLE_EXPECTED,
-        found: EXAMPLE_DERIVATION_NODE,
-        translationTable: EXAMPLE_TRANSLATION_TABLE,
-    }
-    webviewProvider.sendMessage({ type: "refinement-error", error });
-    updateStatusBar("failed");
-    errorDiagnostic = error;
+}
+
+/**
+ * Handles LiquidJava diagnostics received from the language server
+ * @param diagnostics The LiquidJava diagnostics
+ */
+function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
+    logger.client.info("LiquidJava diagnostics from server:\n" + diagnostics);
+    currentDiagnostics = diagnostics;
+    // webviewProvider?.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
 }

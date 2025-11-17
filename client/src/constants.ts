@@ -1,7 +1,7 @@
 import { ValDerivationNode } from "./types";
 
 export const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
-export const DEBUG_MODE = false;
+export const DEBUG_MODE = true;
 export const DEBUG_PORT = 50000;
 export const LIQUIDJAVA_SCOPES = [
     "source.liquidjava keyword.other.liquidjava",

@@ -5,8 +5,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import org.eclipse.lsp4j.jsonrpc.Launcher;
-import org.eclipse.lsp4j.launch.LSPLauncher;
-import org.eclipse.lsp4j.services.LanguageClient;
 
 public class App {
 
@@ -32,7 +30,12 @@ public class App {
                         InputStream in = socket.getInputStream();
                         OutputStream out = socket.getOutputStream();
                         LJLanguageServer server = new LJLanguageServer();
-                        Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, in, out);
+                        Launcher<LJLanguageClient> launcher = new Launcher.Builder<LJLanguageClient>()
+                            .setLocalService(server)
+                            .setRemoteInterface(LJLanguageClient.class)
+                            .setInput(in)
+                            .setOutput(out)
+                            .create();
                         server.connect(launcher.getRemoteProxy());
                         launcher.startListening();
                     } catch (IOException e) {
