@@ -1,5 +1,6 @@
-package dtos;
+package dtos.errors;
 
+import dtos.diagnostics.TranslationTableDTO;
 import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.RefinementError;
 import liquidjava.rj_language.opt.derivation_node.ValDerivationNode;

@@ -1,5 +1,6 @@
-package dtos;
+package dtos.errors;
 
+import dtos.diagnostics.TranslationTableDTO;
 import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.StateConflictError;
 

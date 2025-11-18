@@ -1,4 +1,4 @@
-package dtos;
+package dtos.diagnostics;
 
 import spoon.reflect.cu.SourcePosition;
 

@@ -1,4 +1,4 @@
-package dtos;
+package dtos.errors;
 
 import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.InvalidRefinementError;

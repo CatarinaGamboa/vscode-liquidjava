@@ -1,4 +1,4 @@
-package dtos;
+package dtos.warnings;
 
 import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.warnings.ExternalMethodNotFoundWarning;

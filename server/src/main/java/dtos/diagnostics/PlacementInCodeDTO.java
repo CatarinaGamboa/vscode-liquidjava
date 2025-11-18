@@ -1,4 +1,4 @@
-package dtos;
+package dtos.diagnostics;
 
 import liquidjava.processor.context.PlacementInCode;
 
