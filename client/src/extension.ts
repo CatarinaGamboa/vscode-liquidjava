@@ -124,7 +124,7 @@ function initWebview(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         webviewProvider.onDidReceiveMessage(message => {
             console.log("received message", message);
-            if (message.type === "ready" && currentDiagnostics.length > 0) {
+            if (message.type === "ready") {
                 webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
             }
         })

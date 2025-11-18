@@ -64,7 +64,8 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      */
     public void clearDiagnostic(String uri) {
         this.client.publishDiagnostics(LJDiagnosticsHandler.getEmptyDiagnostics(uri));
-        sendDiagnosticsNotification(List.of());
+        // TODO: fix consistency between native and custom diagnostics
+        // sendDiagnosticsNotification(List.of());
     }
 
     /**

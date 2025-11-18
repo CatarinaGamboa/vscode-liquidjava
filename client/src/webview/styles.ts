@@ -8,6 +8,21 @@ export function getStyles(): string {
             font-weight: bold;
             margin: 0 0 1rem 0;
         }
+        p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin: 0.5rem 0;
+        }
+        pre {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            overflow-x: auto;
+        }
         strong {
             display: block;
             margin-bottom: 0.5rem;
@@ -25,14 +40,19 @@ export function getStyles(): string {
             overflow: visible;
             position: relative;
         }
-        .content {
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .error-item {
             background-color: var(--vscode-textBlockQuote-background);
             padding: 1rem;
             border-left: 4px solid var(--vscode-errorForeground);
             margin-bottom: 1rem;
             border-radius: 4px;
         }
-        .content h3 {
+        .error-item h3 {
             margin-top: 0;
         }
         .section {
