@@ -41,6 +41,45 @@ import liquidjava.diagnostics.warnings.LJWarning;
  */
 public class DiagnosticSerializers {
 
+    /**
+     * Converts a diagnostic to its appropriate DTO type
+     * @param diagnostic the diagnostic to convert
+     * @return the corresponding DTO
+     */
+    public static Object convertToDTO(LJDiagnostic diagnostic) {
+        // Handle specific error types
+        if (diagnostic instanceof RefinementError) {
+            return RefinementErrorDTO.from((RefinementError) diagnostic);
+        } else if (diagnostic instanceof StateRefinementError) {
+            return StateRefinementErrorDTO.from((StateRefinementError) diagnostic);
+        } else if (diagnostic instanceof SyntaxError) {
+            return SyntaxErrorDTO.from((SyntaxError) diagnostic);
+        } else if (diagnostic instanceof CustomError) {
+            return CustomErrorDTO.from((CustomError) diagnostic);
+        } else if (diagnostic instanceof GhostInvocationError) {
+            return GhostInvocationErrorDTO.from((GhostInvocationError) diagnostic);
+        } else if (diagnostic instanceof InvalidRefinementError) {
+            return InvalidRefinementErrorDTO.from((InvalidRefinementError) diagnostic);
+        } else if (diagnostic instanceof StateConflictError) {
+            return StateConflictErrorDTO.from((StateConflictError) diagnostic);
+        } else if (diagnostic instanceof NotFoundError) {
+            return NotFoundErrorDTO.from((NotFoundError) diagnostic);
+        } else if (diagnostic instanceof IllegalConstructorTransitionError) {
+            return IllegalConstructorTransitionErrorDTO.from((IllegalConstructorTransitionError) diagnostic);
+        } else if (diagnostic instanceof ExternalClassNotFoundWarning) {
+            return ExternalClassNotFoundWarningDTO.from((ExternalClassNotFoundWarning) diagnostic);
+        } else if (diagnostic instanceof ExternalMethodNotFoundWarning) {
+            return ExternalMethodNotFoundWarningDTO.from((ExternalMethodNotFoundWarning) diagnostic);
+        } else if (diagnostic instanceof LJError) {
+            return LJErrorDTO.from((LJError) diagnostic);
+        } else if (diagnostic instanceof LJWarning) {
+            return LJWarningDTO.from((LJWarning) diagnostic);
+        } else {
+            // Generic fallback
+            return LJDiagnosticDTO.from(diagnostic);
+        }
+    }
+
     public static class LJDiagnosticSerializer implements JsonSerializer<LJDiagnostic> {
         @Override
         public JsonElement serialize(LJDiagnostic src, Type typeOfSrc, JsonSerializationContext context) {

@@ -14,7 +14,6 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
-import dtos.LJDiagnosticDTO;
 import liquidjava.diagnostics.LJDiagnostic;
 
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
@@ -38,8 +37,8 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
             return;
             
         System.out.println("Sending diagnostics notification with " + diagnostics.size() + " diagnostics");
-        List<LJDiagnosticDTO> dtos = diagnostics.stream()
-            .map(LJDiagnosticDTO::from)
+        List<Object> dtos = diagnostics.stream()
+            .map(DiagnosticSerializers::convertToDTO)
             .collect(Collectors.toList());
         this.client.sendDiagnostics(dtos);
     }
