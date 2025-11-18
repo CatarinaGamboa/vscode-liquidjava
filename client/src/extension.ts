@@ -6,7 +6,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vsc
 import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
 import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from "./utils";
-import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT } from "./constants";
+import { SERVER_JAR, DEBUG_MODE, DEBUG_PORT } from "./constants";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import { LJDiagnostic } from "./types";
 
@@ -34,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await applyItalicOverlay();
 
     // find java executable path
-    const javaExecutablePath = findJavaExecutable("java");
+    const javaExecutablePath = findJavaExecutable();
     if (!javaExecutablePath) {
         vscode.window.showErrorMessage("LiquidJava - Java Runtime Not Found in JAVA_HOME or PATH");
         logger.client.error("Java Runtime not found in JAVA_HOME or PATH - Not activating extension");
@@ -94,7 +94,8 @@ function initCommandPalette(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("liquidjava.showCommands", async () => {
             const commands = [
                 { label: "$(output) Show Logs", command: "liquidjava.showLogs" },
-                { label: "$(window) Show View", command: "liquidjava.showView" }
+                { label: "$(window) Show View", command: "liquidjava.showView" },
+                // TODO: add more commands here, e.g., start, stop, restart, verify, etc.
             ];
             const placeHolder = "Select a LiquidJava Command";
             const selected = await vscode.window.showQuickPick(commands, { placeHolder });
@@ -195,7 +196,7 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     }
     logger.client.info("Running language server on port " + port);
 
-    const jarPath = path.resolve(context.extensionPath, "dist", "server", SERVER_JAR_FILENAME);
+    const jarPath = path.resolve(context.extensionPath, "dist", "server", SERVER_JAR);
     const args = ["-jar", jarPath, port.toString()];
     const options = {
         cwd: vscode.workspace.workspaceFolders[0].uri.fsPath, // root path
@@ -267,7 +268,6 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
         logger.client.info("Extension is ready");
         
         client.onNotification("liquidjava/diagnostics", (diagnostics: LJDiagnostic[]) => {
-            console.log(diagnostics);
             handleLJDiagnostics(diagnostics);
         });
     } catch (e) {
@@ -322,7 +322,7 @@ async function stopExtension(reason: string) {
 }
 
 /**
- * Looks for diagnostics in the editor and updates the status bar
+ * Looks for diagnostics in the editor and updates the status bar accordingly
  * @param diagnostics The diagnostics to handle
  */
 function handleNativeDiagnostics(diagnostics: vscode.Diagnostic[]) {
