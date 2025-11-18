@@ -145,7 +145,7 @@ function initCodeLens(context: vscode.ExtensionContext) {
                 .map(d => {
                     const range = new vscode.Range(d.range.start.line, 0, d.range.end.line, 0);
                     return new vscode.CodeLens(range, {
-                        title: "View LiquidJava Error",
+                        title: "View " + (d.message.split(":")[0] || "Error"),
                         command: "liquidjava.showView",
                         tooltip: "Open LiquidJava View",
                     });
@@ -340,6 +340,6 @@ function handleNativeDiagnostics(diagnostics: vscode.Diagnostic[]) {
  */
 function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     logger.client.info("LiquidJava diagnostics from server:\n" + diagnostics);
+    webviewProvider?.sendMessage({ type: "diagnostics", diagnostics });
     currentDiagnostics = diagnostics;
-    // webviewProvider?.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
 }
