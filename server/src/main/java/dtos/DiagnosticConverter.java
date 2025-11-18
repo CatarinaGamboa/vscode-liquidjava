@@ -32,8 +32,7 @@ import liquidjava.diagnostics.warnings.ExternalMethodNotFoundWarning;
 import liquidjava.diagnostics.warnings.LJWarning;
 
 /**
- * Utility class for converting LiquidJava diagnostic objects to their corresponding DTOs.
- * This ensures proper serialization by avoiding complex objects like File references.
+ * Utility class for converting LiquidJava diagnostic objects to their corresponding DTOs
  */
 public class DiagnosticConverter {
 
@@ -43,35 +42,33 @@ public class DiagnosticConverter {
      * @return the corresponding DTO
      */
     public static Object convertToDTO(LJDiagnostic diagnostic) {
-        // Handle specific error types
-        if (diagnostic instanceof RefinementError) {
-            return RefinementErrorDTO.from((RefinementError) diagnostic);
-        } else if (diagnostic instanceof StateRefinementError) {
-            return StateRefinementErrorDTO.from((StateRefinementError) diagnostic);
-        } else if (diagnostic instanceof SyntaxError) {
-            return SyntaxErrorDTO.from((SyntaxError) diagnostic);
-        } else if (diagnostic instanceof CustomError) {
-            return CustomErrorDTO.from((CustomError) diagnostic);
-        } else if (diagnostic instanceof GhostInvocationError) {
-            return GhostInvocationErrorDTO.from((GhostInvocationError) diagnostic);
-        } else if (diagnostic instanceof InvalidRefinementError) {
-            return InvalidRefinementErrorDTO.from((InvalidRefinementError) diagnostic);
-        } else if (diagnostic instanceof StateConflictError) {
-            return StateConflictErrorDTO.from((StateConflictError) diagnostic);
-        } else if (diagnostic instanceof NotFoundError) {
-            return NotFoundErrorDTO.from((NotFoundError) diagnostic);
-        } else if (diagnostic instanceof IllegalConstructorTransitionError) {
-            return IllegalConstructorTransitionErrorDTO.from((IllegalConstructorTransitionError) diagnostic);
-        } else if (diagnostic instanceof ExternalClassNotFoundWarning) {
-            return ExternalClassNotFoundWarningDTO.from((ExternalClassNotFoundWarning) diagnostic);
-        } else if (diagnostic instanceof ExternalMethodNotFoundWarning) {
-            return ExternalMethodNotFoundWarningDTO.from((ExternalMethodNotFoundWarning) diagnostic);
-        } else if (diagnostic instanceof LJError) {
-            return LJErrorDTO.from((LJError) diagnostic);
-        } else if (diagnostic instanceof LJWarning) {
-            return LJWarningDTO.from((LJWarning) diagnostic);
+        if (diagnostic instanceof RefinementError d) {
+            return RefinementErrorDTO.from(d);
+        } else if (diagnostic instanceof StateRefinementError d) {
+            return StateRefinementErrorDTO.from(d);
+        } else if (diagnostic instanceof SyntaxError d) {
+            return SyntaxErrorDTO.from(d);
+        } else if (diagnostic instanceof CustomError d) {
+            return CustomErrorDTO.from(d);
+        } else if (diagnostic instanceof GhostInvocationError d) {
+            return GhostInvocationErrorDTO.from(d);
+        } else if (diagnostic instanceof InvalidRefinementError d) {
+            return InvalidRefinementErrorDTO.from(d);
+        } else if (diagnostic instanceof StateConflictError d) {
+            return StateConflictErrorDTO.from(d);
+        } else if (diagnostic instanceof NotFoundError d) {
+            return NotFoundErrorDTO.from(d);
+        } else if (diagnostic instanceof IllegalConstructorTransitionError d) {
+            return IllegalConstructorTransitionErrorDTO.from(d);
+        } else if (diagnostic instanceof ExternalClassNotFoundWarning d) {
+            return ExternalClassNotFoundWarningDTO.from(d);
+        } else if (diagnostic instanceof ExternalMethodNotFoundWarning d) {
+            return ExternalMethodNotFoundWarningDTO.from(d);
+        } else if (diagnostic instanceof LJError d) {
+            return LJErrorDTO.from(d);
+        } else if (diagnostic instanceof LJWarning d) {
+            return LJWarningDTO.from(d);
         } else {
-            // Generic fallback
             return LJDiagnosticDTO.from(diagnostic);
         }
     }
