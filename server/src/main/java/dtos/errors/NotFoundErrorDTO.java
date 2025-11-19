@@ -8,10 +8,10 @@ import liquidjava.diagnostics.errors.NotFoundError;
  * Record DTO for serializing NotFoundError instances to JSON
  */
 public record NotFoundErrorDTO(String category, String type, String title, String message, String details, String file, ErrorPosition position,
-        TranslationTableDTO translationTable, String name) {
+        TranslationTableDTO translationTable, String name, String kind) {
 
     public static NotFoundErrorDTO from(NotFoundError error) {
         return new NotFoundErrorDTO("error", "not-found-error", error.getTitle(), error.getMessage(), error.getDetails(), error.getFile(),
-                error.getPosition(), TranslationTableDTO.from(error.getTranslationTable()), error.getName());
+                error.getPosition(), TranslationTableDTO.from(error.getTranslationTable()), error.getName(), error.getKind());
     }
 }

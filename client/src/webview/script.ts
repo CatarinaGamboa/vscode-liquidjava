@@ -25,7 +25,7 @@ export function getScript(vscode: any, document: any, window: any) {
             }
             case 'not-found-error': {
                 const e = error as NotFoundError;
-                return `${base}<p><b>Name:</b><pre>${e.name}</pre></p>${location}`;
+                return `<h3>${error.title}</h3><div class="error-header"><p>${e.kind} <b>${e.name}</b> not found</p></div>${location}`;
             }
             case 'refinement-error': {
                 const e = error as RefinementError;

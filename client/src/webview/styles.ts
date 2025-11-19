@@ -52,7 +52,7 @@ export function getStyles(): string {
             background-color: var(--vscode-textBlockQuote-background);
             padding: 1rem;
             border-left: 4px solid var(--vscode-errorForeground);
-            margin-bottom: 1rem;
+            margin: 1rem 0;
             border-radius: 4px;
         }
         .error-item h3 {

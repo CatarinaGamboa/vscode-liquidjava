@@ -57,6 +57,7 @@ export type NotFoundError = BaseDiagnostic & {
     type: 'not-found-error';
     translationTable: TranslationTable;
     name: string;
+    kind: string;
 }
 
 export type RefinementError = BaseDiagnostic & {
