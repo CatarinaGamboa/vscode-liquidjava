@@ -49,6 +49,6 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   private getHtml(webview: vscode.Webview): string {
-    return getHtml(webview.cspSource);
+    return getHtml(webview, this.extensionUri);
   }
 }

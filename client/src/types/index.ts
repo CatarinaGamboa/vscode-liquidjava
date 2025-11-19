@@ -1,3 +1,3 @@
 export type * from './notifications';
-export type * from './derivationNodes';
+export type * from './derivation-nodes';
 export type * from './diagnostics';

@@ -1,4 +1,4 @@
-import type { ValDerivationNode } from './derivationNodes';
+import type { ValDerivationNode } from './derivation-nodes';
 
 export type ErrorPosition = {
     lineStart: number;
@@ -33,7 +33,7 @@ type BaseDiagnostic = {
     message: string;
     details: string;
     file: string;
-    position: ErrorPosition;
+    position?: ErrorPosition;
 }
 
 export type CustomError = BaseDiagnostic & {
