@@ -4,7 +4,6 @@ package dtos;
 
 import dtos.diagnostics.LJDiagnosticDTO;
 import dtos.errors.CustomErrorDTO;
-import dtos.errors.GhostInvocationErrorDTO;
 import dtos.errors.IllegalConstructorTransitionErrorDTO;
 import dtos.errors.InvalidRefinementErrorDTO;
 import dtos.errors.LJErrorDTO;
@@ -18,7 +17,6 @@ import dtos.warnings.ExternalMethodNotFoundWarningDTO;
 import dtos.warnings.LJWarningDTO;
 import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.errors.CustomError;
-import liquidjava.diagnostics.errors.GhostInvocationError;
 import liquidjava.diagnostics.errors.IllegalConstructorTransitionError;
 import liquidjava.diagnostics.errors.InvalidRefinementError;
 import liquidjava.diagnostics.errors.LJError;
@@ -50,8 +48,6 @@ public class DiagnosticConverter {
             return SyntaxErrorDTO.from(d);
         } else if (diagnostic instanceof CustomError d) {
             return CustomErrorDTO.from(d);
-        } else if (diagnostic instanceof GhostInvocationError d) {
-            return GhostInvocationErrorDTO.from(d);
         } else if (diagnostic instanceof InvalidRefinementError d) {
             return InvalidRefinementErrorDTO.from(d);
         } else if (diagnostic instanceof StateConflictError d) {

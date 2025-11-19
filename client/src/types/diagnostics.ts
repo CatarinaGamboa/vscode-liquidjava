@@ -22,136 +22,81 @@ export type TranslationTable = Record<string, PlacementInCode>;
 
 export type LJDiagnostic = LJError | LJWarning;
 
-export type LJError = CustomError | GhostInvocationError | IllegalConstructorTransitionError | 
+export type LJError = CustomError | IllegalConstructorTransitionError | 
     InvalidRefinementError | NotFoundError | RefinementError | StateConflictError | 
     StateRefinementError | SyntaxError;
 
 export type LJWarning = ExternalClassNotFoundWarning | ExternalMethodNotFoundWarning;
 
-export type CustomError = {
+type BaseDiagnostic = {
+    title: string;
+    message: string;
+    details: string;
+    file: string;
+    position: ErrorPosition;
+}
+
+export type CustomError = BaseDiagnostic & {
     category: 'error';
     type: 'custom-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
 }
 
-export type GhostInvocationError = {
-    category: 'error';
-    type: 'ghost-invocation-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
-    translationTable: TranslationTable;
-    expected: string;
-}
-
-export type IllegalConstructorTransitionError = {
+export type IllegalConstructorTransitionError = BaseDiagnostic & {
     category: 'error';
     type: 'illegal-constructor-transition-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
 }
 
-export type InvalidRefinementError = {
+export type InvalidRefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'invalid-refinement-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     refinement: string;
 }
 
-export type NotFoundError = {
+export type NotFoundError = BaseDiagnostic & {
     category: 'error';
     type: 'not-found-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     translationTable: TranslationTable;
+    name: string;
 }
 
-export type RefinementError = {
+export type RefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'refinement-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     translationTable: TranslationTable;
     expected: string;
     found: ValDerivationNode;
 }
 
-export type StateConflictError = {
+export type StateConflictError = BaseDiagnostic & {
     category: 'error';
     type: 'state-conflict-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     translationTable: TranslationTable;
     state: string;
-    className: string;
 }
 
-export type StateRefinementError = {
+export type StateRefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'state-refinement-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     translationTable: TranslationTable;
-    method: string;
-    expected: string[];
+    expected: string;
     found: string;
 }
 
-export type SyntaxError = {
+export type SyntaxError = BaseDiagnostic & {
     category: 'error';
     type: 'syntax-error';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     refinement: string;
 }
 
-export type ExternalClassNotFoundWarning = {
+export type ExternalClassNotFoundWarning = BaseDiagnostic & {
     category: 'warning';
     type: 'external-class-not-found-warning';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     className: string;
 }
 
-export type ExternalMethodNotFoundWarning = {
+export type ExternalMethodNotFoundWarning = BaseDiagnostic & {
     category: 'warning';
     type: 'external-method-not-found-warning';
-    title: string;
-    message: string;
-    details: string;
-    file: string;
-    position: ErrorPosition;
     methodName: string;
     className: string;
 }

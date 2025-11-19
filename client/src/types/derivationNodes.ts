@@ -1,8 +1,8 @@
 export type DerivationNode = ValDerivationNode | VarDerivationNode | BinaryDerivationNode | UnaryDerivationNode;
 
 export type ValDerivationNode = {
-    val: any;
-    origin?: DerivationNode,
+    value: any;
+    origin: DerivationNode;
 }
 
 export type VarDerivationNode = {

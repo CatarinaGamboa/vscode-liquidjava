@@ -339,7 +339,6 @@ function handleNativeDiagnostics(diagnostics: vscode.Diagnostic[]) {
  * @param diagnostics The LiquidJava diagnostics
  */
 function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
-    logger.client.info("LiquidJava diagnostics from server:\n" + diagnostics);
     webviewProvider?.sendMessage({ type: "diagnostics", diagnostics });
     currentDiagnostics = diagnostics;
 }

@@ -1,13 +1,9 @@
 import type {
-    CustomError,
-    GhostInvocationError,
-    IllegalConstructorTransitionError,
     InvalidRefinementError,
-    NotFoundError,
     RefinementError,
     StateConflictError,
     StateRefinementError,
-    SyntaxError,
+    NotFoundError,
     LJError,
     LJDiagnostic
 } from "../types";
@@ -16,39 +12,35 @@ export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root')
     
     function renderError(error: LJError): string {
-        const base = `<h3>${error.title}</h3><p>${error.message}</p>`;
-        const details = error.details ? `<p>${error.details}</p>` : '';
+        const base = `<h3>${error.title}</h3><div class="error-header"><p>${error.message}</p>${error.details ? `<p>${error.details}</p>` : ''}</div>`;
         const location = `<b>Location:</b><pre><a href="#" class="link location-link" data-file="${error.file}" data-line="${error.position.lineStart}" data-column="${error.position.colStart}">${error.file}:${error.position.lineStart}:${error.position.colStart}</a></pre>`;
         
         switch (error.type) {
-            case 'ghost-invocation-error': {
-                const e = error as GhostInvocationError;
-                return `${base}<p><b>Expected:</b></p><pre>${e.expected}</pre>${details}${location}`;
-            }
             case 'illegal-constructor-transition-error': {
-                return `${base}${details}${location}`;
+                return `${base}${location}`;
             }
             case 'invalid-refinement-error': {
                 const e = error as InvalidRefinementError;
-                return `${base}<p><b>Refinement:</b> ${e.refinement}</p>${details}${location}`;
+                return `${base}<p><b>Refinement:</b><pre>"${e.refinement}"</pre></p>${location}`;
             }
             case 'not-found-error': {
-                return `${base}${details}${location}`;
+                const e = error as NotFoundError;
+                return `${base}<p><b>Name:</b><pre>${e.name}</pre></p>${location}`;
             }
             case 'refinement-error': {
                 const e = error as RefinementError;
-                return `${base}<p><b>Expected:</b></p><pre>${e.expected}</pre>${details}${location}`;
+                return `${base}<p><b>Expected:</b></p><pre>${e.expected}</pre><p><b>Found:</b></p><pre>${e.found.value}</pre>${location}`;
             }
             case 'state-conflict-error': {
                 const e = error as StateConflictError;
-                return `${base}<p><b>State:</b></p><pre>${e.state}</pre><p><b>Class:</b></p><pre>${e.className}</pre>${details}${location}`;
+                return `${base}<p><b>State:</b></p><pre>${e.state}</pre>${location}`;
             }
             case 'state-refinement-error': {
                 const e = error as StateRefinementError;
-                return `${base}<p><b>Method:</b> <pre>${e.method}</pre><b>Expected:</b></p><pre>${e.expected}</pre><b>Found:</b></p><pre>${e.found}</pre>${location}`;
+                return `${base}<p><b>Expected:</b></p><pre>${e.expected}</pre><b>Found:</b></p><pre>${e.found}</pre>${location}`;
             }
             default: {
-                return `${base}${details}${location}`;
+                return `${base}${location}`;
             }
         }
     }

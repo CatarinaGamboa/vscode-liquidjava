@@ -8,10 +8,10 @@ import liquidjava.diagnostics.errors.StateConflictError;
  * Record DTO for serializing StateConflictError instances to JSON
  */
 public record StateConflictErrorDTO(String category, String type, String title, String message, String details, String file, ErrorPosition position,
-        TranslationTableDTO translationTable, String state, String className) {
+        TranslationTableDTO translationTable, String state) {
 
     public static StateConflictErrorDTO from(StateConflictError error) {
         return new StateConflictErrorDTO("error", "state-conflict-error", error.getTitle(), error.getMessage(), error.getDetails(), error.getFile(),
-                error.getPosition(), TranslationTableDTO.from(error.getTranslationTable()), error.getState(), error.getClassName());
+                error.getPosition(), TranslationTableDTO.from(error.getTranslationTable()), error.getState());
     }
 }

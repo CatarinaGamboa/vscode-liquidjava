@@ -40,6 +40,9 @@ export function getStyles(): string {
             overflow: visible;
             position: relative;
         }
+        .error-header {
+            margin: 1rem 0;
+        }
         ul {
             list-style-type: none;
             padding: 0;
