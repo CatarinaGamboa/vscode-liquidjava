@@ -1,12 +1,14 @@
-import type { LJError, LJDiagnostic } from "../types";
-import { handleDerivableNodeClick, handleDerivationResetClick } from "./renderers/derivation-nodes";
+import type { LJError, LJWarning, LJDiagnostic } from "../types";
+import { handleDerivableNodeClick, handleDerivationResetClick } from "./renderers/diagnostics/derivation-nodes";
 import { getCorrectView } from "./renderers/correct";
-import { getErrorsView } from "./renderers/errors";
 import { getLoadingView } from "./renderers/loading";
+import { getErrorsView } from "./renderers/diagnostics/errors";
+import { getWarningsView } from "./renderers/diagnostics/warnings";
 
 export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root');
     let currentErrors: LJError[] = [];
+    let currentWarnings: LJWarning[] = [];
 
     // initial state
     root.innerHTML = getLoadingView();
@@ -40,7 +42,7 @@ export function getScript(vscode: any, document: any, window: any) {
         if (target.classList.contains('derivable-node')) {
             e.stopPropagation();
             if (handleDerivableNodeClick(target)) {
-                root.innerHTML = getErrorsView(currentErrors);
+                updateView();
             }
             return;
         }
@@ -49,7 +51,7 @@ export function getScript(vscode: any, document: any, window: any) {
         if (target.classList.contains('derivation-reset-btn')) {
             e.stopPropagation();
             if (handleDerivationResetClick(target)) {
-                root.innerHTML = getErrorsView(currentErrors);
+                updateView();
             }
         }
     });
@@ -57,12 +59,21 @@ export function getScript(vscode: any, document: any, window: any) {
     window.addEventListener('message', event => {
         const msg = event.data;
         if (msg.type === 'diagnostics') {
-            // TODO: also handle warnings
-            const errors = (msg.diagnostics as LJDiagnostic[]).filter((diag: LJDiagnostic) => diag.category === 'error') as LJError[];
+            const diagnostics = msg.diagnostics as LJDiagnostic[];
+            const errors = diagnostics.filter((diag: LJDiagnostic) => diag.category === 'error') as LJError[];
+            const warnings = diagnostics.filter((diag: LJDiagnostic) => diag.category === 'warning') as LJWarning[];
+            
             currentErrors = errors;
+            currentWarnings = warnings;
 
-            // update view
-            root.innerHTML = errors.length > 0 ? getErrorsView(errors) : getCorrectView();
+            updateView();
         }
     });
+
+    function updateView() {
+        let mainView = currentErrors.length > 0 ? getErrorsView(currentErrors) : getCorrectView();
+        let warningsView = currentWarnings.length > 0 ? getWarningsView(currentWarnings) : '';
+        root.innerHTML = mainView + warningsView;
+    }
 }
+

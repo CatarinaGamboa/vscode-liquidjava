@@ -40,7 +40,7 @@ export function getStyles(): string {
             overflow: visible;
             position: relative;
         }
-        .error-header {
+        .diagnostic-header {
             margin: 1rem 0;
         }
         ul {
@@ -48,15 +48,20 @@ export function getStyles(): string {
             padding: 0;
             margin: 0;
         }
-        .error-item {
+        .diagnostic-item {
             background-color: var(--vscode-textBlockQuote-background);
             padding: 1rem;
-            border-left: 4px solid var(--vscode-errorForeground);
             margin: 1rem 0;
             border-radius: 4px;
         }
-        .error-item h3 {
+        .diagnostic-item h3 {
             margin-top: 0;
+        }
+        .error-item {
+            border-left: 4px solid var(--vscode-errorForeground);
+        }
+        .warning-item {
+            border-left: 4px solid #d4ac0d;
         }
         .section {
             margin-bottom: 1rem;

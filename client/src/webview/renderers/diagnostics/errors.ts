@@ -1,3 +1,5 @@
+import { getExpansions, renderJsonTree, hashError } from "./derivation-nodes";
+import { renderHeader, renderLocation, renderSection } from "./utils";
 import {
     InvalidRefinementError,
     LJError,
@@ -5,34 +7,17 @@ import {
     RefinementError,
     StateConflictError,
     StateRefinementError
-} from "../../types";
-import { getExpansions, renderJsonTree, hashError } from "./derivation-nodes";
-
-const renderSection = (title: string, body: string): string =>
-    `<div class="section"><strong>${title}:</strong><div>${body}</div></div>`;
-
-const renderHeader = (error: LJError): string => {
-    const details = error.details ? `<p>${error.details}</p>` : "";
-    return `<h3>${error.title}</h3><div class="error-header"><p>${error.message}</p>${details}</div>`;
-};
-
-const renderLocation = (error: LJError): string => {
-    const line = error.position?.lineStart ?? 0;
-    const column = error.position?.colStart ?? 0;
-    const simpleFile = error.file.split('/').pop() || error.file;
-    const link = `<a href="#" class="link location-link" data-file="${error.file}" data-line="${line}" data-column="${column}">${simpleFile}:${line}</a>`;
-    return renderSection("Location", `<pre>${link}</pre>`);
-};
+} from "../../../types";
 
 export function getErrorsView(errors: LJError[]): string {
     return /*html*/`
         <div>
             <h2>Failed Verification</h2>
-            <p>${errors.length} error${errors.length > 1 ? 's' : ''} were found by the LiquidJava verifier.</p>
+            <p>${errors.length} error${errors.length > 1 ? 's were' : ' was'} found by the LiquidJava verifier.</p>
             <div class="content">
                 <ul>
                     ${errors.map((error) => /*html*/`
-                        <li class="error-item">
+                        <li class="diagnostic-item error-item">
                             ${renderError(error)}
                         </li>
                     `).join("")}
@@ -45,7 +30,7 @@ export function getErrorsView(errors: LJError[]): string {
 export function renderError(error: LJError): string {
     const header = renderHeader(error);
     const location = renderLocation(error);
-
+    
     switch (error.type) {
         case 'illegal-constructor-transition-error':
             return `${header}${location}`;
@@ -56,7 +41,7 @@ export function renderError(error: LJError): string {
         case 'not-found-error': {
             const e = error as NotFoundError;
             const content = `<p>${e.kind} <b>${e.name}</b> not found</p>`;
-            return `<h3>${error.title}</h3><div class="error-header">${content}</div>${location}`;
+            return `<h3>${error.title}</h3><div class="diagnostic-header">${content}</div>${location}`;
         }
         case 'refinement-error':
             return renderRefinementError(error as RefinementError, header, location);
@@ -73,23 +58,17 @@ export function renderError(error: LJError): string {
     }
 }
 
-function renderRefinementError(
-    error: RefinementError,
-    base: string,
-    location: string
-): string {
+function renderRefinementError(error: RefinementError, base: string, location: string): string {
     const errorId = hashError(error);
     const expandedPaths = getExpansions(errorId);
     const derivationRoot = error.found.origin || error.found;
     const derivationHtml = renderJsonTree(error, derivationRoot, errorId, "root", expandedPaths);
     const resetDisabled = expandedPaths.size === 0 ? "disabled" : "";
-    
     const resetBtn = /*html*/ `
         <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${resetDisabled}>
             Reset
         </button>
     `;
-    
     const derivationContent = /*html*/ `
         <div class="container derivation-container" data-error-id="${errorId}">
             ${derivationHtml}
@@ -97,7 +76,6 @@ function renderRefinementError(
         </div>
         ${resetBtn}
     `;
-    
     return /*html*/ `
         ${base}
         ${renderSection('Expected', `<pre>${error.expected}</pre>`)}

@@ -1,4 +1,4 @@
-import type { RefinementError, DerivationNode, ValDerivationNode, LJError } from "../../types";
+import type { RefinementError, DerivationNode, ValDerivationNode, LJError } from "../../../types";
 
 const expansionsMap = new Map<string, Set<string>>();
 
