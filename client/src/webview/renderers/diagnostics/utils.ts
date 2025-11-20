@@ -3,8 +3,8 @@ import { LJDiagnostic } from "../../../types";
 export const renderSection = (title: string, body: string): string =>
     `<div class="section"><strong>${title}:</strong><div>${body}</div></div>`;
 
-export const renderHeader = (diagnostic: LJDiagnostic): string => {
-    const details = diagnostic.details ? `<p>${diagnostic.details}</p>` : "";
+export const renderHeader = (diagnostic: LJDiagnostic, showDetails: boolean = true): string => {
+    const details = diagnostic.details && showDetails ? `<p>${diagnostic.details}</p>` : "";
     return `<h3>${diagnostic.title}</h3><div class="diagnostic-header"><p>${diagnostic.message}</p>${details}</div>`;
 };
 

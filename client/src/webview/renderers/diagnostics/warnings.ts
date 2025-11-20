@@ -27,8 +27,7 @@ export function renderWarning(warning: LJWarning): string {
         }
         case 'external-method-not-found-warning': {
             const e = warning as ExternalMethodNotFoundWarning;
-            const methodInfo = e.methodName ? `<pre>${e.methodName}</pre>` : '';
-            return `${header}${methodInfo ? renderSection('Method', methodInfo) : ''}${location}`;
+            return `${renderHeader(warning, false)}${renderSection('Method', `<pre>${e.methodName}</pre>`)}${e.overloads.length > 0 ? renderSection("Overloads", `<pre>${e.overloads.join("\n")}</pre>`) : ""}${location}`;
         }
         default:
             return `${header}${location}`;
