@@ -2,24 +2,23 @@ import type { RefinementError, DerivationNode, ValDerivationNode, LJError } from
 
 const expansionsMap = new Map<string, Set<string>>();
 
-export const getExpansions = (errorId: string): Set<string> => {
+function getExpansions(errorId: string): Set<string> {
     if (!expansionsMap.has(errorId)) {
         expansionsMap.set(errorId, new Set());
     }
     return expansionsMap.get(errorId)!;
 };
 
-export const renderJsonTree = (
+function renderJsonTree(
     error: RefinementError,
     node: DerivationNode | undefined,
     errorId: string,
     path: string,
     expandedPaths: Set<string>
-): string => {
-    if (!node) {
+): string {
+    if (!node)
         return '<span class="node-value">undefined</span>';
-    }
-
+    
     if ("var" in node) {
         const placement = error.translationTable?.[node.var];
         const filePath = (placement as any)?.file ?? error.file;
@@ -62,7 +61,18 @@ export const renderJsonTree = (
     return `<span class="node-value">${JSON.stringify(node)}</span>`;
 };
 
-export const handleDerivableNodeClick = (target?: any): boolean => {
+function hashError(error: LJError): string {
+    const content = `${error.title}|${error.message}|${error.file}|${error.position?.lineStart ?? 0}`;
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+        const char = content.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return `error_${Math.abs(hash)}`;
+};
+
+export function handleDerivableNodeClick(target?: any): boolean {
     if (!target) return false;
     
     const nodePath = target.getAttribute("data-node-path");
@@ -77,7 +87,7 @@ export const handleDerivableNodeClick = (target?: any): boolean => {
     return false;
 };
 
-export const handleDerivationResetClick = (target?: any): boolean => {
+export function handleDerivationResetClick(target?: any): boolean {
     if (!target) return false;
 
     const errorId = target.getAttribute("data-error-id");
@@ -88,13 +98,18 @@ export const handleDerivationResetClick = (target?: any): boolean => {
     return false;
 };
 
-export const hashError = (error: LJError): string => {
-    const content = `${error.title}|${error.message}|${error.file}|${error.position?.lineStart ?? 0}`;
-    let hash = 0;
-    for (let i = 0; i < content.length; i++) {
-        const char = content.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
-    }
-    return `error_${Math.abs(hash)}`;
-};
+export function renderDerivationNode(error: RefinementError, node: ValDerivationNode): string {
+    if (!node.origin) return `<pre>${node.value}</pre>`; // no derivation available
+    
+    const errorId = hashError(error);
+    const expansions = getExpansions(errorId);
+    return /*html*/ `
+        <div class="container derivation-container" data-error-id="${errorId}">
+            ${renderJsonTree(error, node.origin || node, errorId, "root", expansions)}
+            ${expansions.size === 0 ? '<span class="node-expand-indicator">&nbsp;(click to expand)</span>' : ''}
+        </div>
+        <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${expansions.size === 0 ? "disabled" : ""}>
+            Reset
+        </button>
+    `;
+}

@@ -63,7 +63,7 @@ export type RefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'refinement-error';
     translationTable: TranslationTable;
-    expected: string;
+    expected: ValDerivationNode;
     found: ValDerivationNode;
 }
 

@@ -1,4 +1,3 @@
-import { getExpansions, renderJsonTree, hashError } from "./derivation-nodes";
 import { renderHeader, renderLocation, renderSection } from "./utils";
 import {
     InvalidRefinementError,
@@ -6,8 +5,9 @@ import {
     NotFoundError,
     RefinementError,
     StateConflictError,
-    StateRefinementError
+    StateRefinementError,
 } from "../../../types";
+import { renderDerivationNode } from "./derivation-nodes";
 
 export function getErrorsView(errors: LJError[]): string {
     return /*html*/`
@@ -44,7 +44,13 @@ export function renderError(error: LJError): string {
             return `<h3>${error.title}</h3><div class="diagnostic-header">${content}</div>${location}`;
         }
         case 'refinement-error':
-            return renderRefinementError(error as RefinementError, header, location);
+            const e = error as RefinementError;
+            return /*html*/`
+                ${header}
+                ${renderSection('Expected', renderDerivationNode(e, e.expected))}
+                ${renderSection('Found', renderDerivationNode(e, e.found))}
+                ${location}
+            `;
         case 'state-conflict-error': {
             const e = error as StateConflictError;
             return `${header}${renderSection('State', `<pre>${e.state}</pre>`)}${location}`;
@@ -56,30 +62,4 @@ export function renderError(error: LJError): string {
         default:
             return `${header}${location}`;
     }
-}
-
-function renderRefinementError(error: RefinementError, base: string, location: string): string {
-    const errorId = hashError(error);
-    const expandedPaths = getExpansions(errorId);
-    const derivationRoot = error.found.origin || error.found;
-    const derivationHtml = renderJsonTree(error, derivationRoot, errorId, "root", expandedPaths);
-    const resetDisabled = expandedPaths.size === 0 ? "disabled" : "";
-    const resetBtn = /*html*/ `
-        <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${resetDisabled}>
-            Reset
-        </button>
-    `;
-    const derivationContent = /*html*/ `
-        <div class="container derivation-container" data-error-id="${errorId}">
-            ${derivationHtml}
-            <span class="node-expand-indicator">&nbsp;(click to expand)</span>
-        </div>
-        ${resetBtn}
-    `;
-    return /*html*/ `
-        ${base}
-        ${renderSection('Expected', `<pre>${error.expected}</pre>`)}
-        ${renderSection('Found', derivationContent)}
-        ${location}
-    `;
 }
