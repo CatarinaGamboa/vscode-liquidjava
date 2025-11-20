@@ -6,10 +6,10 @@ import liquidjava.diagnostics.errors.CustomError;
 /**
  * Record DTO for serializing CustomError instances to JSON
  */
-public record CustomErrorDTO(String category, String type, String title, String message, String details, String file, ErrorPosition position) {
+public record CustomErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position) {
 
     public static CustomErrorDTO from(CustomError error) {
-        return new CustomErrorDTO("error", "custom-error", error.getTitle(), error.getMessage(), error.getDetails(), error.getFile(),
+        return new CustomErrorDTO("error", "custom-error", error.getTitle(), error.getMessage(), error.getFile(),
                 error.getPosition());
     }
 }

@@ -31,7 +31,6 @@ export type LJWarning = ExternalClassNotFoundWarning | ExternalMethodNotFoundWar
 type BaseDiagnostic = {
     title: string;
     message: string;
-    details: string;
     file: string;
     position?: ErrorPosition;
 }
