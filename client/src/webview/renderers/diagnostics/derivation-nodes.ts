@@ -26,7 +26,7 @@ export const renderJsonTree = (
         const filename = filePath ? filePath.split("/").pop() : "";
         const position = placement?.position;
         const tooltipData = placement
-            ? `${placement.text} at ${filename}:${(position?.line ?? 0) + 1}:${(position?.column ?? 0) + 1}`
+            ? `${filename}:${(position?.line ?? 0) + 1}:${(position?.column ?? 0) + 1}`
             : "No location available";
         const fileAttr = filePath ? `data-file="${filePath}"` : "";
         const lineAttr = position ? `data-line="${position.line}"` : "";
