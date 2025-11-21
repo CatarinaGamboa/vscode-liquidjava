@@ -5,6 +5,12 @@ import { getLoadingView } from "./renderers/loading";
 import { getErrorsView } from "./renderers/diagnostics/errors";
 import { getWarningsView } from "./renderers/diagnostics/warnings";
 
+/**
+ * Initializes the webview script
+ * @param vscode
+ * @param document
+ * @param window
+ */
 export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root');
     let currentErrors: LJError[] = [];

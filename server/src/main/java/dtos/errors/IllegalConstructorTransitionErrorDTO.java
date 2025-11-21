@@ -4,7 +4,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.IllegalConstructorTransitionError;
 
 /**
- * Record DTO for serializing IllegalConstructorTransitionError instances to JSON
+ * DTO for serializing IllegalConstructorTransitionError instances to JSON
  */
 public record IllegalConstructorTransitionErrorDTO(String category, String type, String title, String message, String file,
         ErrorPosition position) {

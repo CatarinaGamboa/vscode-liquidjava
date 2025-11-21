@@ -5,7 +5,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.StateConflictError;
 
 /**
- * Record DTO for serializing StateConflictError instances to JSON
+ * DTO for serializing StateConflictError instances to JSON
  */
 public record StateConflictErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position,
         TranslationTableDTO translationTable, String state) {

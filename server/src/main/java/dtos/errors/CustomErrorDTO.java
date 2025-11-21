@@ -4,7 +4,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.CustomError;
 
 /**
- * Record DTO for serializing CustomError instances to JSON
+ * DTO for serializing CustomError instances to JSON
  */
 public record CustomErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position) {
 

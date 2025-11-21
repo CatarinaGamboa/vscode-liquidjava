@@ -4,7 +4,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.warnings.ExternalMethodNotFoundWarning;
 
 /**
- * Record DTO for serializing ExternalMethodNotFoundWarning instances to JSON
+ * DTO for serializing ExternalMethodNotFoundWarning instances to JSON
  */
 public record ExternalMethodNotFoundWarningDTO(String category, String type, String title, String message, String file,
         ErrorPosition position, String methodName, String className, String[] overloads) {

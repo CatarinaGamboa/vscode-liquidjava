@@ -4,7 +4,7 @@ import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.ErrorPosition;
 
 /**
- * Record DTO for serializing LJDiagnostic instances to JSON
+ * DTO for serializing LJDiagnostic instances to JSON
  */
 public record LJDiagnosticDTO(String title, String message, String details, String file, ErrorPosition position) {
 

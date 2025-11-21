@@ -1,6 +1,12 @@
 import * as vscode from "vscode";
 import { getStyles } from "./styles";
 
+/**
+ * Generates the HTML content for the webview
+ * @param webview
+ * @param extensionUri
+ * @returns HTML string
+ */
 export function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
     const nonce = Date.now().toString();
     const cspSource = webview.cspSource;

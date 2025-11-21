@@ -8,6 +8,7 @@ export const renderHeader = (diagnostic: LJDiagnostic): string => {
 };
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
+    if (!diagnostic.position) return "";
     const line = diagnostic.position?.lineStart ?? 0;
     const column = diagnostic.position?.colStart ?? 0;
     const simpleFile = diagnostic.file.split('/').pop() || diagnostic.file;

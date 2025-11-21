@@ -4,7 +4,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.SyntaxError;
 
 /**
- * Record DTO for serializing SyntaxError instances to JSON
+ * DTO for serializing SyntaxError instances to JSON
  */
 public record SyntaxErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position,
         String refinement) {

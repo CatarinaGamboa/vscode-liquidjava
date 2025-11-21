@@ -6,7 +6,7 @@ import liquidjava.diagnostics.errors.RefinementError;
 import liquidjava.rj_language.opt.derivation_node.ValDerivationNode;
 
 /**
- * Record DTO for serializing RefinementError instances to JSON
+ * DTO for serializing RefinementError instances to JSON
  */
 public record RefinementErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position,
         TranslationTableDTO translationTable, ValDerivationNode expected, ValDerivationNode found) {

@@ -5,7 +5,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.LJError;
 
 /**
- * Record DTO for serializing LJError instances to JSON
+ * DTO for serializing LJError instances to JSON
  */
 public record LJErrorDTO(String title, String message, String file, ErrorPosition position,
         TranslationTableDTO translationTable) {

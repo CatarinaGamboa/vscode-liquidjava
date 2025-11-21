@@ -4,7 +4,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.warnings.ExternalClassNotFoundWarning;
 
 /**
- * Record DTO for serializing ExternalClassNotFoundWarning instances to JSON
+ * DTO for serializing ExternalClassNotFoundWarning instances to JSON
  */
 public record ExternalClassNotFoundWarningDTO(String category, String type, String title, String message, String file,
         ErrorPosition position, String className) {

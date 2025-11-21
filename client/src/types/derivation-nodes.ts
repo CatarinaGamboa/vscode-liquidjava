@@ -1,3 +1,5 @@
+// Type definitions used in refinement errors for expanding node simplifications
+
 export type DerivationNode = ValDerivationNode | VarDerivationNode | BinaryDerivationNode | UnaryDerivationNode;
 
 export type ValDerivationNode = {

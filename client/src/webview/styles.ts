@@ -1,3 +1,8 @@
+
+/**
+ * Generates the CSS styles for the webview
+ * @returns CSS string
+ */
 export function getStyles(): string {
     return /*css*/`
         body {

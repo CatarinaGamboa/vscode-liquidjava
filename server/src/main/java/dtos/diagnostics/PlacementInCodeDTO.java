@@ -3,7 +3,7 @@ package dtos.diagnostics;
 import liquidjava.processor.context.PlacementInCode;
 
 /**
- * Record DTO for serializing PlacementInCode instances to JSON
+ * DTO for serializing PlacementInCode instances to JSON
  */
 public record PlacementInCodeDTO(String text, PositionDTO position) {
 

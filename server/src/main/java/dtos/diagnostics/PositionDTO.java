@@ -3,7 +3,7 @@ package dtos.diagnostics;
 import spoon.reflect.cu.SourcePosition;
 
 /**
- * Record DTO for serializing Spoon SourcePosition to JSON
+ * DTO for serializing Spoon SourcePosition to JSON
  */
 public record PositionDTO(String file, int line, int column) {
 

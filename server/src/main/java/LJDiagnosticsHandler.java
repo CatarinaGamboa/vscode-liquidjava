@@ -24,6 +24,12 @@ public class LJDiagnosticsHandler {
     private static final String SRC_SUFFIX = "/src/";
     private static final String SOURCE = "liquidjava";
 
+
+    /**
+     * Generates LJDiagnostics for the given URI
+     * @param uri
+     * @return LJDiagnostics
+     */
     public static LJDiagnostics getLJDiagnostics(String uri) {
         List<LJError> errors = new ArrayList<>();
         List<LJWarning> warnings = new ArrayList<>();
@@ -43,6 +49,12 @@ public class LJDiagnosticsHandler {
         return new LJDiagnostics(errors, warnings);
     }
 
+    /**
+     * Generates VS Code diagnostics for the given LJDiagnostics and URI
+     * @param diagnostics
+     * @param uri
+     * @return List of PublishDiagnosticsParams
+     */
     public static List<PublishDiagnosticsParams> getNativeDiagnostics(LJDiagnostics diagnostics, String uri) {
         List<PublishDiagnosticsParams> errors = getDiagnostics(new ArrayList<>(diagnostics.errors()), DiagnosticSeverity.Error);
         List<PublishDiagnosticsParams> warnings = getDiagnostics(new ArrayList<>(diagnostics.warnings()), DiagnosticSeverity.Warning);

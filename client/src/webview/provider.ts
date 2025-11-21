@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 import { getHtml } from './html';
 
+/**
+ * Webview provider for the LiquidJava extension
+ * Provides an interactive user interface for the LiquidJava diagnostics 
+ */
 export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "liquidJavaView";
   private view?: vscode.WebviewView;
@@ -44,10 +48,19 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
     });
   }
 
+  /**
+   * Sends a message from the client to the webview
+   * @param message
+   */
   public sendMessage(message: any) {
     this.view?.webview.postMessage(message);
   }
 
+  /**
+   * Generates the HTML content for the webview
+   * @param webview
+   * @returns HTML string
+   */
   private getHtml(webview: vscode.Webview): string {
     return getHtml(webview, this.extensionUri);
   }

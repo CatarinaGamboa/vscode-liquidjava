@@ -4,7 +4,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.InvalidRefinementError;
 
 /**
- * Record DTO for serializing InvalidRefinementError instances to JSON
+ * DTO for serializing InvalidRefinementError instances to JSON
  */
 public record InvalidRefinementErrorDTO(String category, String type, String title, String message, String file,
         ErrorPosition position, String refinement) {

@@ -5,7 +5,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.NotFoundError;
 
 /**
- * Record DTO for serializing NotFoundError instances to JSON
+ * DTO for serializing NotFoundError instances to JSON
  */
 public record NotFoundErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position,
         TranslationTableDTO translationTable, String name, String kind) {

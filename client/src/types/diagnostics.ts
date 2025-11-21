@@ -1,5 +1,7 @@
 import type { ValDerivationNode } from './derivation-nodes';
 
+// Type definitions used for LiquidJava diagnostics
+
 export type ErrorPosition = {
     lineStart: number;
     lineEnd: number;
