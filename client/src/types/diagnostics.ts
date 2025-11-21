@@ -28,7 +28,7 @@ export type LJError = CustomError | IllegalConstructorTransitionError |
     InvalidRefinementError | NotFoundError | RefinementError | StateConflictError | 
     StateRefinementError | SyntaxError;
 
-export type LJWarning = ExternalClassNotFoundWarning | ExternalMethodNotFoundWarning;
+export type LJWarning = CustomWarning | ExternalClassNotFoundWarning | ExternalMethodNotFoundWarning;
 
 type BaseDiagnostic = {
     title: string;
@@ -88,6 +88,11 @@ export type SyntaxError = BaseDiagnostic & {
     category: 'error';
     type: 'syntax-error';
     refinement: string;
+}
+
+export type CustomWarning = BaseDiagnostic & {
+    category: 'warning';
+    type: 'custom-warning';
 }
 
 export type ExternalClassNotFoundWarning = BaseDiagnostic & {
