@@ -13,6 +13,6 @@ public record RefinementErrorDTO(String category, String type, String title, Str
 
     public static RefinementErrorDTO from(RefinementError error) {
         return new RefinementErrorDTO("error", "refinement-error", error.getTitle(), error.getMessage(), error.getFile(),
-                error.getPosition(), TranslationTableDTO.from(error.getTranslationTable()), new ValDerivationNode(null, null), error.getFound());
+                error.getPosition(), TranslationTableDTO.from(error.getTranslationTable()), error.getExpected(), error.getFound());
     }
 }
