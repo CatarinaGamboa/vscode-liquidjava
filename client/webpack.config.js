@@ -5,14 +5,24 @@
 const path = require('path');
 const fs = require('fs');
 
-/**@type {import('webpack').Configuration}*/
-const config = {
-  target: 'node', // vscode extensions run in a Node.js context
-  mode: 'none', // leave the source code as close as possible to the original
+/** @type {() => import('webpack').RuleSetRule} */
+const createTsRule = () => ({
+  test: /\.ts$/,
+  exclude: /node_modules/,
+  use: [
+    {
+      loader: 'ts-loader'
+    }
+  ]
+});
 
-  entry: './src/extension.ts', // the entry point of this extension
+/** @type {import('webpack').Configuration} */
+const extensionConfig = {
+  target: 'node',
+  mode: 'none',
+  entry: './src/extension.ts',
   output: {
-    // the bundle is stored in the 'dist' folder
+    // store bundle in dist folder
     path: path.resolve(__dirname, 'dist'),
     filename: 'extension.js',
     libraryTarget: 'commonjs2',
@@ -23,21 +33,10 @@ const config = {
     vscode: 'commonjs vscode'
   },
   resolve: {
-    // support reading TypeScript and JavaScript files
     extensions: ['.ts', '.js']
   },
   module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader'
-          }
-        ]
-      }
-    ]
+    rules: [createTsRule()]
   },
   plugins: [
     // Copy server JAR to dist folder after build
@@ -62,4 +61,23 @@ const config = {
     }
   ]
 };
-module.exports = config;
+
+/** @type {import('webpack').Configuration} */
+const webviewConfig = {
+  target: 'web',
+  mode: 'none',
+  entry: './src/webview/main.ts',
+  output: {
+    path: path.resolve(__dirname, 'media'),
+    filename: 'webview.js'
+  },
+  devtool: 'source-map',
+  resolve: {
+    extensions: ['.ts', '.js']
+  },
+  module: {
+    rules: [createTsRule()]
+  }
+};
+
+module.exports = [extensionConfig, webviewConfig];

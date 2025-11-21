@@ -2,13 +2,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
+import { JAVA_BINARY } from "./constants";
 
 /**
  * Finds the Java executable in the system, either in JAVA_HOME or in PATH
  * MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
  */
-export function findJavaExecutable(binname: string): string | null {
-    binname = process.platform === "win32" ? `${binname}.exe` : binname;
+export function findJavaExecutable(): string | null {
+    const binname = process.platform === "win32" ? `${JAVA_BINARY}.exe` : JAVA_BINARY;
 
     // First search each JAVA_HOME bin folder
     if (process.env["JAVA_HOME"]) {

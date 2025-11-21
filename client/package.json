@@ -10,7 +10,7 @@
 	},
 	"homepage": "https://liquid-java.github.io",
 	"engines": {
-		"vscode": "^1.70.0"
+		"vscode": "^1.82.0"
 	},
 	"languages": [
 		{
@@ -67,13 +67,38 @@
 			}
 		},
 		"viewsContainers": {
-			"activitybar": []
+			"activitybar": [
+				{
+					"id": "liquidJavaContainer",
+					"title": "LiquidJava",
+					"icon": "media/java-icon.svg"
+				}
+			]
 		},
-		"views": {},
+		"views": {
+			"liquidJavaContainer": [
+				{
+					"id": "liquidJavaView",
+					"name": "LiquidJava",
+					"type": "webview",
+					"icon": "media/java-icon.svg"
+				}
+			]
+		},
 		"commands": [
+			{
+				"command": "liquidjava.showCommands",
+				"title": "Show Commands",
+				"category": "LiquidJava"
+			},
 			{
 				"command": "liquidjava.showLogs",
 				"title": "Show Logs",
+				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.showView",
+				"title": "Show View",
 				"category": "LiquidJava"
 			}
 		],
@@ -103,13 +128,13 @@
 	"extensionDependencies": [],
 	"devDependencies": {
 		"@types/mkdirp": "^0.5.2",
-		"@types/node": "^12.12.0",
+		"@types/node": "^24.7.2",
 		"@types/rimraf": "^2.0.2",
-		"@types/vscode": "^1.45.0",
+		"@types/vscode": "^1.82.0",
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
 		"eslint": "^7.21.0",
-		"typescript": "^4.2.2",
+		"typescript": "~5.3.0",
 		"ts-loader": "^9.5.4",
 		"webpack": "^5.102.1",
 		"webpack-cli": "^5.1.4"
@@ -121,6 +146,6 @@
 		"minimist": "^1.2.7",
 		"mkdirp": "^0.5.1",
 		"rimraf": "^2.6.2",
-		"vscode-languageclient": "^3.1.0"
+		"vscode-languageclient": "^9.0.1"
 	}
 }

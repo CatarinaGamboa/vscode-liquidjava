@@ -1,5 +1,5 @@
-export const API_JAR_GLOB = "lib/liquidjava-api*.jar";
-export const SERVER_JAR_FILENAME = "language-server-liquidjava.jar";
+export const SERVER_JAR = "language-server-liquidjava.jar";
+export const JAVA_BINARY = "java";
 export const DEBUG_MODE = false;
 export const DEBUG_PORT = 50000;
 export const LIQUIDJAVA_SCOPES = [

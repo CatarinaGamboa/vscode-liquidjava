@@ -2,11 +2,13 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
-import { LanguageClient, LanguageClientOptions, StreamInfo, ServerOptions, State } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vscode-languageclient/node";
 import { LiquidJavaLogger, createLogger } from "./logging";
 import { applyItalicOverlay } from "./decorators";
 import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from "./utils";
-import { SERVER_JAR_FILENAME, DEBUG_MODE, DEBUG_PORT } from "./constants";
+import { SERVER_JAR, DEBUG_MODE, DEBUG_PORT } from "./constants";
+import { LiquidJavaWebviewProvider } from "./webview/provider";
+import { LJDiagnostic } from "./types";
 
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
@@ -14,6 +16,8 @@ let socket: net.Socket;
 let outputChannel: vscode.OutputChannel;
 let logger: LiquidJavaLogger;
 let statusBarItem: vscode.StatusBarItem;
+let currentDiagnostics: LJDiagnostic[];
+let webviewProvider: LiquidJavaWebviewProvider;
 
 /**
  * Activates the LiquidJava extension
@@ -22,12 +26,15 @@ let statusBarItem: vscode.StatusBarItem;
 export async function activate(context: vscode.ExtensionContext) {
     initLogging(context);
     initStatusBar(context);
+    initCommandPalette(context);
+    initWebview(context);
+    initCodeLens(context);
 
     logger.client.info("Activating LiquidJava extension...");
     await applyItalicOverlay();
 
     // find java executable path
-    const javaExecutablePath = findJavaExecutable("java");
+    const javaExecutablePath = findJavaExecutable();
     if (!javaExecutablePath) {
         vscode.window.showErrorMessage("LiquidJava - Java Runtime Not Found in JAVA_HOME or PATH");
         logger.client.error("Java Runtime not found in JAVA_HOME or PATH - Not activating extension");
@@ -71,11 +78,92 @@ function initLogging(context: vscode.ExtensionContext) {
  */
 function initStatusBar(context: vscode.ExtensionContext) {
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
-    statusBarItem.tooltip = "Show Logs";
-    statusBarItem.command = "liquidjava.showLogs";
+    statusBarItem.tooltip = "LiquidJava Commands";
+    statusBarItem.command = "liquidjava.showCommands";
     updateStatusBar("loading")
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
+}
+
+/**
+ * Initializes the command palette for the extension
+ * @param context The extension context
+ */
+function initCommandPalette(context: vscode.ExtensionContext) {
+    context.subscriptions.push(
+        vscode.commands.registerCommand("liquidjava.showCommands", async () => {
+            const commands = [
+                { label: "$(output) Show Logs", command: "liquidjava.showLogs" },
+                { label: "$(window) Show View", command: "liquidjava.showView" },
+                // TODO: add more commands here, e.g., start, stop, restart, verify, etc.
+            ];
+            const placeHolder = "Select a LiquidJava Command";
+            const selected = await vscode.window.showQuickPick(commands, { placeHolder });
+            if (selected) vscode.commands.executeCommand(selected.command);
+        })
+    );
+}
+
+/**
+ * Initializes the webview panel for the extension
+ * @param context The extension context
+ */
+function initWebview(context: vscode.ExtensionContext) {
+    webviewProvider = new LiquidJavaWebviewProvider(context.extensionUri);
+
+    // webview provider
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(LiquidJavaWebviewProvider.viewType, webviewProvider)
+    );
+    // show view command
+    context.subscriptions.push(
+        vscode.commands.registerCommand("liquidjava.showView", () => {
+            vscode.commands.executeCommand("liquidJavaView.focus");
+        })
+    );
+    // listen for messages from the webview
+    context.subscriptions.push(
+        webviewProvider.onDidReceiveMessage(message => {
+            console.log("received message", message);
+            if (message.type === "ready") {
+                webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
+            }
+        })
+    );
+}
+
+/**
+ * Initializes code lens with clickable "View Details" button
+ * @param context The extension context
+ */
+function initCodeLens(context: vscode.ExtensionContext) {
+    const codeLensEventEmitter = new vscode.EventEmitter<void>();
+    const codeLensProvider: vscode.CodeLensProvider = {
+        provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
+            const diagnostics = vscode.languages.getDiagnostics(document.uri);
+            return diagnostics
+                .filter(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error)
+                .map(d => {
+                    const range = new vscode.Range(d.range.start.line, 0, d.range.end.line, 0);
+                    return new vscode.CodeLens(range, {
+                        title: "View " + (d.message.split(":")[0] || "Error"),
+                        command: "liquidjava.showView",
+                        tooltip: "Open LiquidJava View",
+                    });
+                });
+        },
+        onDidChangeCodeLenses: codeLensEventEmitter.event
+    };
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider({ language: "java" }, codeLensProvider)
+    );
+    // update code lenses when diagnostics change
+    context.subscriptions.push(
+        vscode.languages.onDidChangeDiagnostics(() => {
+            codeLensEventEmitter.fire();
+        })
+    );
+    context.subscriptions.push(codeLensEventEmitter);
 }
 
 /**
@@ -108,7 +196,7 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     }
     logger.client.info("Running language server on port " + port);
 
-    const jarPath = path.resolve(context.extensionPath, "dist", "server", SERVER_JAR_FILENAME);
+    const jarPath = path.resolve(context.extensionPath, "dist", "server", SERVER_JAR);
     const args = ["-jar", jarPath, port.toString()];
     const options = {
         cwd: vscode.workspace.workspaceFolders[0].uri.fsPath, // root path
@@ -120,11 +208,6 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
     serverProcess.stdout.on("data", (data) => {
         const message = data.toString().trim();
         logger.server.info(message);
-        if (message.includes("Failed")) {
-            updateStatusBar("failed");
-        } else if (message.includes("Passed")) {
-            updateStatusBar("passed");
-        }
     });
     serverProcess.stderr.on("data", (data) => {
         logger.server.error(data.toString().trim())
@@ -146,7 +229,7 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
  */
 async function runClient(context: vscode.ExtensionContext, port: number) {
     const serverOptions: ServerOptions = () => {
-        return new Promise<StreamInfo>(async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 socket = await connectToPort(port);
                 resolve({
@@ -161,6 +244,12 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
     };
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
+        middleware: {
+            handleDiagnostics(uri, diagnostics, next) {
+                handleNativeDiagnostics(diagnostics)
+                next(uri, diagnostics);
+            },
+        }
     };
     client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     client.onDidChangeState((e) => {
@@ -168,22 +257,24 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
             stopExtension("Extension stopped");
         }
     });
-    const disposable = client.start();
-    context.subscriptions.push(disposable); // client teardown
+    
+    context.subscriptions.push(client); // client teardown
     context.subscriptions.push({
         dispose: () => stopExtension("Extension was disposed"), // server teardown
     });
 
-    client
-        .onReady()
-        .then(() => {
-            logger.client.info("Extension is ready");
-        })
-        .catch(async (e) => {
-            vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
-            logger.client.error("Failed to initialize: " + e.toString());
-            await stopExtension("Failed to initialize");
+    try {
+        await client.start();
+        logger.client.info("Extension is ready");
+        
+        client.onNotification("liquidjava/diagnostics", (diagnostics: LJDiagnostic[]) => {
+            handleLJDiagnostics(diagnostics);
         });
+    } catch (e) {
+        vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
+        logger.client.error("Failed to initialize: " + e.toString());
+        await stopExtension("Failed to initialize");
+    }
 
     // update status bar on file save
     context.subscriptions.push(
@@ -228,4 +319,26 @@ async function stopExtension(reason: string) {
     // kill server process
     await killProcess(serverProcess);
     serverProcess = undefined;
+}
+
+/**
+ * Looks for diagnostics in the editor and updates the status bar accordingly
+ * @param diagnostics The diagnostics to handle
+ */
+function handleNativeDiagnostics(diagnostics: vscode.Diagnostic[]) {
+    const ljError = diagnostics.find(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error);
+    if (ljError) {
+        updateStatusBar("failed");
+    } else {
+        updateStatusBar("passed");
+    }
+}
+
+/**
+ * Handles LiquidJava diagnostics received from the language server
+ * @param diagnostics The LiquidJava diagnostics
+ */
+function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
+    webviewProvider?.sendMessage({ type: "diagnostics", diagnostics });
+    currentDiagnostics = diagnostics;
 }
