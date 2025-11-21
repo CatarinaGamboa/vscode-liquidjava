@@ -12,6 +12,7 @@ import dtos.errors.RefinementErrorDTO;
 import dtos.errors.StateConflictErrorDTO;
 import dtos.errors.StateRefinementErrorDTO;
 import dtos.errors.SyntaxErrorDTO;
+import dtos.warnings.CustomWarningDTO;
 import dtos.warnings.ExternalClassNotFoundWarningDTO;
 import dtos.warnings.ExternalMethodNotFoundWarningDTO;
 import dtos.warnings.LJWarningDTO;
@@ -25,6 +26,7 @@ import liquidjava.diagnostics.errors.RefinementError;
 import liquidjava.diagnostics.errors.StateConflictError;
 import liquidjava.diagnostics.errors.StateRefinementError;
 import liquidjava.diagnostics.errors.SyntaxError;
+import liquidjava.diagnostics.warnings.CustomWarning;
 import liquidjava.diagnostics.warnings.ExternalClassNotFoundWarning;
 import liquidjava.diagnostics.warnings.ExternalMethodNotFoundWarning;
 import liquidjava.diagnostics.warnings.LJWarning;
@@ -60,6 +62,8 @@ public class DiagnosticConverter {
             return ExternalClassNotFoundWarningDTO.from(d);
         } else if (diagnostic instanceof ExternalMethodNotFoundWarning d) {
             return ExternalMethodNotFoundWarningDTO.from(d);
+        } else if (diagnostic instanceof CustomWarning d) {
+            return CustomWarningDTO.from(d);
         } else if (diagnostic instanceof LJError d) {
             return LJErrorDTO.from(d);
         } else if (diagnostic instanceof LJWarning d) {

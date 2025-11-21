@@ -59,7 +59,5 @@ export function renderError(error: LJError): string {
             const e = error as StateRefinementError;
             return `${header}${renderSection('Expected', `<pre>${e.expected}</pre>`)}${renderSection('Found', `<pre>${e.found}</pre>`)}${location}`;
         }
-        default:
-            return `${header}${location}`;
     }
 }
