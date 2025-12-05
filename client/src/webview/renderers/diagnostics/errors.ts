@@ -47,7 +47,7 @@ export function renderError(error: LJError): string {
             const e = error as RefinementError;
             return /*html*/`
                 ${header}
-                ${renderSection('Expected', renderDerivationNode(e, e.expected))}
+                <pre>${e.expected/*renderSection('Expected', renderDerivationNode(e, e.expected))*/} </pre>
                 ${renderSection('Found', renderDerivationNode(e, e.found))}
                 ${location}
             `;
