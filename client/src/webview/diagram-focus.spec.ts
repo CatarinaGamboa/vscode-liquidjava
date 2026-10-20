@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LJStateMachine, LJStateMachineErrorContext } from '../types/fsm';
 import { createMermaidDiagram } from './diagram';
-import { getFocusedStates, getRejectedCallText, getStateErrorFocus } from './diagram-focus';
+import { getDisplayedStateMachine, getFocusedStates, getRejectedCallText, getStateErrorFocus } from './diagram-focus';
 
 // DefaultMutableTreeNode from the state error focus issue (#117):
 // root.add(...); root.removeAllChildren(); root.getFirstChild(); // state error
@@ -96,23 +96,23 @@ describe('state error focus', () => {
             'childrenAllowed --> maybeHasChildren : add',
             'maybeHasChildren --> childrenAllowed : removeAllChildren',
         ]));
-        // the rejected call is not drawn as a transition, and unrelated content is left out
-        expect(diagram.filter(line => line.includes('-->') && line.includes('getFirstChild'))).toEqual([]);
+        // the call only appears where it is allowed, without the highlight of a taken transition
+        expect(diagram.filter(line => line.includes('-->') && line.includes('getFirstChild')))
+            .toEqual(['maybeHasChildren --> maybeHasChildren : getFirstChild']);
         expect(diagram.some(line => line.startsWith('[*]'))).toBe(false);
         expect(diagram.join('\n')).not.toContain('lj-state-error-method');
     });
 
-    it('marks the error on the full diagram without highlighting transitions by label', () => {
+    it('marks the error on the full diagram and highlights where the call is allowed', () => {
         const diagram = lines(createMermaidDiagram(treeNode(), 'TB', false, false));
 
         expect(diagram).toEqual(expect.arrayContaining([
             '[*] --> childrenAllowed : DefaultMutableTreeNode(Object)',
-            'maybeHasChildren --> maybeHasChildren : getFirstChild',
+            'maybeHasChildren --> maybeHasChildren : <span class="lj-state-error-method">getFirstChild</span>',
             'note right of childrenAllowed : ⊘ root.getFirstChild()<br/>Call rejected from this state',
             'class childrenAllowed ljStateErrorFound',
             'class maybeHasChildren ljStateErrorRequired',
         ]));
-        expect(diagram.join('\n')).not.toContain('lj-state-error-method');
         expect(diagram.join('\n')).not.toContain('ljStateErrorActual');
     });
 
@@ -129,8 +129,11 @@ describe('state error focus', () => {
             'note right of bound : ⊘ socket.sendUrgentData()<br/>Call rejected from this state',
             'bound --> connected : connect',
             'connected --> inputShutdown : shutdownInput',
+            // self loops of the called method show where it is allowed, other self loops are left out
+            'connected --> connected : sendUrgentData',
+            'inputShutdown --> inputShutdown : sendUrgentData',
         ]));
-        for (const unrelated of ['unconnected', 'outputShutdown', 'bothShutdown', 'closed', '[*]', 'isClosed', 'sendUrgentData :']) {
+        for (const unrelated of ['unconnected', 'outputShutdown', 'bothShutdown', 'closed', '[*]', 'isClosed']) {
             expect(focused).not.toContain(unrelated);
         }
 
@@ -203,9 +206,50 @@ describe('state error focus', () => {
         sm.transitions.push({ from: 'childrenAllowed', to: 'maybeHasChildren', label: 'getFirstChild' });
 
         const diagram = createMermaidDiagram(sm, 'TB', false, false);
-        expect(diagram).toContain('childrenAllowed --> maybeHasChildren : add<br/>getFirstChild');
+        expect(diagram).toContain('childrenAllowed --> maybeHasChildren : add<br/><span class="lj-state-error-method">getFirstChild</span>');
         expect(diagram).toContain('note right of childrenAllowed : ⊘ root.getFirstChild()');
-        expect(diagram).not.toContain('lj-state-error-method');
+    });
+
+    it('combines the labels of a state that may be found and is also required', () => {
+        const sm: LJStateMachine = {
+            className: 'Connection',
+            states: ['Open', 'Closed'],
+            initialTransitions: [{ to: 'Closed' }],
+            transitions: [
+                { from: 'Closed', to: 'Open', label: 'open' },
+                { from: 'Open', to: 'Open', label: 'read' },
+            ],
+            errorContext: {
+                calledMethod: 'read', actualStates: ['Open', 'Closed'], receiver: 'connection', expectedStates: ['Open'],
+                expectedCondition: 'Open(connection)', foundCondition: 'Open(connection) || Closed(connection)',
+                definiteFoundState: null,
+            },
+        };
+
+        for (const focusOnError of [true, false]) {
+            const diagram = lines(createMermaidDiagram(sm, 'TB', false, focusOnError));
+            expect(diagram.filter(line => line.startsWith('Open :'))).toEqual([
+                'Open : Open',
+                'Open : ? Possible · ✓ Required<br/>for this call',
+            ]);
+            expect(diagram.filter(line => line.startsWith('class'))).toEqual([
+                'class lj_found_condition ljStateErrorFoundCondition',
+                'class Closed ljStateErrorPossible',
+                'class Open ljStateErrorPossibleRequired',
+            ]);
+        }
+        // the call is only allowed as a self loop on the required state
+        expect(lines(createMermaidDiagram(sm, 'TB', false, true))).toContain('Open --> Open : read');
+    });
+
+    it('only offers condition expansions of the displayed transitions', () => {
+        const sm = socket();
+        sm.transitions.push({ from: 'closed', to: 'closed', label: 'isBound', fromCondition: 'size > 0' });
+
+        expect(getDisplayedStateMachine(sm, false).transitions.some(transition => transition.fromCondition)).toBe(true);
+        const focused = getDisplayedStateMachine(sm, true);
+        expect(focused.initialTransitions).toEqual([]);
+        expect(focused.transitions.some(transition => transition.fromCondition)).toBe(false);
     });
 
     it('keeps the previous highlighting for an error context without the error states', () => {

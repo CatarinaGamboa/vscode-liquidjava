@@ -46,6 +46,13 @@ describe('state error styles', () => {
         expect(stroke('.ljStateErrorPossible rect.outer').dash).toBe('5 3');
     });
 
+    it('dashes a possible state that is also required in the required colour', () => {
+        render(describedState('ljStateErrorPossibleRequired'));
+
+        expect(stroke('.ljStateErrorPossibleRequired rect.outer')).toEqual({ color: 'var(--lj-state-required)', dash: '5 3' });
+        expect(stroke('.ljStateErrorPossibleRequired .divider').color).toBe('var(--lj-state-required)');
+    });
+
     it('keeps unrelated states with the default outline', () => {
         render(describedState('') + plainState(''));
 

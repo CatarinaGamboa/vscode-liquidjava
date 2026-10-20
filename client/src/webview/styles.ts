@@ -1024,10 +1024,12 @@ export function getStyles(): string {
             stroke-width: 2px !important;
         }
         .diagram-container .mermaid svg .ljStateErrorFoundCondition :is(.label-container, rect.outer),
-        .diagram-container .mermaid svg .ljStateErrorPossible :is(.label-container, rect.outer) {
+        .diagram-container .mermaid svg .ljStateErrorPossible :is(.label-container, rect.outer),
+        .diagram-container .mermaid svg .ljStateErrorPossibleRequired :is(.label-container, rect.outer) {
             stroke-dasharray: 5 3;
         }
-        .diagram-container .mermaid svg .ljStateErrorRequired :is(.label-container, rect.outer, .divider) {
+        .diagram-container .mermaid svg .ljStateErrorRequired :is(.label-container, rect.outer, .divider),
+        .diagram-container .mermaid svg .ljStateErrorPossibleRequired :is(.label-container, rect.outer, .divider) {
             stroke: var(--lj-state-required) !important;
             stroke-width: 2px !important;
         }

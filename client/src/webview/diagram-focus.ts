@@ -11,6 +11,7 @@ export const REJECTED_CALL_ICON = '\u2298';
 export const REJECTED_CALL_TEXT = 'Call rejected from this state';
 export const REJECTED_CALL_UNKNOWN_STATE_TEXT = 'Call rejected from the found state';
 export const UNKNOWN_FOUND_STATE_TEXT = 'no single state';
+export const POSSIBLE_REQUIRED_STATE_TEXT = `Possible \u00B7 ${REQUIRED_STATE_ICON} ${REQUIRED_STATE_TEXT}`;
 
 /**
  * The selected state error of a single state machine, with the states it involves
@@ -82,6 +83,39 @@ function getShortestPath(sm: LJStateMachine, sources: string[], targets: string[
             });
     }
     return [];
+}
+
+/**
+ * The part of a state machine shown in its diagram
+ */
+export type DisplayedStateMachine = {
+    errorFocus: StateErrorFocus | null;
+    focusedStates: string[] | null;
+    initialTransitions: LJStateMachine['initialTransitions'];
+    transitions: LJStateMachine['transitions'];
+};
+
+/**
+ * Gets the part of a state machine shown in its diagram
+ * The focused view only keeps the transitions between the focused states, without self loops
+ * except for the called method on a required state, which shows where the call is allowed
+ * @param sm
+ * @param focusOnError whether to only show the states involved in the selected state error
+ * @returns the error focus, the focused states (null for the full diagram), and the displayed transitions
+ */
+export function getDisplayedStateMachine(sm: LJStateMachine, focusOnError: boolean): DisplayedStateMachine {
+    const errorFocus = getStateErrorFocus(sm);
+    if (!focusOnError || !errorFocus) {
+        return { errorFocus, focusedStates: null, initialTransitions: sm.initialTransitions, transitions: sm.transitions };
+    }
+
+    const focusedStates = getFocusedStates(sm, errorFocus);
+    const transitions = sm.transitions.filter(transition => {
+        if (!focusedStates.includes(transition.from) || !focusedStates.includes(transition.to)) return false;
+        return transition.from !== transition.to
+            || (errorFocus.requiredStates.includes(transition.from) && transition.label === errorFocus.calledMethod);
+    });
+    return { errorFocus, focusedStates, initialTransitions: [], transitions };
 }
 
 /**

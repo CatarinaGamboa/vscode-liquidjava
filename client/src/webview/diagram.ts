@@ -4,7 +4,7 @@ import {
     FOUND_STATE_ICON, FOUND_STATE_TEXT, POSSIBLE_STATE_ICON, POSSIBLE_STATE_TEXT,
     REJECTED_CALL_ICON, REJECTED_CALL_TEXT, REJECTED_CALL_UNKNOWN_STATE_TEXT,
     REQUIRED_STATE_ICON, REQUIRED_STATE_TEXT, UNKNOWN_FOUND_STATE_TEXT,
-    getFocusedStates, getRejectedCallText, getStateErrorFocus, type StateErrorFocus,
+    POSSIBLE_REQUIRED_STATE_TEXT, getDisplayedStateMachine, getRejectedCallText, type StateErrorFocus,
 } from "./diagram-focus";
 
 // constants
@@ -41,8 +41,7 @@ export function createMermaidDiagram(
     if (!sm) return '';
     
     const lines: string[] = [];
-    const errorFocus = getStateErrorFocus(sm);
-    const focusedStates = focusOnError && errorFocus ? getFocusedStates(sm, errorFocus) : null;
+    const { errorFocus, focusedStates, initialTransitions, transitions } = getDisplayedStateMachine(sm, focusOnError);
 
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
@@ -51,21 +50,16 @@ export function createMermaidDiagram(
     if (errorFocus && focusedStates) lines.push(...getStateErrorLines(errorFocus));
     
     // initial transitions
-    if (!focusedStates) {
-        sm.initialTransitions.forEach(transition => {
-            const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
-            lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
-        });
-    }
+    initialTransitions.forEach(transition => {
+        const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
+        lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
+    });
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
-    sm.transitions.forEach(transition => {
-        // the focused view only keeps the transitions between its states, without self loops
-        if (focusedStates && (transition.from === transition.to
-            || !focusedStates.includes(transition.from) || !focusedStates.includes(transition.to))) return;
-        // without the error states, the called method can only be found by its transition label
-        const isCalledMethod = !errorFocus && transition.label === sm.errorContext?.calledMethod;
+    transitions.forEach(transition => {
+        // the full diagram highlights where the called method is allowed, the focused view only marks the rejected call
+        const isCalledMethod = !focusedStates && transition.label === sm.errorContext?.calledMethod;
         const label = getTransitionLabel(
             transition.label,
             transition.fromCondition,
@@ -107,6 +101,10 @@ export function createMermaidDiagram(
 function getStateErrorLines(focus: StateErrorFocus): string[] {
     const lines: string[] = [];
     const foundNode = focus.foundState ?? STATE_ERROR_FOUND_CONDITION_ID;
+    // a state that may be found and is also required gets a single combined label
+    const possibleRequiredStates = focus.possibleStates.filter(state => focus.requiredStates.includes(state));
+    const possibleStates = focus.possibleStates.filter(state => !possibleRequiredStates.includes(state));
+    const requiredStates = focus.requiredStates.filter(state => !possibleRequiredStates.includes(state));
     if (focus.foundState) {
         lines.push(...getStateDescriptionLines(focus.foundState, `${FOUND_STATE_ICON} ${FOUND_STATE_TEXT}`));
     } else {
@@ -115,11 +113,14 @@ function getStateErrorLines(focus: StateErrorFocus): string[] {
             ? escapeMermaidLabel(focus.foundCondition).replace(/\\"/g, '#quot;')
             : UNKNOWN_FOUND_STATE_TEXT;
         lines.push(`    state "${FOUND_STATE_ICON} Found: ${condition}" as ${STATE_ERROR_FOUND_CONDITION_ID}`);
-        focus.possibleStates.forEach(state => {
+        possibleStates.forEach(state => {
             lines.push(...getStateDescriptionLines(state, `${POSSIBLE_STATE_ICON} ${POSSIBLE_STATE_TEXT}`));
         });
+        possibleRequiredStates.forEach(state => {
+            lines.push(...getStateDescriptionLines(state, `${POSSIBLE_STATE_ICON} ${POSSIBLE_REQUIRED_STATE_TEXT}`));
+        });
     }
-    focus.requiredStates.forEach(state => {
+    requiredStates.forEach(state => {
         lines.push(...getStateDescriptionLines(state, `${REQUIRED_STATE_ICON} ${REQUIRED_STATE_TEXT}`));
     });
 
@@ -129,12 +130,11 @@ function getStateErrorLines(focus: StateErrorFocus): string[] {
     lines.push(`    note right of ${foundNode} : ${callLabel}`);
 
     lines.push(`    class ${foundNode} ${focus.foundState ? 'ljStateErrorFound' : 'ljStateErrorFoundCondition'}`);
-    if (focus.possibleStates.length > 0 && !focus.foundState) {
-        lines.push(`    class ${focus.possibleStates.join(',')} ljStateErrorPossible`);
+    if (possibleStates.length > 0) lines.push(`    class ${possibleStates.join(',')} ljStateErrorPossible`);
+    if (possibleRequiredStates.length > 0) {
+        lines.push(`    class ${possibleRequiredStates.join(',')} ljStateErrorPossibleRequired`);
     }
-    if (focus.requiredStates.length > 0) {
-        lines.push(`    class ${focus.requiredStates.join(',')} ljStateErrorRequired`);
-    }
+    if (requiredStates.length > 0) lines.push(`    class ${requiredStates.join(',')} ljStateErrorRequired`);
     return lines;
 }
 
@@ -323,6 +323,8 @@ export function registerPanListeners(document: any) {
     const onMouseDown = (e: any) => {
         const target = e.target as any;
         if (target.tagName === 'A' || target.tagName === 'BUTTON') return;
+        // keep the error summary text selectable
+        if (target.closest?.('.diagram-error-summary')) return;
         
         e.preventDefault();
         isPanning = true;

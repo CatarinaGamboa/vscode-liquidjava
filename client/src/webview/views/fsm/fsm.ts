@@ -1,6 +1,6 @@
 import type { LJStateMachine } from "../../../types/fsm";
 import {
-    FOUND_STATE_ICON, REJECTED_CALL_ICON, REQUIRED_STATE_ICON, UNKNOWN_FOUND_STATE_TEXT, getRejectedCallText, getStateErrorFocus, type StateErrorFocus,
+    FOUND_STATE_ICON, REJECTED_CALL_ICON, REQUIRED_STATE_ICON, UNKNOWN_FOUND_STATE_TEXT, getDisplayedStateMachine, getRejectedCallText, type StateErrorFocus,
 } from "../../diagram-focus";
 import { renderHighlightedInlineExpression } from "../../highlighting";
 import { renderCodiconButton } from "../../icons";
@@ -14,10 +14,12 @@ export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | u
 }
 
 function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, diagramHeight?: number): string {
-    const errorFocus = getStateErrorFocus(sm);
-    const hasConditionExpansions = sm
-        ? sm.initialTransitions.some(transition => !!transition.toCondition)
-            || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
+    // only the displayed transitions can expand their conditions
+    const displayed = sm ? getDisplayedStateMachine(sm, focusOnError) : null;
+    const errorFocus = displayed?.errorFocus ?? null;
+    const hasConditionExpansions = displayed
+        ? displayed.initialTransitions.some(transition => !!transition.toCondition)
+            || displayed.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
         : false;
     const conditionToggleLabel = !hasConditionExpansions
         ? 'No additional conditions to expand'

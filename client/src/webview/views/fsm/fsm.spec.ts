@@ -152,6 +152,25 @@ describe('state machine view', () => {
         expect(document.querySelector('#diagram-focus-btn')).toBeNull();
     });
 
+    it('only enables condition expansion for conditions shown in the focused view', () => {
+        const errorMachine = machine({
+            transitions: [
+                { from: 'Closed', to: 'Open', label: 'open' },
+                { from: 'Closed', to: 'Closed', label: 'reset', fromCondition: 'size > 0' },
+            ],
+            errorContext: {
+                calledMethod: 'read', actualStates: ['Closed'], receiver: 'connection', expectedStates: ['Open'],
+                expectedCondition: 'Open(connection)', foundCondition: 'Closed(connection)', definiteFoundState: 'Closed',
+            },
+        });
+
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true);
+        expect(button('diagram-conditions-btn').disabled).toBe(true);
+
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, false);
+        expect(button('diagram-conditions-btn').disabled).toBe(false);
+    });
+
     it('preserves the previous diagram container height when rerendering', () => {
         renderStateMachineView(document.body, machine(), diagram, 'TB', false);
         const previousContainer = document.querySelector<HTMLElement>('.diagram-container')!;

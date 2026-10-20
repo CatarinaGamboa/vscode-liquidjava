@@ -57,6 +57,29 @@ const stateMachine: LJStateMachine = {
     errorContext: null,
 };
 
+function stateError(title: string, sm: LJStateMachine, line = position.lineStart): LJDiagnostic {
+    const errorPosition = { ...position, lineStart: line, lineEnd: line };
+    return {
+        title, message: `${title} message`, hint: null, file: currentFile, position: errorPosition,
+        category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
+        found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
+        customMessage: '', declarationPosition: null, stateMachine: sm,
+    };
+}
+
+function errorMachine(className: string, calledMethod: string): LJStateMachine {
+    return {
+        ...stateMachine,
+        className,
+        transitions: [...stateMachine.transitions, { from: 'Closed', to: 'Closed', label: 'reopen()' }],
+        initialTransitions: [{ to: 'Open' }, { to: 'Closed' }],
+        errorContext: {
+            calledMethod, actualStates: ['Closed'], receiver: 'counter', expectedStates: ['Open'],
+            expectedCondition: 'Open(counter)', foundCondition: 'Closed(counter)', definiteFoundState: 'Closed',
+        },
+    };
+}
+
 describe('webview script', () => {
     let dom: JSDOM;
     let root: HTMLElement;
@@ -142,21 +165,7 @@ describe('webview script', () => {
     });
 
     it('opens a state error focused on the error and toggles the full diagram', () => {
-        const errorMachine: LJStateMachine = {
-            ...stateMachine,
-            transitions: [...stateMachine.transitions, { from: 'Closed', to: 'Closed', label: 'reopen()' }],
-            initialTransitions: [{ to: 'Open' }, { to: 'Closed' }],
-            errorContext: {
-                calledMethod: 'close', actualStates: ['Closed'], receiver: 'counter', expectedStates: ['Open'],
-                expectedCondition: 'Open(counter)', foundCondition: 'Closed(counter)', definiteFoundState: 'Closed',
-            },
-        };
-        const error: LJDiagnostic = {
-            title: 'State refinement error', message: 'State refinement error message', hint: null,
-            file: currentFile, position, category: 'error', type: 'state-refinement-error', translationTable: {},
-            expected: 'Open(counter)', found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
-            customMessage: '', declarationPosition: null, stateMachine: errorMachine,
-        };
+        const error = stateError('State refinement error', errorMachine('Counter', 'close'));
         showDiagnostics([error]);
 
         click('.diagnostic-state-machine-btn');
@@ -181,6 +190,40 @@ describe('webview script', () => {
         click('[data-tab="fsm"]');
         expect(root.querySelector('#diagram-focus-btn')).toBeNull();
         expect(root.querySelector('.mermaid')?.textContent).not.toContain('note');
+    });
+
+    it('opens another state error focused after showing the full diagram of the previous one', () => {
+        showDiagnostics([
+            stateError('First state error', errorMachine('First', 'close'), 4),
+            stateError('Second state error', errorMachine('Second', 'reset'), 9),
+        ]);
+
+        click('.diagnostic-state-machine-btn[data-error-index="0"]');
+        click('#diagram-focus-btn');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Focus on error');
+
+        click('[data-tab="diagnostics"]');
+        click('.diagnostic-state-machine-btn[data-error-index="1"]');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show full diagram');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('counter.reset()');
+        expect(root.querySelector('.mermaid')?.textContent).not.toContain('[*]');
+    });
+
+    it('keeps the error summary selectable while the diagram pans', async () => {
+        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+        click('.diagnostic-state-machine-btn');
+        await vi.waitFor(() => {
+            expect(root.querySelector<HTMLElement>('#diagram-wrapper')?.style.transform).toBe('matrix(1, 0, 0, 1, 0, 0)');
+        });
+
+        const mouseDown = (selector: string) => {
+            const event = new dom.window.MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            root.querySelector(selector)!.dispatchEvent(event);
+            return event.defaultPrevented;
+        };
+        expect(mouseDown('.diagram-error-found code')).toBe(false);
+        expect(mouseDown('#diagram-wrapper')).toBe(true);
     });
 
     it('toggles between file and workspace errors by clicking scope buttons', () => {
