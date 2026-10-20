@@ -109,6 +109,49 @@ describe('state machine view', () => {
         }
     });
 
+    it('summarizes a selected state error with text and a toggle to the full diagram', () => {
+        const errorMachine = machine({
+            errorContext: {
+                calledMethod: 'read', actualStates: ['Closed'], receiver: 'connection',
+                expectedStates: ['Open'], expectedCondition: 'Open(connection)', foundCondition: 'Closed(connection)',
+                definiteFoundState: 'Closed',
+            },
+        });
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true);
+
+        const items = Array.from(document.querySelectorAll('.diagram-error-items li'), node => node.textContent?.replace(/\s+/g, ' ').trim());
+        expect(items).toEqual([
+            '\u2298 Call rejected: connection.read()',
+            '\u25C9 Found: Closed(connection)',
+            '\u2713 Required: Open(connection)',
+        ]);
+        expect(button('diagram-focus-btn').textContent?.trim()).toBe('Show full diagram');
+
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, false);
+        expect(button('diagram-focus-btn').textContent?.trim()).toBe('Focus on error');
+    });
+
+    it('says when the found condition does not establish a single state', () => {
+        renderStateMachineView(document.body, machine({
+            errorContext: {
+                calledMethod: 'read', actualStates: [], receiver: 'connection', expectedStates: ['Open'],
+                expectedCondition: 'Open(connection)', foundCondition: 'true', definiteFoundState: null,
+            },
+        }), diagram, 'TB', false, true);
+
+        expect(document.querySelector('.diagram-error-found')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('\u25C9 Found (no single state)');
+    });
+
+    it.each([
+        ['no error', null],
+        ['an error context without the error states', { calledMethod: 'open', actualStates: ['Closed'] }],
+    ])('omits the error summary with %s', (_, errorContext) => {
+        renderStateMachineView(document.body, machine({ errorContext }), diagram, 'TB', false, true);
+
+        expect(document.querySelector('.diagram-error-summary')).toBeNull();
+        expect(document.querySelector('#diagram-focus-btn')).toBeNull();
+    });
+
     it('preserves the previous diagram container height when rerendering', () => {
         renderStateMachineView(document.body, machine(), diagram, 'TB', false);
         const previousContainer = document.querySelector<HTMLElement>('.diagram-container')!;

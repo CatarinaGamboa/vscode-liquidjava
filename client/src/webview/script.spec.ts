@@ -141,6 +141,48 @@ describe('webview script', () => {
         ]);
     });
 
+    it('opens a state error focused on the error and toggles the full diagram', () => {
+        const errorMachine: LJStateMachine = {
+            ...stateMachine,
+            transitions: [...stateMachine.transitions, { from: 'Closed', to: 'Closed', label: 'reopen()' }],
+            initialTransitions: [{ to: 'Open' }, { to: 'Closed' }],
+            errorContext: {
+                calledMethod: 'close', actualStates: ['Closed'], receiver: 'counter', expectedStates: ['Open'],
+                expectedCondition: 'Open(counter)', foundCondition: 'Closed(counter)', definiteFoundState: 'Closed',
+            },
+        };
+        const error: LJDiagnostic = {
+            title: 'State refinement error', message: 'State refinement error message', hint: null,
+            file: currentFile, position, category: 'error', type: 'state-refinement-error', translationTable: {},
+            expected: 'Open(counter)', found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
+            customMessage: '', declarationPosition: null, stateMachine: errorMachine,
+        };
+        showDiagnostics([error]);
+
+        click('.diagnostic-state-machine-btn');
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('fsm');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show full diagram');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('note right of Closed');
+        expect(root.querySelector('.mermaid')?.textContent).not.toContain('[*]');
+
+        click('#diagram-focus-btn');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Focus on error');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('[*] --> Open');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('Closed --> Closed : reopen()');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('note right of Closed');
+
+        click('#diagram-focus-btn');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show full diagram');
+        expect(root.querySelector('.mermaid')?.textContent).not.toContain('[*]');
+
+        // the general diagram of the file has no error to focus on
+        click('[data-tab="diagnostics"]');
+        receive({ type: 'fsm', sm: stateMachine });
+        click('[data-tab="fsm"]');
+        expect(root.querySelector('#diagram-focus-btn')).toBeNull();
+        expect(root.querySelector('.mermaid')?.textContent).not.toContain('note');
+    });
+
     it('toggles between file and workspace errors by clicking scope buttons', () => {
         showDiagnostics([
             diagnostic(currentFile, 'Current error'),

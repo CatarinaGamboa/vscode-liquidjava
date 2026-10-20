@@ -39,6 +39,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let status: ExtensionStatus = 'loading';
     let diagramOrientation: "LR" | "TB" = "TB";
     let showDiagramConditions = false;
+    let focusDiagramOnError = false;
     let currentDiagram: string = '';
     let revealTimeout: ReturnType<typeof setTimeout> | undefined;
     const contextSectionState: ContextSectionState = {
@@ -147,6 +148,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             diagnosticStateMachine = diagnostic.stateMachine;
             diagnosticStateMachineFile = diagnostic.file;
             showDiagramConditions = false;
+            focusDiagramOnError = true;
+            resetZoom(document);
             currentDiagram = '';
             updateView();
             return;
@@ -195,6 +198,15 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             e.stopPropagation();
             if ((diagramConditionsButton as HTMLButtonElement).disabled) return;
             showDiagramConditions = !showDiagramConditions;
+            updateView();
+            return;
+        }
+
+        // toggle between the selected state error and the full diagram
+        if (target.closest?.('#diagram-focus-btn')) {
+            e.stopPropagation();
+            focusDiagramOnError = !focusDiagramOnError;
+            resetZoom(document);
             updateView();
             return;
         }
@@ -402,9 +414,10 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 break;
             case 'fsm': {
                 const displayedStateMachine = diagnosticStateMachine ?? stateMachine;
-                const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions);
+                const focusOnError = focusDiagramOnError && !!diagnosticStateMachine;
+                const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions, focusOnError);
                 currentDiagram = diagram;
-                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions);
+                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, focusOnError);
                 if (displayedStateMachine) renderMermaidDiagram(document, window);
                 break;
             }

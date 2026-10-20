@@ -1,5 +1,11 @@
 import type { LJStateMachine } from "../types/fsm";
 import { copyToClipboard } from "./clipboard";
+import {
+    FOUND_STATE_ICON, FOUND_STATE_TEXT, POSSIBLE_STATE_ICON, POSSIBLE_STATE_TEXT,
+    REJECTED_CALL_ICON, REJECTED_CALL_TEXT, REJECTED_CALL_UNKNOWN_STATE_TEXT,
+    REQUIRED_STATE_ICON, REQUIRED_STATE_TEXT, UNKNOWN_FOUND_STATE_TEXT,
+    getFocusedStates, getRejectedCallText, getStateErrorFocus, type StateErrorFocus,
+} from "./diagram-focus";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -7,6 +13,8 @@ const MAX_ZOOM = 5;
 const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
+const STATE_ERROR_FOUND_CONDITION_ID = 'lj_found_condition';
+const STATE_ERROR_LABEL_LINE_LENGTH = 24;
 
 // state variables
 let zoomLevel = 1;
@@ -19,30 +27,45 @@ let startY = 0;
 /**
  * Converts a StateMachine object to a Mermaid state diagram string
  * @param sm 
+ * @param orientation
+ * @param showConditions
+ * @param focusOnError whether to only show the states involved in the selected state error
  * @returns Mermaid diagram string
  */
 export function createMermaidDiagram(
     sm: LJStateMachine | undefined,
     orientation: "LR" | "TB",
     showConditions = false,
+    focusOnError = false,
 ): string {
     if (!sm) return '';
     
     const lines: string[] = [];
+    const errorFocus = getStateErrorFocus(sm);
+    const focusedStates = focusOnError && errorFocus ? getFocusedStates(sm, errorFocus) : null;
 
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
+
+    // declare the error states first so the focused layout starts from the found state
+    if (errorFocus && focusedStates) lines.push(...getStateErrorLines(errorFocus));
     
     // initial transitions
-    sm.initialTransitions.forEach(transition => {
-        const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
-        lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
-    });
+    if (!focusedStates) {
+        sm.initialTransitions.forEach(transition => {
+            const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
+            lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
+        });
+    }
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
-        const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
+        // the focused view only keeps the transitions between its states, without self loops
+        if (focusedStates && (transition.from === transition.to
+            || !focusedStates.includes(transition.from) || !focusedStates.includes(transition.to))) return;
+        // without the error states, the called method can only be found by its transition label
+        const isCalledMethod = !errorFocus && transition.label === sm.errorContext?.calledMethod;
         const label = getTransitionLabel(
             transition.label,
             transition.fromCondition,
@@ -62,12 +85,72 @@ export function createMermaidDiagram(
         lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
     });
 
+    if (errorFocus) {
+        if (!focusedStates) lines.push(...getStateErrorLines(errorFocus));
+        return lines.join('\n');
+    }
+
     const highlightedStates = sm.states.filter(state => sm.errorContext?.actualStates.includes(state));
     if (highlightedStates.length > 0) {
         lines.push(`    class ${highlightedStates.join(',')} ljStateErrorActual`);
     }
 
     return lines.join('\n');
+}
+
+/**
+ * Marks the found and required states of a state error and attaches the rejected call to the found state
+ * The rejected call is a note rather than a transition, since the call does not change the state
+ * @param focus
+ * @returns Mermaid lines
+ */
+function getStateErrorLines(focus: StateErrorFocus): string[] {
+    const lines: string[] = [];
+    const foundNode = focus.foundState ?? STATE_ERROR_FOUND_CONDITION_ID;
+    if (focus.foundState) {
+        lines.push(...getStateDescriptionLines(focus.foundState, `${FOUND_STATE_ICON} ${FOUND_STATE_TEXT}`));
+    } else {
+        // quotes would end the quoted state name
+        const condition = focus.foundCondition
+            ? escapeMermaidLabel(focus.foundCondition).replace(/\\"/g, '#quot;')
+            : UNKNOWN_FOUND_STATE_TEXT;
+        lines.push(`    state "${FOUND_STATE_ICON} Found: ${condition}" as ${STATE_ERROR_FOUND_CONDITION_ID}`);
+        focus.possibleStates.forEach(state => {
+            lines.push(...getStateDescriptionLines(state, `${POSSIBLE_STATE_ICON} ${POSSIBLE_STATE_TEXT}`));
+        });
+    }
+    focus.requiredStates.forEach(state => {
+        lines.push(...getStateDescriptionLines(state, `${REQUIRED_STATE_ICON} ${REQUIRED_STATE_TEXT}`));
+    });
+
+    const call = getRejectedCallText(focus);
+    const rejectedText = focus.foundState ? REJECTED_CALL_TEXT : REJECTED_CALL_UNKNOWN_STATE_TEXT;
+    const callLabel = call ? `${REJECTED_CALL_ICON} ${escapeMermaidLabel(call)}<br/>${rejectedText}` : `${REJECTED_CALL_ICON} ${rejectedText}`;
+    lines.push(`    note right of ${foundNode} : ${callLabel}`);
+
+    lines.push(`    class ${foundNode} ${focus.foundState ? 'ljStateErrorFound' : 'ljStateErrorFoundCondition'}`);
+    if (focus.possibleStates.length > 0 && !focus.foundState) {
+        lines.push(`    class ${focus.possibleStates.join(',')} ljStateErrorPossible`);
+    }
+    if (focus.requiredStates.length > 0) {
+        lines.push(`    class ${focus.requiredStates.join(',')} ljStateErrorRequired`);
+    }
+    return lines;
+}
+
+function getStateDescriptionLines(state: string, description: string): string[] {
+    return [`    ${state} : ${state}`, `    ${state} : ${wrapLabel(description)}`];
+}
+
+// state descriptions do not wrap, so long ones would shrink the whole diagram in narrow views
+function wrapLabel(label: string): string {
+    const lines: string[] = [];
+    label.split(' ').forEach(word => {
+        const last = lines.length - 1;
+        if (last >= 0 && lines[last].length + word.length < STATE_ERROR_LABEL_LINE_LENGTH) lines[last] += ` ${word}`;
+        else lines.push(word);
+    });
+    return lines.join('<br/>');
 }
 
 function getTransitionLabel(
