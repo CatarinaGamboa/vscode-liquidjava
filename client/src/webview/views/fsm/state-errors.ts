@@ -33,26 +33,31 @@ function belongsToStateMachine(error: StateRefinementError, sm: LJStateMachine):
 
 export function getStateErrorKey(error: StateRefinementError): string {
     const target = getDiagnosticRevealTarget(error);
-    return target ? getDiagnosticRevealTargetKey(target) : `${error.file}:${error.message}`;
+    // errors without a position never match the position pattern of reveal keys
+    return target ? getDiagnosticRevealTargetKey(target) : `${error.file}#${error.title}#${error.message}`;
 }
 
 /**
  * Finds the selected error again after a new verification
- * Falls back to the only error in the same file for the same called method, since edits can move the error position
+ * Since edits can move the error position, falls back to the same file and called method when that call was
+ * the only one before and after the verification, so a fixed error never passes its selection to a sibling
  * @param errors The errors of the displayed state machine
  * @param selected The previously selected error
+ * @param previousErrors The errors of the displayed state machine before the verification
  */
-export function findStateError(errors: StateRefinementError[], selected: StateRefinementError | undefined): StateRefinementError | undefined {
+export function findStateError(errors: StateRefinementError[], selected: StateRefinementError | undefined,
+    previousErrors: StateRefinementError[] = []): StateRefinementError | undefined {
     if (!selected) return undefined;
     const key = getStateErrorKey(selected);
     const exact = errors.find(error => getStateErrorKey(error) === key);
     const declarationKey = getDeclarationKey(selected);
     if (exact || !declarationKey) return exact;
 
-    const candidates = errors.filter(error =>
-        error.file.toLowerCase() === selected.file.toLowerCase() && getDeclarationKey(error) === declarationKey
-    );
-    return candidates.length === 1 ? candidates[0] : undefined;
+    const isSameCall = (error: StateRefinementError) =>
+        error.file.toLowerCase() === selected.file.toLowerCase() && getDeclarationKey(error) === declarationKey;
+    const candidates = errors.filter(isSameCall);
+    const previousCandidates = previousErrors.filter(isSameCall);
+    return candidates.length === 1 && previousCandidates.length === 1 ? candidates[0] : undefined;
 }
 
 function getDeclarationKey(error: StateRefinementError): string | undefined {

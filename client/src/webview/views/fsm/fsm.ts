@@ -21,8 +21,7 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
     return /*html*/`
         <div>
             ${renderMainHeader("", 'fsm')}
-            ${sm ? /*html*/`
-                ${errorList ? '<div class="fsm-layout">' : ''}
+            ${sm ? renderWithErrorList(/*html*/`
                 <div class="diagram-section">
                     <div class="diagram-container"${diagramHeight ? ` style="min-height: ${diagramHeight}px"` : ''}>
                         <div class="diagram-header">
@@ -46,9 +45,12 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                             <pre class="mermaid">${diagram}</pre>
                         </div>
                     </div>
-                </div>
-                ${errorList ? `${errorList}</div>` : ''}`
+                </div>`, errorList)
             : 'No state machine available for the current file'}
         </div>
     `;
+}
+
+function renderWithErrorList(diagramSection: string, errorList: string): string {
+    return errorList ? /*html*/`<div class="fsm-layout">${diagramSection}${errorList}</div>` : diagramSection;
 }

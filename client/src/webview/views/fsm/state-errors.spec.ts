@@ -135,10 +135,38 @@ describe('state machine errors', () => {
         const moved = stateError(12);
         const otherCall = stateError(20, { declarationPosition: { file: refinementsFile, lineStart: 18, colStart: 29, lineEnd: 18, colEnd: 51 } });
 
-        expect(findStateError([otherCall, stateError(10)], selected)).toEqual(selected);
-        expect(findStateError([otherCall, moved], selected)).toBe(moved);
-        expect(findStateError([otherCall], selected)).toBeUndefined();
-        expect(findStateError([moved, stateError(14)], selected)).toBeUndefined();
+        expect(findStateError([otherCall, stateError(10)], selected, [selected, otherCall])).toEqual(selected);
+        // an edit moved the only error of this call
+        expect(findStateError([otherCall, moved], selected, [selected, otherCall])).toBe(moved);
+        expect(findStateError([otherCall, moved], selected)).toBeUndefined();
+        expect(findStateError([otherCall], selected, [selected, otherCall])).toBeUndefined();
+        expect(findStateError([moved, stateError(14)], selected, [selected])).toBeUndefined();
         expect(findStateError([selected], undefined)).toBeUndefined();
+    });
+
+    it('drops a fixed selection instead of moving it to a sibling for the same call', () => {
+        const selected = stateError(10);
+        const sibling = stateError(20);
+
+        expect(findStateError([sibling], selected, [selected, sibling])).toBeUndefined();
+    });
+
+    it('keeps keys distinct for errors without a position', () => {
+        const first = stateError(10, { position: null, title: 'State Refinement Error', message: 'a' });
+        const second = stateError(10, { position: null, title: 'State Conflict', message: 'a' });
+
+        expect(getStateErrorKey(first)).not.toBe(getStateErrorKey(second));
+        expect(getStateErrorKey(first)).not.toMatch(/:\d+:\d+-\d+:\d+$/);
+        expect(findStateError([second], first)).toBeUndefined();
+    });
+
+    it('escapes the file of the source link', () => {
+        const file = '/workspace/src/"onmouseover="alert(1).java';
+        const error = stateError(10, { file, position: { file, lineStart: 1, colStart: 0, lineEnd: 1, colEnd: 4 } });
+        renderStateMachineView(document.body, machine(), 'diagram', 'TB', false, renderStateErrorList([error], undefined));
+
+        const link = document.querySelector('.state-error-location .location-link')!;
+        expect(link.getAttribute('data-file')).toBe(file);
+        expect(link.hasAttribute('onmouseover')).toBe(false);
     });
 });

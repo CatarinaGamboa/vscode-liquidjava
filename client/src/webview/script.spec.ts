@@ -358,6 +358,67 @@ describe('webview script', () => {
             expect(mermaidSource()).not.toContain('lj-state-error-method');
         });
 
+        it('drops a fixed selection instead of selecting a sibling error for the same call', () => {
+            const sibling = stateError(20, 'getFirstChild', 'node');
+            showStateMachine([firstChildError, sibling]);
+            items()[0].click();
+
+            receive({ type: 'diagnostics', diagnostics: [stateError(20, 'getFirstChild', 'node')] });
+            expect(calls()).toEqual(['node.getFirstChild()']);
+            expect(pressed()).toEqual(['false']);
+            expect(mermaidSource()).not.toContain('lj-state-error-method');
+        });
+
+        it('refreshes a machine from another file after its selection is cleared or fixed', () => {
+            // edits to the refinements file add a method to every error machine
+            const withState = (error: StateRefinementError, method: string): StateRefinementError => ({
+                ...error,
+                stateMachine: { ...error.stateMachine!, transitions: [
+                    ...treeMachine.transitions, { from: 'childrenAllowed', to: 'childrenAllowed', label: method },
+                ] },
+            });
+            // the caller file has no machine, so the diagram comes from the errors
+            receive({ type: 'file', file: otherFile });
+            receive({ type: 'diagnostics', diagnostics: [firstChildError, removeError] });
+            receive({ type: 'status', status: 'failed' });
+            receive({ type: 'fsm', sm: null });
+            root.querySelectorAll<HTMLElement>('.diagnostic-state-machine-btn')[0].click();
+            click('#state-error-clear-btn');
+
+            receive({ type: 'diagnostics', diagnostics: [withState(firstChildError, 'cleared'), withState(removeError, 'cleared')] });
+            expect(root.querySelector('.state-errors')).not.toBeNull();
+            expect(root.querySelector('.mermaid')?.textContent).toContain('cleared');
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+
+            items()[0].click();
+            receive({ type: 'diagnostics', diagnostics: [withState(removeError, 'fixed')] });
+            expect(calls()).toEqual(['menu.removeAllChildren()']);
+            expect(pressed()).toEqual(['false']);
+            expect(root.querySelector('.mermaid')?.textContent).toContain('fixed');
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+        });
+
+        it('keeps the rendered view and focus when a verification changes nothing', () => {
+            showStateMachine([firstChildError, removeError]);
+            items()[1].click();
+            const renderedItem = items()[1];
+            const mermaidRuns = runMermaid.mock.calls.length;
+            expect(dom.window.document.activeElement).toBe(renderedItem);
+
+            receive({ type: 'diagnostics', diagnostics: [stateError(10, 'getFirstChild', 'root'), stateError(15, 'removeAllChildren', 'menu')] });
+            receive({ type: 'status', status: 'failed' });
+            expect(items()[1]).toBe(renderedItem);
+            expect(runMermaid.mock.calls.length).toBe(mermaidRuns);
+            expect(dom.window.document.activeElement).toBe(renderedItem);
+
+            // a changed list is rendered again with focus on the same error
+            receive({ type: 'diagnostics', diagnostics: [stateError(15, 'removeAllChildren', 'menu'), stateError(30, 'getFirstChild', 'node')] });
+            expect(calls()).toEqual(['menu.removeAllChildren()', 'node.getFirstChild()']);
+            expect(runMermaid.mock.calls.length).toBe(mermaidRuns + 1);
+            expect(dom.window.document.activeElement).toBe(items()[0]);
+            expect(pressed()).toEqual(['true', 'false']);
+        });
+
         it('leaves the view unchanged when the machine has no state errors', () => {
             showStateMachine([diagnostic(currentFile, 'Unrelated error')]);
 
