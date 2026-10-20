@@ -1057,18 +1057,18 @@ export function getStyles(): string {
             background-color: var(--vscode-textCodeBlock-background);
             border-radius: 4px;
             margin-bottom: 0.5rem;
-            padding: 0.25rem 0.5rem 0.5rem;
-            outline: 1px solid transparent;
+            padding: 0.5rem;
+            outline: 2px solid transparent;
         }
         .state-error-item.selected {
-            outline: 2px solid var(--vscode-focusBorder);
+            outline-color: var(--vscode-focusBorder);
         }
         .state-error-select {
             display: flex;
             align-items: flex-start;
             gap: 0.5rem;
             width: 100%;
-            padding: 0.25rem 0;
+            padding: 0.25rem;
             color: var(--vscode-foreground);
             background: none;
             border: none;
@@ -1079,7 +1079,7 @@ export function getStyles(): string {
         }
         .state-error-select:focus-visible {
             outline: 1px solid var(--vscode-focusBorder);
-            outline-offset: 0;
+            outline-offset: -1px;
         }
         .state-error-marker {
             flex-shrink: 0;
@@ -1102,7 +1102,8 @@ export function getStyles(): string {
             opacity: 0.8;
         }
         .state-error-location {
-            padding-left: 1.5rem;
+            margin-top: 0.25rem;
+            padding: 0 0.25rem 0.25rem 1.75rem;
             font-size: 0.85rem;
         }
     `;
