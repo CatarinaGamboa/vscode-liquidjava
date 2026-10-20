@@ -3,7 +3,7 @@ import { renderLoading } from "./views/loading";
 import { renderStopped } from "./views/stopped";
 import { renderStateMachineView } from "./views/fsm/fsm";
 import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
-import type { LJDiagnostic, RefinementMismatchError } from "../types/diagnostics";
+import type { LJDiagnostic, RefinementMismatchError, StateRefinementError } from "../types/diagnostics";
 import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { ExtensionStatus } from "../state";
@@ -13,6 +13,7 @@ import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 import type { DiagnosticRevealTarget } from "../types/diagnostics";
 import { getDiagnosticRevealTargetFromKey, getDiagnosticRevealTargetKey } from "./diagnostic-reveal";
+import { findStateError, focusStateError, getStateErrorKey, getStateMachineErrors, renderStateErrorList } from "./views/fsm/state-errors";
 
 type VSCodeApi = {
     postMessage(message: unknown): void;
@@ -33,6 +34,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let stateMachine: LJStateMachine | undefined;
     let diagnosticStateMachine: LJStateMachine | undefined;
     let diagnosticStateMachineFile: string | undefined;
+    let diagnosticStateMachineError: StateRefinementError | undefined;
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
@@ -144,11 +146,28 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             if (diagnostic?.type !== 'state-refinement-error' || !diagnostic.stateMachine) return;
 
             selectedTab = 'fsm';
-            diagnosticStateMachine = diagnostic.stateMachine;
-            diagnosticStateMachineFile = diagnostic.file;
             showDiagramConditions = false;
-            currentDiagram = '';
-            updateView();
+            selectStateError(diagnostic);
+            return;
+        }
+
+        // select or clear a state error beside the diagram
+        const stateErrorButton = target.closest?.('.state-error-select');
+        if (stateErrorButton) {
+            e.stopPropagation();
+            const key = stateErrorButton.getAttribute('data-state-error-key');
+            const error = getStateMachineErrors(diagnostics, diagnosticStateMachine ?? stateMachine)
+                .find(stateError => getStateErrorKey(stateError) === key);
+            const isSelected = !!diagnosticStateMachineError && getStateErrorKey(diagnosticStateMachineError) === key;
+            selectStateError(isSelected ? undefined : error);
+            if (key) focusStateError(root, key);
+            return;
+        }
+        if (target.closest?.('#state-error-clear-btn')) {
+            e.stopPropagation();
+            const previousError = diagnosticStateMachineError;
+            selectStateError(undefined);
+            if (previousError) focusStateError(root, getStateErrorKey(previousError));
             return;
         }
 
@@ -273,6 +292,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 if (tab === 'fsm') {
                     diagnosticStateMachine = undefined;
                     diagnosticStateMachineFile = undefined;
+                    diagnosticStateMachineError = undefined;
                 }
                 selectedTab = tab;
                 updateView();
@@ -342,16 +362,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             case 'diagnostics': {
                 diagnostics = msg.diagnostics as LJDiagnostic[];
                 if (diagnosticStateMachine) {
-                    const updatedError = diagnostics.find(diagnostic =>
-                        diagnostic.type === 'state-refinement-error'
-                        && diagnostic.file.toLowerCase() === diagnosticStateMachineFile?.toLowerCase()
-                        && diagnostic.stateMachine?.className === diagnosticStateMachine?.className
-                    );
-                    diagnosticStateMachine = updatedError?.type === 'state-refinement-error'
-                        ? updatedError.stateMachine ?? diagnosticStateMachine
-                        : { ...diagnosticStateMachine, errorContext: null };
+                    const updatedError = findStateError(getStateMachineErrors(diagnostics, diagnosticStateMachine), diagnosticStateMachineError);
+                    if (updatedError) selectStateError(updatedError, false);
+                    else clearStateErrorSelection();
                 }
-                if (selectedTab === 'diagnostics' || (selectedTab === 'fsm' && diagnosticStateMachine)) updateView();
+                if (selectedTab === 'diagnostics' || selectedTab === 'fsm') updateView();
                 break;
             }
             case 'file':
@@ -359,6 +374,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 diagnosticStateMachine = undefined;
                 diagnosticStateMachineFile = undefined;
+                diagnosticStateMachineError = undefined;
                 stateMachine = undefined;
                 currentDiagram = '';
                 if (selectedTab === 'fsm') updateView();
@@ -404,7 +420,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 const displayedStateMachine = diagnosticStateMachine ?? stateMachine;
                 const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions);
                 currentDiagram = diagram;
-                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions);
+                const errorList = renderStateErrorList(getStateMachineErrors(diagnostics, displayedStateMachine), diagnosticStateMachineError);
+                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, errorList);
                 if (displayedStateMachine) renderMermaidDiagram(document, window);
                 break;
             }
@@ -412,6 +429,33 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor);
                 break;
         }
+    }
+
+    /**
+     * Shows a state error on its state machine, or the general diagram when no error is given
+     * @param error The state error to select
+     * @param render Whether to update the view
+     */
+    function selectStateError(error: StateRefinementError | undefined, render = true) {
+        if (error?.stateMachine) {
+            diagnosticStateMachine = error.stateMachine;
+            diagnosticStateMachineFile = error.file;
+            diagnosticStateMachineError = error;
+        } else {
+            clearStateErrorSelection();
+        }
+        currentDiagram = '';
+        if (render) updateView();
+    }
+
+    function clearStateErrorSelection() {
+        if (diagnosticStateMachine) {
+            diagnosticStateMachine = stateMachine?.className === diagnosticStateMachine.className
+                ? undefined
+                : { ...diagnosticStateMachine, errorContext: null };
+        }
+        diagnosticStateMachineFile = undefined;
+        diagnosticStateMachineError = undefined;
     }
 
     function revealDiagnostic(target: DiagnosticRevealTarget) {

@@ -3,13 +3,13 @@ import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderMainHeader } from "../sections";
 
-export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean) {
+export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, errorList = '') {
     const previousDiagramContainer = root.querySelector('.diagram-container') as HTMLElement | null;
     const diagramHeight = previousDiagramContainer?.offsetHeight;
-    root.innerHTML = renderStateMachineViewHtml(sm, diagram, orientation, showConditions, diagramHeight);
+    root.innerHTML = renderStateMachineViewHtml(sm, diagram, orientation, showConditions, diagramHeight, errorList);
 }
 
-function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, diagramHeight?: number): string {
+function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, diagramHeight?: number, errorList = ''): string {
     const hasConditionExpansions = sm
         ? sm.initialTransitions.some(transition => !!transition.toCondition)
             || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
@@ -22,6 +22,7 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
         <div>
             ${renderMainHeader("", 'fsm')}
             ${sm ? /*html*/`
+                ${errorList ? '<div class="fsm-layout">' : ''}
                 <div class="diagram-section">
                     <div class="diagram-container"${diagramHeight ? ` style="min-height: ${diagramHeight}px"` : ''}>
                         <div class="diagram-header">
@@ -45,7 +46,8 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                             <pre class="mermaid">${diagram}</pre>
                         </div>
                     </div>
-                </div>`
+                </div>
+                ${errorList ? `${errorList}</div>` : ''}`
             : 'No state machine available for the current file'}
         </div>
     `;
