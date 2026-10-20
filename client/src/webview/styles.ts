@@ -1017,18 +1017,17 @@ export function getStyles(): string {
             fill: var(--vscode-errorForeground) !important;
             stroke: var(--vscode-errorForeground) !important;
         }
-        .diagram-container .mermaid svg .ljStateErrorFound .label-container,
-        .diagram-container .mermaid svg .ljStateErrorFound .divider,
-        .diagram-container .mermaid svg .ljStateErrorFoundCondition .label-container {
+        /* states without a description render a .label-container, states with one an outer rect and a divider */
+        .diagram-container .mermaid svg .ljStateErrorFound :is(.label-container, rect.outer, .divider),
+        .diagram-container .mermaid svg .ljStateErrorFoundCondition :is(.label-container, rect.outer, .divider) {
             stroke: var(--vscode-errorForeground) !important;
             stroke-width: 2px !important;
         }
-        .diagram-container .mermaid svg .ljStateErrorFoundCondition .label-container,
-        .diagram-container .mermaid svg .ljStateErrorPossible .label-container {
+        .diagram-container .mermaid svg .ljStateErrorFoundCondition :is(.label-container, rect.outer),
+        .diagram-container .mermaid svg .ljStateErrorPossible :is(.label-container, rect.outer) {
             stroke-dasharray: 5 3;
         }
-        .diagram-container .mermaid svg .ljStateErrorRequired .label-container,
-        .diagram-container .mermaid svg .ljStateErrorRequired .divider {
+        .diagram-container .mermaid svg .ljStateErrorRequired :is(.label-container, rect.outer, .divider) {
             stroke: var(--lj-state-required) !important;
             stroke-width: 2px !important;
         }
