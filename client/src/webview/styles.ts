@@ -1016,5 +1016,95 @@ export function getStyles(): string {
             fill: var(--vscode-errorForeground) !important;
             stroke: var(--vscode-errorForeground) !important;
         }
+        .fsm-layout {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        .fsm-layout .diagram-section {
+            flex: 3 1 24rem;
+            min-width: 0;
+        }
+        .state-errors {
+            flex: 1 1 14rem;
+            min-width: 0;
+        }
+        .state-errors-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .state-errors-header h3 {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .state-errors-count {
+            font-weight: normal;
+            opacity: 0.7;
+        }
+        .state-errors-header .underline-button {
+            margin-bottom: 0;
+        }
+        .state-errors-header .underline-button:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+        .state-error-item {
+            background-color: var(--vscode-textCodeBlock-background);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            outline: 2px solid transparent;
+        }
+        .state-error-item.selected {
+            outline-color: var(--vscode-focusBorder);
+        }
+        .state-error-select {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.25rem;
+            color: var(--vscode-foreground);
+            background: none;
+            border: none;
+            text-align: left;
+        }
+        .state-error-select:hover {
+            background: none;
+        }
+        .state-error-select:focus-visible {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+        }
+        .state-error-marker {
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+        }
+        .state-error-item.selected .state-error-marker {
+            color: var(--vscode-focusBorder);
+        }
+        .state-error-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        .state-error-call {
+            font-weight: 600;
+        }
+        .state-error-label {
+            opacity: 0.8;
+        }
+        .state-error-location {
+            margin-top: 0.25rem;
+            padding: 0 0.25rem 0.25rem 1.75rem;
+            font-size: 0.85rem;
+        }
     `;
 }

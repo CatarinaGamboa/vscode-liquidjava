@@ -122,7 +122,7 @@ export function renderLocationLink(position?: SourcePosition): string {
     return /*html*/`<a
         href="#"
         class="link location-link"
-        data-file="${position.file}"
+        data-file="${escapeHtml(position.file ?? '')}"
         data-line="${position.lineStart}"
         data-column="${position.colStart}"
     >${escapeHtml(getFile(position))}</a>`;

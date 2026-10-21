@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import type { LJContext, LJVariable } from '../types/context';
-import type { LJDiagnostic, SourcePosition } from '../types/diagnostics';
+import type { LJDiagnostic, SourcePosition, StateRefinementError } from '../types/diagnostics';
 import type { LJStateMachine } from '../types/fsm';
 
 const currentFile = '/workspace/src/Main.java';
@@ -56,6 +56,36 @@ const stateMachine: LJStateMachine = {
     transitions: [{ from: 'Open', to: 'Closed', label: 'close()' }],
     errorContext: null,
 };
+
+const refinementsFile = '/workspace/src/DefaultMutableTreeNodeRefinements.java';
+const treeMachine: LJStateMachine = {
+    className: 'javax.swing.tree.DefaultMutableTreeNode',
+    initialTransitions: [{ to: 'childrenAllowed' }],
+    states: ['childrenAllowed', 'maybeHasChildren'],
+    transitions: [
+        { from: 'childrenAllowed', to: 'maybeHasChildren', label: 'add' },
+        { from: 'maybeHasChildren', to: 'childrenAllowed', label: 'removeAllChildren' },
+        { from: 'maybeHasChildren', to: 'maybeHasChildren', label: 'getFirstChild' },
+    ],
+    errorContext: null,
+};
+
+// state errors are reported in the caller file, while the machine comes from the refinements file
+function stateError(line: number, calledMethod: string, receiver: string): StateRefinementError {
+    return {
+        category: 'error', type: 'state-refinement-error', title: 'State Refinement Error',
+        message: `found childrenAllowed(${receiver}) but expected maybeHasChildren(${receiver})`, hint: null,
+        file: otherFile, position: { file: otherFile, lineStart: line, colStart: 8, lineEnd: line, colEnd: 30 },
+        translationTable: {}, expected: `maybeHasChildren(${receiver})`,
+        found: { implication: { name: receiver, type: 'DefaultMutableTreeNode', predicate: `childrenAllowed(${receiver})`, next: null }, origin: null, simplification: null },
+        customMessage: '',
+        declarationPosition: { file: refinementsFile, lineStart: calledMethod === 'getFirstChild' ? 21 : 18, colStart: 4, lineEnd: 21, colEnd: 40 },
+        stateMachine: { ...treeMachine, errorContext: {
+            calledMethod, actualStates: ['childrenAllowed'], receiver,
+            expectedStates: ['maybeHasChildren'], definiteFoundState: 'childrenAllowed',
+        } },
+    };
+}
 
 describe('webview script', () => {
     let dom: JSDOM;
@@ -225,5 +255,176 @@ describe('webview script', () => {
             character: position.colStart,
             highlightRange: range,
         }]]);
+    });
+
+    describe('state errors beside the diagram', () => {
+        const firstChildError = stateError(10, 'getFirstChild', 'root');
+        const removeError = stateError(15, 'removeAllChildren', 'menu');
+
+        function showStateMachine(diagnostics: LJDiagnostic[]) {
+            receive({ type: 'file', file: refinementsFile });
+            receive({ type: 'diagnostics', diagnostics });
+            receive({ type: 'status', status: 'failed' });
+            receive({ type: 'fsm', sm: treeMachine });
+            click('[data-tab="fsm"]');
+        }
+
+        const items = () => Array.from(root.querySelectorAll<HTMLButtonElement>('.state-error-select'));
+        const pressed = () => items().map(item => item.getAttribute('aria-pressed'));
+        const calls = () => Array.from(root.querySelectorAll('.state-error-call'), node => node.textContent);
+        const mermaidSource = () => root.querySelector('.mermaid')?.innerHTML ?? '';
+
+        it('lists errors from other files for the machine of the current file', () => {
+            showStateMachine([firstChildError, removeError, diagnostic(currentFile, 'Unrelated error')]);
+
+            expect(root.querySelector('.diagram-title')?.textContent).toBe('javax.swing.tree.DefaultMutableTreeNode');
+            expect(calls()).toEqual(['root.getFirstChild()', 'menu.removeAllChildren()']);
+            expect(pressed()).toEqual(['false', 'false']);
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+        });
+
+        it('selects an error to highlight it and clears the selection to show the general diagram', () => {
+            showStateMachine([firstChildError, removeError]);
+
+            items()[0].click();
+            expect(pressed()).toEqual(['true', 'false']);
+            expect(mermaidSource()).toContain('class childrenAllowed ljStateErrorActual');
+            expect(mermaidSource()).toContain('lj-state-error-method">getFirstChild');
+            expect(dom.window.document.activeElement).toBe(items()[0]);
+
+            items()[1].click();
+            expect(pressed()).toEqual(['false', 'true']);
+            expect(mermaidSource()).toContain('lj-state-error-method">removeAllChildren');
+            expect(mermaidSource()).not.toContain('lj-state-error-method">getFirstChild');
+
+            // selecting the selected error again clears the selection
+            items()[1].click();
+            expect(pressed()).toEqual(['false', 'false']);
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+
+            items()[0].click();
+            click('#state-error-clear-btn');
+            expect(pressed()).toEqual(['false', 'false']);
+            expect(mermaidSource()).not.toContain('lj-state-error-method');
+            expect(root.querySelector<HTMLButtonElement>('#state-error-clear-btn')?.disabled).toBe(true);
+            expect(calls()).toEqual(['root.getFirstChild()', 'menu.removeAllChildren()']);
+        });
+
+        it('keeps the selection when its error remains after verification and drops fixed errors', () => {
+            showStateMachine([firstChildError, removeError]);
+            items()[1].click();
+
+            receive({ type: 'diagnostics', diagnostics: [stateError(10, 'getFirstChild', 'root'), stateError(15, 'removeAllChildren', 'menu')] });
+            expect(pressed()).toEqual(['false', 'true']);
+            expect(mermaidSource()).toContain('lj-state-error-method">removeAllChildren');
+
+            receive({ type: 'diagnostics', diagnostics: [stateError(15, 'removeAllChildren', 'menu')] });
+            expect(calls()).toEqual(['menu.removeAllChildren()']);
+            expect(pressed()).toEqual(['true']);
+
+            receive({ type: 'diagnostics', diagnostics: [firstChildError] });
+            expect(calls()).toEqual(['root.getFirstChild()']);
+            expect(pressed()).toEqual(['false']);
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+        });
+
+        it('keeps the diagram and drops the list once every state error is fixed', () => {
+            showStateMachine([firstChildError]);
+            items()[0].click();
+
+            receive({ type: 'diagnostics', diagnostics: [] });
+            expect(root.querySelector('.diagram-title')?.textContent).toBe('javax.swing.tree.DefaultMutableTreeNode');
+            expect(root.querySelector('.state-errors')).toBeNull();
+            expect(root.querySelector('.fsm-layout')).toBeNull();
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+        });
+
+        it('preselects the error opened with View error on state machine', () => {
+            receive({ type: 'file', file: otherFile });
+            receive({ type: 'diagnostics', diagnostics: [firstChildError, removeError] });
+            receive({ type: 'status', status: 'failed' });
+            receive({ type: 'fsm', sm: null });
+
+            root.querySelectorAll<HTMLElement>('.diagnostic-state-machine-btn')[1].click();
+            expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('fsm');
+            expect(calls()).toEqual(['root.getFirstChild()', 'menu.removeAllChildren()']);
+            expect(pressed()).toEqual(['false', 'true']);
+            expect(mermaidSource()).toContain('lj-state-error-method">removeAllChildren');
+
+            // the caller file has no machine of its own, so clearing keeps the error machine without its context
+            click('#state-error-clear-btn');
+            expect(root.querySelector('.diagram-title')?.textContent).toBe('javax.swing.tree.DefaultMutableTreeNode');
+            expect(pressed()).toEqual(['false', 'false']);
+            expect(mermaidSource()).not.toContain('lj-state-error-method');
+        });
+
+        it('drops a fixed selection instead of selecting a sibling error for the same call', () => {
+            const sibling = stateError(20, 'getFirstChild', 'node');
+            showStateMachine([firstChildError, sibling]);
+            items()[0].click();
+
+            receive({ type: 'diagnostics', diagnostics: [stateError(20, 'getFirstChild', 'node')] });
+            expect(calls()).toEqual(['node.getFirstChild()']);
+            expect(pressed()).toEqual(['false']);
+            expect(mermaidSource()).not.toContain('lj-state-error-method');
+        });
+
+        it('refreshes a machine from another file after its selection is cleared or fixed', () => {
+            // edits to the refinements file add a method to every error machine
+            const withState = (error: StateRefinementError, method: string): StateRefinementError => ({
+                ...error,
+                stateMachine: { ...error.stateMachine!, transitions: [
+                    ...treeMachine.transitions, { from: 'childrenAllowed', to: 'childrenAllowed', label: method },
+                ] },
+            });
+            // the caller file has no machine, so the diagram comes from the errors
+            receive({ type: 'file', file: otherFile });
+            receive({ type: 'diagnostics', diagnostics: [firstChildError, removeError] });
+            receive({ type: 'status', status: 'failed' });
+            receive({ type: 'fsm', sm: null });
+            root.querySelectorAll<HTMLElement>('.diagnostic-state-machine-btn')[0].click();
+            click('#state-error-clear-btn');
+
+            receive({ type: 'diagnostics', diagnostics: [withState(firstChildError, 'cleared'), withState(removeError, 'cleared')] });
+            expect(root.querySelector('.state-errors')).not.toBeNull();
+            expect(root.querySelector('.mermaid')?.textContent).toContain('cleared');
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+
+            items()[0].click();
+            receive({ type: 'diagnostics', diagnostics: [withState(removeError, 'fixed')] });
+            expect(calls()).toEqual(['menu.removeAllChildren()']);
+            expect(pressed()).toEqual(['false']);
+            expect(root.querySelector('.mermaid')?.textContent).toContain('fixed');
+            expect(mermaidSource()).not.toContain('ljStateErrorActual');
+        });
+
+        it('keeps the rendered view and focus when a verification changes nothing', () => {
+            showStateMachine([firstChildError, removeError]);
+            items()[1].click();
+            const renderedItem = items()[1];
+            const mermaidRuns = runMermaid.mock.calls.length;
+            expect(dom.window.document.activeElement).toBe(renderedItem);
+
+            receive({ type: 'diagnostics', diagnostics: [stateError(10, 'getFirstChild', 'root'), stateError(15, 'removeAllChildren', 'menu')] });
+            receive({ type: 'status', status: 'failed' });
+            expect(items()[1]).toBe(renderedItem);
+            expect(runMermaid.mock.calls.length).toBe(mermaidRuns);
+            expect(dom.window.document.activeElement).toBe(renderedItem);
+
+            // a changed list is rendered again with focus on the same error
+            receive({ type: 'diagnostics', diagnostics: [stateError(15, 'removeAllChildren', 'menu'), stateError(30, 'getFirstChild', 'node')] });
+            expect(calls()).toEqual(['menu.removeAllChildren()', 'node.getFirstChild()']);
+            expect(runMermaid.mock.calls.length).toBe(mermaidRuns + 1);
+            expect(dom.window.document.activeElement).toBe(items()[0]);
+            expect(pressed()).toEqual(['true', 'false']);
+        });
+
+        it('leaves the view unchanged when the machine has no state errors', () => {
+            showStateMachine([diagnostic(currentFile, 'Unrelated error')]);
+
+            expect(root.querySelector('.diagram-title')?.textContent).toBe('javax.swing.tree.DefaultMutableTreeNode');
+            expect(root.querySelector('.state-errors')).toBeNull();
+            expect(root.querySelector('.fsm-layout')).toBeNull();
+        });
     });
 });
