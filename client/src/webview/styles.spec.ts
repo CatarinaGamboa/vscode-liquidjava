@@ -86,6 +86,13 @@ describe('state error styles', () => {
         const [method, inDimmedTransition] = document.querySelectorAll('.lj-dimmed-method');
         expect(getComputedStyle(method).opacity).toBe('0.25');
         expect(getComputedStyle(inDimmedTransition).opacity).toBe('1');
+
+        // only the background of a fully dimmed label is cleared
+        const [bright, dimmed] = document.querySelectorAll('g.label');
+        expect(getComputedStyle(bright.querySelector('div')!).getPropertyValue('background')).toBe('var(--vscode-editor-background)');
+        for (const part of dimmed.querySelectorAll('div, span, p')) {
+            expect(getComputedStyle(part).getPropertyValue('background')).toBe('transparent');
+        }
     });
 
     it('keeps other states with the default outline', () => {

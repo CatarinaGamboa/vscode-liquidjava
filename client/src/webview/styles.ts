@@ -1048,6 +1048,11 @@ export function getStyles(): string {
         .diagram-container .mermaid svg .lj-dimmed .lj-dimmed-method {
             opacity: 1;
         }
+        /* the opaque label background would stand out from the dimmed transition */
+        .diagram-container .mermaid .edgeLabel .lj-dimmed,
+        .diagram-container .mermaid .edgeLabel .lj-dimmed * {
+            background: transparent !important;
+        }
         .diagram-error-summary {
             display: flex;
             flex-wrap: wrap;
