@@ -71,8 +71,9 @@ function errorMachine(className: string, calledMethod: string): LJStateMachine {
     return {
         ...stateMachine,
         className,
-        transitions: [...stateMachine.transitions, { from: 'Closed', to: 'Closed', label: 'reopen()' }],
-        initialTransitions: [{ to: 'Open' }, { to: 'Closed' }],
+        states: [...stateMachine.states, 'Broken'],
+        transitions: [...stateMachine.transitions, { from: 'Broken', to: 'Broken', label: 'reopen()' }],
+        initialTransitions: [{ to: 'Open' }, { to: 'Broken' }],
         errorContext: {
             calledMethod, actualStates: ['Closed'], receiver: 'counter', expectedStates: ['Open'],
             expectedCondition: 'Open(counter)', foundCondition: 'Closed(counter)', definiteFoundState: 'Closed',
@@ -164,32 +165,31 @@ describe('webview script', () => {
         ]);
     });
 
-    it('opens a state error focused on the error and toggles the full diagram', () => {
+    it('opens a state error focused on the error and toggles the dimming', () => {
         const error = stateError('State refinement error', errorMachine('Counter', 'close'));
         showDiagnostics([error]);
 
         click('.diagnostic-state-machine-btn');
         expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('fsm');
-        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show full diagram');
-        expect(root.querySelector('.mermaid')?.textContent).toContain('note right of Closed');
-        expect(root.querySelector('.mermaid')?.textContent).not.toContain('[*]');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
 
+        // the full diagram stays visible, only the dimming is toggled
         click('#diagram-focus-btn');
         expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Focus on error');
-        expect(root.querySelector('.mermaid')?.textContent).toContain('[*] --> Open');
-        expect(root.querySelector('.mermaid')?.textContent).toContain('Closed --> Closed : reopen()');
-        expect(root.querySelector('.mermaid')?.textContent).toContain('note right of Closed');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('Broken --> Broken : reopen()');
+        expect(root.querySelector('.mermaid')?.textContent).not.toContain('ljStateDimmed');
 
         click('#diagram-focus-btn');
-        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show full diagram');
-        expect(root.querySelector('.mermaid')?.textContent).not.toContain('[*]');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
 
         // the general diagram of the file has no error to focus on
         click('[data-tab="diagnostics"]');
         receive({ type: 'fsm', sm: stateMachine });
         click('[data-tab="fsm"]');
         expect(root.querySelector('#diagram-focus-btn')).toBeNull();
-        expect(root.querySelector('.mermaid')?.textContent).not.toContain('note');
+        expect(root.querySelector('.mermaid')?.textContent).not.toContain('ljState');
     });
 
     it('opens another state error focused after showing the full diagram of the previous one', () => {
@@ -205,9 +205,9 @@ describe('webview script', () => {
         click('[data-tab="diagnostics"]');
         click('.diagnostic-state-machine-btn[data-error-index="1"]');
         expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
-        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show full diagram');
-        expect(root.querySelector('.mermaid')?.textContent).toContain('counter.reset()');
-        expect(root.querySelector('.mermaid')?.textContent).not.toContain('[*]');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.diagram-error-text')?.textContent).toContain('counter.reset()');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
     });
 
     it('keeps the error summary selectable while the diagram pans', async () => {
@@ -222,7 +222,7 @@ describe('webview script', () => {
             root.querySelector(selector)!.dispatchEvent(event);
             return event.defaultPrevented;
         };
-        expect(mouseDown('.diagram-error-found code')).toBe(false);
+        expect(mouseDown('.diagram-error-text code')).toBe(false);
         expect(mouseDown('#diagram-wrapper')).toBe(true);
     });
 

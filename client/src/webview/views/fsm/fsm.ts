@@ -1,8 +1,5 @@
 import type { LJStateMachine } from "../../../types/fsm";
-import {
-    FOUND_STATE_ICON, REJECTED_CALL_ICON, REQUIRED_STATE_ICON, UNKNOWN_FOUND_STATE_TEXT, getDisplayedStateMachine, getRejectedCallText, type StateErrorFocus,
-} from "../../diagram-focus";
-import { renderHighlightedInlineExpression } from "../../highlighting";
+import { getRejectedCallText, getStateErrorFocus, type StateErrorFocus } from "../../diagram-focus";
 import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderMainHeader } from "../sections";
@@ -14,12 +11,10 @@ export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | u
 }
 
 function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, diagramHeight?: number): string {
-    // only the displayed transitions can expand their conditions
-    const displayed = sm ? getDisplayedStateMachine(sm, focusOnError) : null;
-    const errorFocus = displayed?.errorFocus ?? null;
-    const hasConditionExpansions = displayed
-        ? displayed.initialTransitions.some(transition => !!transition.toCondition)
-            || displayed.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
+    const errorFocus = getStateErrorFocus(sm);
+    const hasConditionExpansions = sm
+        ? sm.initialTransitions.some(transition => !!transition.toCondition)
+            || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
         : false;
     const conditionToggleLabel = !hasConditionExpansions
         ? 'No additional conditions to expand'
@@ -61,28 +56,22 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
 
 function renderStateErrorSummary(focus: StateErrorFocus, focusOnError: boolean): string {
     const call = getRejectedCallText(focus);
-    const found = focus.foundCondition ?? focus.foundState;
-    const foundNote = focus.foundState ? '' : ` (${UNKNOWN_FOUND_STATE_TEXT})`;
-    const required = focus.expectedCondition ?? (focus.requiredStates.length > 0 ? focus.requiredStates.join(' || ') : null);
+    const receiver = focus.receiver ? `<code>${escapeHtml(focus.receiver)}</code>` : 'the receiver';
+    const parts = [
+        `${call ? `<code>${escapeHtml(call)}</code>` : 'The call'} is rejected`
+            + (focus.invalidStates.length > 0 ? ` when ${receiver} is ${renderStates(focus.invalidStates)}` : ''),
+        focus.validStates.length > 0 ? `allowed when ${renderStates(focus.validStates)}` : '',
+    ];
     return /*html*/`
         <div class="diagram-error-summary">
-            <ul class="diagram-error-items">
-                <li class="diagram-error-call">
-                    <span class="diagram-error-icon" aria-hidden="true">${REJECTED_CALL_ICON}</span>
-                    <span>Call rejected${call ? /*html*/`: <code>${escapeHtml(call)}</code>` : ''}</span>
-                </li>
-                <li class="diagram-error-found">
-                    <span class="diagram-error-icon" aria-hidden="true">${FOUND_STATE_ICON}</span>
-                    <span>Found${found ? /*html*/`: <code>${renderHighlightedInlineExpression(found)}</code>` : ''}${foundNote}</span>
-                </li>
-                <li class="diagram-error-required">
-                    <span class="diagram-error-icon" aria-hidden="true">${REQUIRED_STATE_ICON}</span>
-                    <span>Required${required ? /*html*/`: <code>${renderHighlightedInlineExpression(required)}</code>` : ''}</span>
-                </li>
-            </ul>
+            <p class="diagram-error-text">${parts.filter(Boolean).join(' \u00B7 ')}</p>
             <button id="diagram-focus-btn" class="diagram-focus-btn" type="button">
-                ${focusOnError ? 'Show full diagram' : 'Focus on error'}
+                ${focusOnError ? 'Show all' : 'Focus on error'}
             </button>
         </div>
     `;
+}
+
+function renderStates(states: string[]): string {
+    return states.map(state => `<code>${escapeHtml(state)}</code>`).join(' or ');
 }

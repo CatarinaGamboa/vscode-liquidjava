@@ -109,66 +109,45 @@ describe('state machine view', () => {
         }
     });
 
-    it('summarizes a selected state error with text and a toggle to the full diagram', () => {
+    it('summarizes where the call is rejected and allowed in one line', () => {
         const errorMachine = machine({
+            states: ['unbound', 'bound', 'connected', 'closed'],
             errorContext: {
-                calledMethod: 'read', actualStates: ['Closed'], receiver: 'connection',
-                expectedStates: ['Open'], expectedCondition: 'Open(connection)', foundCondition: 'Closed(connection)',
-                definiteFoundState: 'Closed',
+                calledMethod: 'receive', actualStates: ['bound', 'closed'], receiver: 'socket',
+                expectedStates: ['unbound', 'bound', 'connected'], possibleStates: ['bound', 'closed'],
             },
         });
         renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true);
 
-        const items = Array.from(document.querySelectorAll('.diagram-error-items li'), node => node.textContent?.replace(/\s+/g, ' ').trim());
-        expect(items).toEqual([
-            '\u2298 Call rejected: connection.read()',
-            '\u25C9 Found: Closed(connection)',
-            '\u2713 Required: Open(connection)',
-        ]);
-        expect(button('diagram-focus-btn').textContent?.trim()).toBe('Show full diagram');
+        const summary = document.querySelector('.diagram-error-text')!;
+        expect(summary.textContent).toBe('socket.receive() is rejected when socket is closed \u00B7 allowed when bound');
+        expect(Array.from(summary.querySelectorAll('code'), node => node.textContent)).toEqual(['socket.receive()', 'socket', 'closed', 'bound']);
+        expect(button('diagram-focus-btn').textContent?.trim()).toBe('Show all');
 
         renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, false);
         expect(button('diagram-focus-btn').textContent?.trim()).toBe('Focus on error');
     });
 
-    it('says when the found condition does not establish a single state', () => {
+    it('omits the allowed part of the summary when no possible state accepts the call', () => {
         renderStateMachineView(document.body, machine({
+            states: ['childrenAllowed', 'maybeHasChildren'],
             errorContext: {
-                calledMethod: 'read', actualStates: [], receiver: 'connection', expectedStates: ['Open'],
-                expectedCondition: 'Open(connection)', foundCondition: 'true', definiteFoundState: null,
+                calledMethod: 'getFirstChild', actualStates: ['childrenAllowed'], receiver: 'root',
+                expectedStates: ['maybeHasChildren'], definiteFoundState: 'childrenAllowed',
             },
         }), diagram, 'TB', false, true);
 
-        expect(document.querySelector('.diagram-error-found')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('\u25C9 Found (no single state)');
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('root.getFirstChild() is rejected when root is childrenAllowed');
     });
 
     it.each([
         ['no error', null],
-        ['an error context without the error states', { calledMethod: 'open', actualStates: ['Closed'] }],
+        ['an error context without the accepted states', { calledMethod: 'open', actualStates: ['Closed'] }],
     ])('omits the error summary with %s', (_, errorContext) => {
         renderStateMachineView(document.body, machine({ errorContext }), diagram, 'TB', false, true);
 
         expect(document.querySelector('.diagram-error-summary')).toBeNull();
         expect(document.querySelector('#diagram-focus-btn')).toBeNull();
-    });
-
-    it('only enables condition expansion for conditions shown in the focused view', () => {
-        const errorMachine = machine({
-            transitions: [
-                { from: 'Closed', to: 'Open', label: 'open' },
-                { from: 'Closed', to: 'Closed', label: 'reset', fromCondition: 'size > 0' },
-            ],
-            errorContext: {
-                calledMethod: 'read', actualStates: ['Closed'], receiver: 'connection', expectedStates: ['Open'],
-                expectedCondition: 'Open(connection)', foundCondition: 'Closed(connection)', definiteFoundState: 'Closed',
-            },
-        });
-
-        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true);
-        expect(button('diagram-conditions-btn').disabled).toBe(true);
-
-        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, false);
-        expect(button('diagram-conditions-btn').disabled).toBe(false);
     });
 
     it('preserves the previous diagram container height when rerendering', () => {

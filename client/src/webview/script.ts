@@ -202,7 +202,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
-        // toggle between the selected state error and the full diagram
+        // toggle the dimming of the diagram parts unrelated to the selected state error
         if (target.closest?.('#diagram-focus-btn')) {
             e.stopPropagation();
             focusDiagramOnError = !focusDiagramOnError;

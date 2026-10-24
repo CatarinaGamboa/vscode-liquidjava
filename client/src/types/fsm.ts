@@ -16,4 +16,5 @@ export type LJStateMachineErrorContext = {
     expectedCondition?: string | null;
     foundCondition?: string | null;
     definiteFoundState?: string | null;
+    possibleStates?: string[];
 };

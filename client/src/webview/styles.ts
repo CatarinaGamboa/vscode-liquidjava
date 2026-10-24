@@ -42,7 +42,7 @@ export function getStyles(): string {
             --lj-token-punctuation: var(--vscode-editor-foreground);
             --lj-state-cond-pre: var(--lj-token-identifier);
             --lj-state-cond-post: var(--lj-token-type);
-            --lj-state-required: var(--vscode-testing-iconPassed, var(--vscode-charts-green, #388a34));
+            --lj-state-valid: var(--vscode-testing-iconPassed, var(--vscode-charts-green, #388a34));
         }
         body.vscode-light {
             --lj-token-keyword: #0000FF;
@@ -1017,39 +1017,29 @@ export function getStyles(): string {
             fill: var(--vscode-errorForeground) !important;
             stroke: var(--vscode-errorForeground) !important;
         }
-        /* states without a description render a .label-container, states with one an outer rect and a divider */
-        .diagram-container .mermaid svg .ljStateErrorFound :is(.label-container, rect.outer, .divider),
-        .diagram-container .mermaid svg .ljStateErrorFoundCondition :is(.label-container, rect.outer, .divider) {
+        .diagram-container .mermaid svg .ljStateInvalid .label-container {
+            fill: color-mix(in srgb, var(--vscode-errorForeground) 10%, var(--vscode-editor-background)) !important;
             stroke: var(--vscode-errorForeground) !important;
             stroke-width: 2px !important;
         }
-        .diagram-container .mermaid svg .ljStateErrorFoundCondition :is(.label-container, rect.outer),
-        .diagram-container .mermaid svg .ljStateErrorPossible :is(.label-container, rect.outer),
-        .diagram-container .mermaid svg .ljStateErrorPossibleRequired :is(.label-container, rect.outer) {
-            stroke-dasharray: 5 3;
-        }
-        .diagram-container .mermaid svg .ljStateErrorRequired :is(.label-container, rect.outer, .divider),
-        .diagram-container .mermaid svg .ljStateErrorPossibleRequired :is(.label-container, rect.outer, .divider) {
-            stroke: var(--lj-state-required) !important;
+        .diagram-container .mermaid svg .ljStateValid .label-container {
+            fill: color-mix(in srgb, var(--lj-state-valid) 10%, var(--vscode-editor-background)) !important;
+            stroke: var(--lj-state-valid) !important;
             stroke-width: 2px !important;
         }
-        .diagram-container .mermaid svg .note-cluster rect {
-            fill: none !important;
-            stroke: none !important;
-        }
-        .diagram-container .mermaid svg .statediagram-note .label-container path {
-            fill: color-mix(in srgb, var(--vscode-errorForeground) 12%, var(--vscode-editor-background)) !important;
-            stroke: var(--vscode-errorForeground) !important;
-            stroke-dasharray: 4 2;
-        }
-        .diagram-container .mermaid svg path.note-edge {
-            stroke: var(--vscode-errorForeground) !important;
+        .diagram-container .mermaid svg .ljStateAccepted .label-container {
+            stroke: var(--vscode-editorWarning-foreground, #cca700) !important;
+            stroke-width: 1px !important;
             stroke-dasharray: 4 3;
+        }
+        .diagram-container .mermaid svg .ljStateDimmed,
+        .diagram-container .mermaid svg .lj-dimmed {
+            opacity: 0.25;
         }
         .diagram-error-summary {
             display: flex;
             flex-wrap: wrap;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
             gap: 0.5rem 1rem;
             margin-bottom: 0.75rem;
@@ -1057,32 +1047,10 @@ export function getStyles(): string {
             cursor: default;
             user-select: text;
         }
-        .diagram-error-items {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
+        .diagram-error-text {
             min-width: 0;
             margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .diagram-error-items li {
-            display: flex;
-            gap: 0.4rem;
             overflow-wrap: anywhere;
-        }
-        .diagram-error-icon {
-            flex-shrink: 0;
-            width: 1em;
-            font-weight: 700;
-            text-align: center;
-        }
-        .diagram-error-call .diagram-error-icon,
-        .diagram-error-found .diagram-error-icon {
-            color: var(--vscode-errorForeground);
-        }
-        .diagram-error-required .diagram-error-icon {
-            color: var(--lj-state-required);
         }
         .diagram-focus-btn {
             flex-shrink: 0;

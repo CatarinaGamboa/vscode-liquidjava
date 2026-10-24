@@ -1,11 +1,6 @@
 import type { LJStateMachine } from "../types/fsm";
 import { copyToClipboard } from "./clipboard";
-import {
-    FOUND_STATE_ICON, FOUND_STATE_TEXT, POSSIBLE_STATE_ICON, POSSIBLE_STATE_TEXT,
-    REJECTED_CALL_ICON, REJECTED_CALL_TEXT, REJECTED_CALL_UNKNOWN_STATE_TEXT,
-    REQUIRED_STATE_ICON, REQUIRED_STATE_TEXT, UNKNOWN_FOUND_STATE_TEXT,
-    POSSIBLE_REQUIRED_STATE_TEXT, getDisplayedStateMachine, getRejectedCallText, type StateErrorFocus,
-} from "./diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getRelatedStates, getStateErrorFocus } from "./diagram-focus";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -13,8 +8,6 @@ const MAX_ZOOM = 5;
 const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
-const STATE_ERROR_FOUND_CONDITION_ID = 'lj_found_condition';
-const STATE_ERROR_LABEL_LINE_LENGTH = 24;
 
 // state variables
 let zoomLevel = 1;
@@ -29,7 +22,7 @@ let startY = 0;
  * @param sm 
  * @param orientation
  * @param showConditions
- * @param focusOnError whether to only show the states involved in the selected state error
+ * @param focusOnError whether to dim the states and transitions unrelated to the selected state error
  * @returns Mermaid diagram string
  */
 export function createMermaidDiagram(
@@ -41,25 +34,24 @@ export function createMermaidDiagram(
     if (!sm) return '';
     
     const lines: string[] = [];
-    const { errorFocus, focusedStates, initialTransitions, transitions } = getDisplayedStateMachine(sm, focusOnError);
+    const errorFocus = getStateErrorFocus(sm);
+    const relatedStates = focusOnError && errorFocus ? getRelatedStates(errorFocus) : null;
+    const isDimmed = (state: string) => !!relatedStates && !relatedStates.includes(state);
 
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
-
-    // declare the error states first so the focused layout starts from the found state
-    if (errorFocus && focusedStates) lines.push(...getStateErrorLines(errorFocus));
     
     // initial transitions
-    initialTransitions.forEach(transition => {
+    sm.initialTransitions.forEach(transition => {
         const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
-        lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
+        const displayedLabel = isDimmed(transition.to) ? dimLabel(label) : label;
+        lines.push(`    [*] --> ${transition.to}${displayedLabel ? ` : ${displayedLabel}` : ''}`);
     });
     
     // group transitions by from/to states and merge labels
-    const transitionMap = new Map<string, string[]>();
-    transitions.forEach(transition => {
-        // the full diagram highlights where the called method is allowed, the focused view only marks the rejected call
-        const isCalledMethod = !focusedStates && transition.label === sm.errorContext?.calledMethod;
+    const transitionMap = new Map<string, { labels: string[], hasCalledMethod: boolean }>();
+    sm.transitions.forEach(transition => {
+        const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
         const label = getTransitionLabel(
             transition.label,
             transition.fromCondition,
@@ -68,89 +60,48 @@ export function createMermaidDiagram(
             isCalledMethod,
         );
         const key = `${transition.from}|${transition.to}`;
-        if (!transitionMap.has(key)) transitionMap.set(key, []);
-        transitionMap.get(key)?.push(label);
+        if (!transitionMap.has(key)) transitionMap.set(key, { labels: [], hasCalledMethod: false });
+        const group = transitionMap.get(key)!;
+        group.labels.push(label);
+        group.hasCalledMethod ||= isCalledMethod;
     });
 
     // add transitions
-    transitionMap.forEach((labels, key) => {
+    transitionMap.forEach(({ labels, hasCalledMethod }, key) => {
         const [from, to] = key.split('|');
         const mergedLabel = labels.join('<br/>');
-        lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
+        const dimmed = !hasCalledMethod && (isDimmed(from) || isDimmed(to));
+        lines.push(`    ${from} --> ${to} : ${dimmed ? dimLabel(mergedLabel) : mergedLabel}`);
     });
 
-    if (errorFocus) {
-        if (!focusedStates) lines.push(...getStateErrorLines(errorFocus));
+    if (!errorFocus) {
+        const highlightedStates = sm.states.filter(state => sm.errorContext?.actualStates.includes(state));
+        if (highlightedStates.length > 0) {
+            lines.push(`    class ${highlightedStates.join(',')} ljStateErrorActual`);
+        }
         return lines.join('\n');
     }
 
-    const highlightedStates = sm.states.filter(state => sm.errorContext?.actualStates.includes(state));
-    if (highlightedStates.length > 0) {
-        lines.push(`    class ${highlightedStates.join(',')} ljStateErrorActual`);
-    }
+    // mark the possible states from which the call is accepted or rejected, with text besides colour,
+    // and hint at the other states that accept the call
+    errorFocus.validStates.forEach(state => lines.push(`    state "${VALID_STATE_ICON} ${state}" as ${state}`));
+    errorFocus.invalidStates.forEach(state => lines.push(`    state "${INVALID_STATE_ICON} ${state}" as ${state}`));
+    const stateClasses: [string[], string][] = [
+        [errorFocus.validStates, 'ljStateValid'],
+        [errorFocus.invalidStates, 'ljStateInvalid'],
+        [errorFocus.acceptedStates.filter(state => !errorFocus.validStates.includes(state)), 'ljStateAccepted'],
+        [sm.states.filter(isDimmed), 'ljStateDimmed'],
+    ];
+    stateClasses.forEach(([states, className]) => {
+        if (states.length > 0) lines.push(`    class ${states.join(',')} ${className}`);
+    });
 
     return lines.join('\n');
 }
 
-/**
- * Marks the found and required states of a state error and attaches the rejected call to the found state
- * The rejected call is a note rather than a transition, since the call does not change the state
- * @param focus
- * @returns Mermaid lines
- */
-function getStateErrorLines(focus: StateErrorFocus): string[] {
-    const lines: string[] = [];
-    const foundNode = focus.foundState ?? STATE_ERROR_FOUND_CONDITION_ID;
-    // a state that may be found and is also required gets a single combined label
-    const possibleRequiredStates = focus.possibleStates.filter(state => focus.requiredStates.includes(state));
-    const possibleStates = focus.possibleStates.filter(state => !possibleRequiredStates.includes(state));
-    const requiredStates = focus.requiredStates.filter(state => !possibleRequiredStates.includes(state));
-    if (focus.foundState) {
-        lines.push(...getStateDescriptionLines(focus.foundState, `${FOUND_STATE_ICON} ${FOUND_STATE_TEXT}`));
-    } else {
-        // quotes would end the quoted state name
-        const condition = focus.foundCondition
-            ? escapeMermaidLabel(focus.foundCondition).replace(/\\"/g, '#quot;')
-            : UNKNOWN_FOUND_STATE_TEXT;
-        lines.push(`    state "${FOUND_STATE_ICON} Found: ${condition}" as ${STATE_ERROR_FOUND_CONDITION_ID}`);
-        possibleStates.forEach(state => {
-            lines.push(...getStateDescriptionLines(state, `${POSSIBLE_STATE_ICON} ${POSSIBLE_STATE_TEXT}`));
-        });
-        possibleRequiredStates.forEach(state => {
-            lines.push(...getStateDescriptionLines(state, `${POSSIBLE_STATE_ICON} ${POSSIBLE_REQUIRED_STATE_TEXT}`));
-        });
-    }
-    requiredStates.forEach(state => {
-        lines.push(...getStateDescriptionLines(state, `${REQUIRED_STATE_ICON} ${REQUIRED_STATE_TEXT}`));
-    });
-
-    const call = getRejectedCallText(focus);
-    const rejectedText = focus.foundState ? REJECTED_CALL_TEXT : REJECTED_CALL_UNKNOWN_STATE_TEXT;
-    const callLabel = call ? `${REJECTED_CALL_ICON} ${escapeMermaidLabel(call)}<br/>${rejectedText}` : `${REJECTED_CALL_ICON} ${rejectedText}`;
-    lines.push(`    note right of ${foundNode} : ${callLabel}`);
-
-    lines.push(`    class ${foundNode} ${focus.foundState ? 'ljStateErrorFound' : 'ljStateErrorFoundCondition'}`);
-    if (possibleStates.length > 0) lines.push(`    class ${possibleStates.join(',')} ljStateErrorPossible`);
-    if (possibleRequiredStates.length > 0) {
-        lines.push(`    class ${possibleRequiredStates.join(',')} ljStateErrorPossibleRequired`);
-    }
-    if (requiredStates.length > 0) lines.push(`    class ${requiredStates.join(',')} ljStateErrorRequired`);
-    return lines;
-}
-
-function getStateDescriptionLines(state: string, description: string): string[] {
-    return [`    ${state} : ${state}`, `    ${state} : ${wrapLabel(description)}`];
-}
-
-// state descriptions do not wrap, so long ones would shrink the whole diagram in narrow views
-function wrapLabel(label: string): string {
-    const lines: string[] = [];
-    label.split(' ').forEach(word => {
-        const last = lines.length - 1;
-        if (last >= 0 && lines[last].length + word.length < STATE_ERROR_LABEL_LINE_LENGTH) lines[last] += ` ${word}`;
-        else lines.push(word);
-    });
-    return lines.join('<br/>');
+// marks a transition label so that its transition is dimmed once rendered
+function dimLabel(label: string): string {
+    return `<span class="lj-dimmed-transition">${label}</span>`;
 }
 
 function getTransitionLabel(
@@ -205,6 +156,7 @@ export async function renderMermaidDiagram(document: any, window: any) {
     try { 
         await mermaid.run({ nodes: mermaidElements });
         highlightErrorTransitions(document);
+        dimTransitions(document);
         applyTransform(document);
         registerPanListeners(document);
         const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
@@ -225,6 +177,18 @@ function highlightErrorTransitions(document: any) {
         if (!transition || transition.classList.contains('lj-state-error-transition')) return;
         transition.classList.add('lj-state-error-transition');
         highlightTransitionMarker(svg, transition, edgeId);
+    });
+}
+
+function dimTransitions(document: any) {
+    document.querySelectorAll('.lj-dimmed-transition').forEach((dimmedLabel: any) => {
+        const label = dimmedLabel.closest('g.label[data-id]');
+        const edgeId = label?.getAttribute('data-id');
+        const svg = label?.ownerSVGElement;
+        if (!edgeId || !svg) return;
+
+        label.classList.add('lj-dimmed');
+        svg.querySelector(`path.transition[data-id="${edgeId}"]`)?.classList.add('lj-dimmed');
     });
 }
 

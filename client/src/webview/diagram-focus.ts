@@ -1,121 +1,51 @@
 import type { LJStateMachine } from "../types/fsm";
 
-// labels shown next to the states and call of a state error
-export const FOUND_STATE_ICON = '\u25C9';
-export const FOUND_STATE_TEXT = 'Found for this receiver at the call';
-export const POSSIBLE_STATE_ICON = '?';
-export const POSSIBLE_STATE_TEXT = 'Possible for this receiver at the call';
-export const REQUIRED_STATE_ICON = '\u2713';
-export const REQUIRED_STATE_TEXT = 'Required for this call';
-export const REJECTED_CALL_ICON = '\u2298';
-export const REJECTED_CALL_TEXT = 'Call rejected from this state';
-export const REJECTED_CALL_UNKNOWN_STATE_TEXT = 'Call rejected from the found state';
-export const UNKNOWN_FOUND_STATE_TEXT = 'no single state';
-export const POSSIBLE_REQUIRED_STATE_TEXT = `Possible \u00B7 ${REQUIRED_STATE_ICON} ${REQUIRED_STATE_TEXT}`;
+export const VALID_STATE_ICON = '✓';
+export const INVALID_STATE_ICON = '✕';
 
 /**
- * The selected state error of a single state machine, with the states it involves
+ * The selected state error of a single state machine, split by the possible states of the receiver
  */
 export type StateErrorFocus = {
     calledMethod: string | null;
     receiver: string | null;
-    foundState: string | null;
-    possibleStates: string[];
-    requiredStates: string[];
-    foundCondition: string | null;
-    expectedCondition: string | null;
+    // possible states from which the call is accepted
+    validStates: string[];
+    // possible states from which the call is rejected
+    invalidStates: string[];
+    // states from which the call is accepted
+    acceptedStates: string[];
 };
 
 /**
  * Gets the state error to focus on from the error context of a state machine
  * @param sm
- * @returns the state error focus, or null when there is no error or the server only reports the called method and found states
+ * @returns the state error focus, or null when there is no error or the server does not report the accepted states
  */
 export function getStateErrorFocus(sm: LJStateMachine | undefined): StateErrorFocus | null {
     const context = sm?.errorContext;
     if (!context?.expectedStates) return null;
 
-    const foundState = context.definiteFoundState && sm.states.includes(context.definiteFoundState)
-        ? context.definiteFoundState
-        : null;
+    const possible = context.possibleStates
+        ?? (context.definiteFoundState ? [context.definiteFoundState] : context.actualStates);
+    const possibleStates = sm.states.filter(state => possible.includes(state));
+    const acceptedStates = sm.states.filter(state => context.expectedStates?.includes(state));
     return {
         calledMethod: context.calledMethod,
         receiver: context.receiver ?? null,
-        foundState,
-        possibleStates: foundState ? [] : sm.states.filter(state => context.actualStates.includes(state)),
-        requiredStates: sm.states.filter(state => state !== foundState && context.expectedStates?.includes(state)),
-        // a trivially true condition tells nothing about the state of the receiver
-        foundCondition: context.foundCondition && context.foundCondition !== 'true' ? context.foundCondition : null,
-        expectedCondition: context.expectedCondition ?? null,
+        validStates: possibleStates.filter(state => acceptedStates.includes(state)),
+        invalidStates: possibleStates.filter(state => !acceptedStates.includes(state)),
+        acceptedStates,
     };
 }
 
 /**
- * Gets the states shown when focusing on a state error: the found states, the required states,
- * and the states on a shortest path between them
- * @param sm
+ * Gets the states related to a state error: the possible states of the receiver and the accepted states
  * @param focus
- * @returns the focused states, in the order of the state machine
+ * @returns the related states
  */
-export function getFocusedStates(sm: LJStateMachine, focus: StateErrorFocus): string[] {
-    const sources = focus.foundState ? [focus.foundState] : focus.possibleStates;
-    const focused = new Set([...sources, ...focus.requiredStates, ...getShortestPath(sm, sources, focus.requiredStates)]);
-    return sm.states.filter(state => focused.has(state));
-}
-
-function getShortestPath(sm: LJStateMachine, sources: string[], targets: string[]): string[] {
-    const previous = new Map<string, string | null>(sources.map(source => [source, null]));
-    const queue = [...sources];
-    while (queue.length > 0) {
-        const state = queue.shift()!;
-        if (targets.includes(state)) {
-            const path: string[] = [];
-            for (let current: string | null | undefined = state; current; current = previous.get(current)) {
-                path.unshift(current);
-            }
-            return path;
-        }
-        sm.transitions
-            .filter(transition => transition.from === state && !previous.has(transition.to))
-            .forEach(transition => {
-                previous.set(transition.to, state);
-                queue.push(transition.to);
-            });
-    }
-    return [];
-}
-
-/**
- * The part of a state machine shown in its diagram
- */
-export type DisplayedStateMachine = {
-    errorFocus: StateErrorFocus | null;
-    focusedStates: string[] | null;
-    initialTransitions: LJStateMachine['initialTransitions'];
-    transitions: LJStateMachine['transitions'];
-};
-
-/**
- * Gets the part of a state machine shown in its diagram
- * The focused view only keeps the transitions between the focused states, without self loops
- * except for the called method on a required state, which shows where the call is allowed
- * @param sm
- * @param focusOnError whether to only show the states involved in the selected state error
- * @returns the error focus, the focused states (null for the full diagram), and the displayed transitions
- */
-export function getDisplayedStateMachine(sm: LJStateMachine, focusOnError: boolean): DisplayedStateMachine {
-    const errorFocus = getStateErrorFocus(sm);
-    if (!focusOnError || !errorFocus) {
-        return { errorFocus, focusedStates: null, initialTransitions: sm.initialTransitions, transitions: sm.transitions };
-    }
-
-    const focusedStates = getFocusedStates(sm, errorFocus);
-    const transitions = sm.transitions.filter(transition => {
-        if (!focusedStates.includes(transition.from) || !focusedStates.includes(transition.to)) return false;
-        return transition.from !== transition.to
-            || (errorFocus.requiredStates.includes(transition.from) && transition.label === errorFocus.calledMethod);
-    });
-    return { errorFocus, focusedStates, initialTransitions: [], transitions };
+export function getRelatedStates(focus: StateErrorFocus): string[] {
+    return [...new Set([...focus.validStates, ...focus.invalidStates, ...focus.acceptedStates])];
 }
 
 /**
