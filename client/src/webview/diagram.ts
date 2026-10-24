@@ -57,10 +57,14 @@ export function createMermaidDiagram(
         addTransition(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`, isDimmed(transition.to));
     });
     
+    // in focus mode, only the failed method and the ways out of the possible states stay bright
+    const isUsefulTransition = (from: string, to: string) => !!errorFocus?.possibleStates.includes(from) && from !== to;
+
     // group transitions by from/to states and merge labels
-    const transitionMap = new Map<string, { labels: string[], hasCalledMethod: boolean }>();
+    const transitionMap = new Map<string, { labels: string[], dimmed: boolean }>();
     sm.transitions.forEach(transition => {
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
+        const dimmed = relatedStates.length > 0 && !isCalledMethod && !isUsefulTransition(transition.from, transition.to);
         const label = getTransitionLabel(
             transition.label,
             transition.fromCondition,
@@ -69,17 +73,17 @@ export function createMermaidDiagram(
             isCalledMethod,
         );
         const key = `${transition.from}|${transition.to}`;
-        if (!transitionMap.has(key)) transitionMap.set(key, { labels: [], hasCalledMethod: false });
+        if (!transitionMap.has(key)) transitionMap.set(key, { labels: [], dimmed: true });
         const group = transitionMap.get(key)!;
-        group.labels.push(label);
-        group.hasCalledMethod ||= isCalledMethod;
+        // wrapping the label keeps its text, so the layout stays the same
+        group.labels.push(dimmed ? `<span class="lj-dimmed-method">${label}</span>` : label);
+        group.dimmed &&= dimmed;
     });
 
-    // add transitions
-    transitionMap.forEach(({ labels, hasCalledMethod }, key) => {
+    // add transitions, dimming those whose methods are all dimmed
+    transitionMap.forEach(({ labels, dimmed }, key) => {
         const [from, to] = key.split('|');
-        const mergedLabel = labels.join('<br/>');
-        addTransition(`    ${from} --> ${to} : ${mergedLabel}`, !hasCalledMethod && (isDimmed(from) || isDimmed(to)));
+        addTransition(`    ${from} --> ${to} : ${labels.join('<br/>')}`, dimmed);
     });
 
     if (!errorFocus) {

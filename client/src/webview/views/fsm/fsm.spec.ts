@@ -164,12 +164,31 @@ describe('state machine view', () => {
     });
 
     it.each([
+        ['invalid, valid, and other accepted states', ['bound', 'closed'], ['\u2715 Call rejected', '\u2713 Call allowed', 'Allowed, but not reachable here']],
+        ['only an invalid and other accepted states', ['closed'], ['\u2715 Call rejected', 'Allowed, but not reachable here']],
+        ['an unknown receiver state', ['unbound', 'bound', 'connected', 'closed'], ['Allowed, but not reachable here']],
+    ])('explains the state marks in a legend with %s', (_, possibleStates, items) => {
+        renderStateMachineView(document.body, machine({
+            states: ['unbound', 'bound', 'connected', 'closed'],
+            errorContext: {
+                calledMethod: 'receive', actualStates: [], receiver: 'socket',
+                expectedStates: ['unbound', 'bound', 'connected'], possibleStates,
+            },
+        }), diagram, 'TB', false, true);
+
+        const legend = document.querySelectorAll('.diagram-error-legend-item');
+        expect(Array.from(legend, item => item.textContent)).toEqual(items);
+        expect(Array.from(legend, item => item.querySelector('.diagram-error-legend-swatch')?.getAttribute('aria-hidden'))).toEqual(items.map(() => 'true'));
+    });
+
+    it.each([
         ['no error', null],
         ['an error context without the accepted states', { calledMethod: 'open', actualStates: ['Closed'] }],
     ])('omits the error summary with %s', (_, errorContext) => {
         renderStateMachineView(document.body, machine({ errorContext }), diagram, 'TB', false, true);
 
         expect(document.querySelector('.diagram-error-summary')).toBeNull();
+        expect(document.querySelector('.diagram-error-legend')).toBeNull();
         expect(document.querySelector('#diagram-focus-btn')).toBeNull();
     });
 

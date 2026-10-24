@@ -1,5 +1,5 @@
 import type { LJStateMachine } from "../../../types/fsm";
-import { getRejectedCallText, getStateErrorFocus, type StateErrorFocus } from "../../diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocus, type StateErrorFocus } from "../../diagram-focus";
 import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderMainHeader } from "../sections";
@@ -37,7 +37,7 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                                 ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
                             </div>
                         </div>
-                        ${errorFocus ? renderStateErrorSummary(errorFocus, focusOnError) : ''}
+                        ${errorFocus ? renderStateErrorSummary(errorFocus, focusOnError) + renderStateErrorLegend(errorFocus) : ''}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
                                 <span class="diagram-condition-legend-pre">Precondition</span>
@@ -76,6 +76,23 @@ function renderStateErrorSummary(focus: StateErrorFocus, focusOnError: boolean):
             </button>
         </div>
     `;
+}
+
+// explains the state marks with the same outlines, fills, and icons as the diagram
+function renderStateErrorLegend(focus: StateErrorFocus): string {
+    const items = [
+        focus.invalidStates.length > 0 ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Call rejected`) : '',
+        focus.validStates.length > 0 ? renderLegendItem('valid', `${VALID_STATE_ICON} Call allowed`) : '',
+        focus.acceptedStates.some(state => !focus.validStates.includes(state))
+            ? renderLegendItem('accepted', 'Allowed, but not reachable here')
+            : '',
+    ].filter(Boolean);
+    if (items.length === 0) return '';
+    return `<div class="diagram-error-legend">${items.join('')}</div>`;
+}
+
+function renderLegendItem(kind: string, label: string): string {
+    return `<span class="diagram-error-legend-item"><span class="diagram-error-legend-swatch diagram-error-legend-${kind}" aria-hidden="true"></span>${label}</span>`;
 }
 
 function renderStates(states: string[]): string {

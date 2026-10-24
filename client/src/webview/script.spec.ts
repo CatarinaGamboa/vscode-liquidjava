@@ -178,11 +178,13 @@ describe('webview script', () => {
         click('#diagram-focus-btn');
         expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Focus on error');
         expect(root.querySelector('.mermaid')?.textContent).toContain('Broken --> Broken : reopen()');
-        expect(root.querySelector('.mermaid')?.textContent).not.toContain('ljStateDimmed');
+        expect(root.querySelector('.mermaid')?.textContent).not.toMatch(/ljStateDimmed|lj-dimmed/);
+        expect(root.querySelector('.mermaid .lj-dimmed-method')).toBeNull();
 
         click('#diagram-focus-btn');
         expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
         expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
+        expect(Array.from(root.querySelectorAll('.mermaid .lj-dimmed-method'), node => node.textContent)).toEqual(['close()', 'reopen()']);
 
         // the general diagram of the file has no error to focus on
         click('[data-tab="diagnostics"]');

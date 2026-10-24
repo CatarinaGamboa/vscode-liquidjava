@@ -27,21 +27,40 @@ describe('state error styles', () => {
     it('outlines the states from which the call is rejected or accepted', () => {
         render(state('ljStateInvalid') + state('ljStateValid'));
 
-        expect(style('.ljStateInvalid .label-container').getPropertyValue('stroke')).toBe('var(--vscode-errorForeground)');
+        expect(style('.ljStateInvalid .label-container').getPropertyValue('stroke')).toBe('var(--lj-state-invalid)');
         expect(style('.ljStateValid .label-container').getPropertyValue('stroke')).toBe('var(--lj-state-valid)');
         // a faint fill of the outline colour helps to find small marked states in large machines
         expect(style('.ljStateInvalid .label-container').getPropertyValue('fill'))
-            .toBe('color-mix(in srgb, var(--vscode-errorForeground) 10%, var(--vscode-editor-background))');
+            .toBe('color-mix(in srgb, var(--lj-state-invalid) 10%, var(--vscode-editor-background))');
     });
 
     it('hints at the other accepted states with a thin dashed warning outline', () => {
         render(state('ljStateAccepted'));
 
         const outline = style('.ljStateAccepted .label-container');
-        expect(outline.getPropertyValue('stroke')).toBe('var(--vscode-editorWarning-foreground, #cca700)');
+        expect(outline.getPropertyValue('stroke')).toBe('var(--lj-state-accepted)');
         expect(outline.getPropertyValue('stroke-width')).toBe('1px');
         expect(outline.getPropertyValue('stroke-dasharray')).toBe('4 3');
         expect(outline.getPropertyValue('fill')).toBe('var(--vscode-editor-background)');
+    });
+
+    it('draws the legend swatches like the marked states', () => {
+        render('');
+        document.body.insertAdjacentHTML('beforeend', ['invalid', 'valid', 'accepted']
+            .map(kind => `<span class="diagram-error-legend-swatch diagram-error-legend-${kind}"></span>`).join(''));
+
+        // jsdom does not compute colours given as variables, so read the declared colour
+        const declaredColour = (selector: string) => Array.from(document.styleSheets[0].cssRules)
+            .map(rule => rule as CSSStyleRule)
+            .find(rule => rule.selectorText === selector)?.style.getPropertyValue('border-color');
+        const border = (kind: string) => {
+            const swatch = style(`.diagram-error-legend-${kind}`);
+            return [swatch.getPropertyValue('border-top-width'), swatch.getPropertyValue('border-top-style'),
+                declaredColour(`.diagram-error-legend-${kind}`)];
+        };
+        expect(border('invalid')).toEqual(['2px', 'solid', 'var(--lj-state-invalid)']);
+        expect(border('valid')).toEqual(['2px', 'solid', 'var(--lj-state-valid)']);
+        expect(border('accepted')).toEqual(['1px', 'dashed', 'var(--lj-state-accepted)']);
     });
 
     it('dims unrelated states and transitions', () => {
@@ -50,6 +69,16 @@ describe('state error styles', () => {
         for (const selector of ['.ljStateDimmed', 'path.lj-dimmed', 'g.lj-dimmed']) {
             expect(style(selector).opacity).toBe('0.25');
         }
+    });
+
+    it('dims single methods of a label without dimming a dimmed transition twice', () => {
+        const label = (className: string, method: string) => `<g class="edgeLabel"><g class="${className}"><foreignObject>`
+            + `<div><span class="edgeLabel"><p><span class="lj-dimmed-method">${method}</span></p></span></div></foreignObject></g></g>`;
+        render(label('label', 'send') + label('label lj-dimmed', 'bind'));
+
+        const [method, inDimmedTransition] = document.querySelectorAll('.lj-dimmed-method');
+        expect(getComputedStyle(method).opacity).toBe('0.25');
+        expect(getComputedStyle(inDimmedTransition).opacity).toBe('1');
     });
 
     it('keeps other states with the default outline', () => {

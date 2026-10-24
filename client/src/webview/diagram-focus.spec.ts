@@ -65,6 +65,10 @@ function lines(diagram: string): string[] {
 
 const dimmedTransitions = (diagram: string) => lines(diagram).filter(line => line.startsWith('%% lj-dimmed-transitions:'));
 const calledMethod = (label: string) => `<span class="lj-state-error-method">${label}</span>`;
+const dimmedMethod = (label: string) => `<span class="lj-dimmed-method">${label}</span>`;
+// removes the hooks that only style the focused diagram
+const withoutDimming = (diagram: string) => lines(diagram.replace(/<span class="lj-dimmed-method">(.*?)<\/span>/g, '$1'))
+    .filter(line => !line.startsWith('%%') && !line.endsWith('ljStateDimmed'));
 
 describe('state error focus', () => {
     it('splits the possible states into valid and invalid ones', () => {
@@ -99,10 +103,11 @@ describe('state error focus', () => {
                 'state "✕ closed" as closed',
                 'class bound ljStateValid',
                 'class closed ljStateInvalid',
-                `unbound --> unbound : ${calledMethod('receive')}<br/>send`,
-                `bound --> bound : ${calledMethod('receive')}<br/>send`,
-                `connected --> connected : ${calledMethod('receive')}<br/>send`,
             ]));
+            const send = focusOnError ? dimmedMethod('send') : 'send';
+            for (const state of ['unbound', 'bound', 'connected']) {
+                expect(diagram).toContain(`${state} --> ${state} : ${calledMethod('receive')}<br/>${send}`);
+            }
             // accepted states that are not possible get only a class, without a mark in their name
             expect(diagram.filter(line => /^(state|class) .*\b(unbound|connected)\b/.test(line)))
                 .toEqual(['class unbound,connected ljStateAccepted']);
@@ -115,29 +120,58 @@ describe('state error focus', () => {
         const full = createMermaidDiagram(datagramSocket(), 'TB', false, false);
 
         expect(lines(focused)).toContain('class broken ljStateDimmed');
-        // the initial transition into broken, repair, and discard, in declaration order
-        expect(dimmedTransitions(focused)).toEqual(['%% lj-dimmed-transitions: edge1 edge11 edge12']);
-        // focusing only adds the dimming, so the layout stays the same
-        expect(lines(focused).filter(line => !line.startsWith('%%') && !line.endsWith('ljStateDimmed'))).toEqual(lines(full));
-        expect(lines(full)).toContain('[*] --> broken');
-        expect(full).not.toContain('ljStateDimmed');
-        expect(dimmedTransitions(full)).toEqual([]);
+        // the initial transition into broken, then bind, disconnect, close from unbound and connected, repair, and discard
+        expect(dimmedTransitions(focused)).toEqual(['%% lj-dimmed-transitions: edge1 edge2 edge4 edge8 edge10 edge11 edge12']);
+        // focusing only adds styling hooks, so the layout stays the same
+        expect(withoutDimming(focused)).toEqual(lines(full));
+        expect(full).not.toMatch(/ljStateDimmed|lj-dimmed/);
     });
 
-    it('keeps edges of the called method undimmed even between unrelated states', () => {
+    it('only keeps the failed method and the ways out of the possible states bright', () => {
+        const diagram = lines(createMermaidDiagram(datagramSocket(), 'TB', false, true));
+
+        expect(diagram).toEqual(expect.arrayContaining([
+            // leaving a possible state for another state
+            'bound --> connected : connect',
+            'bound --> closed : close',
+            // self loops and transitions from other states
+            `bound --> bound : ${calledMethod('receive')}<br/>${dimmedMethod('send')}`,
+            `unbound --> bound : ${dimmedMethod('bind')}`,
+            `connected --> bound : ${dimmedMethod('disconnect')}`,
+            `broken --> closed : ${dimmedMethod('discard')}`,
+        ]));
+    });
+
+    it('dims each method of a merged label, and the transition only when all of them are dimmed', () => {
         const sm = datagramSocket();
-        sm.transitions.push({ from: 'broken', to: 'broken', label: 'receive' });
+        sm.transitions.push(
+            { from: 'broken', to: 'broken', label: 'receive' },
+            { from: 'bound', to: 'connected', label: 'reconnect' },
+        );
 
         const diagram = createMermaidDiagram(sm, 'TB', false, true);
-        expect(lines(diagram)).toContain(`broken --> broken : repair<br/>${calledMethod('receive')}`);
-        expect(dimmedTransitions(diagram)).toEqual(['%% lj-dimmed-transitions: edge1 edge12']);
+        expect(lines(diagram)).toEqual(expect.arrayContaining([
+            `broken --> broken : ${dimmedMethod('repair')}<br/>${calledMethod('receive')}`,
+            'bound --> connected : connect<br/>reconnect',
+        ]));
+        // the self loop of broken keeps its path for the failed method
+        expect(dimmedTransitions(diagram)).toEqual(['%% lj-dimmed-transitions: edge1 edge2 edge4 edge8 edge10 edge12']);
+    });
+
+    it('dims the conditions of a dimmed method with it', () => {
+        const sm = datagramSocket();
+        sm.transitions[0] = { ...sm.transitions[0], fromCondition: 'unbound(this)' };
+
+        expect(lines(createMermaidDiagram(sm, 'TB', true, true))).toContain(
+            `unbound --> bound : ${dimmedMethod('<span class="state-cond state-cond-pre">unbound(this)</span><br/>bind')}`);
     });
 
     it('only colours labels that match the called method exactly', () => {
         const sm = datagramSocket();
         sm.transitions.push({ from: 'bound', to: 'bound', label: 'receiveAll' });
 
-        expect(lines(createMermaidDiagram(sm, 'TB', false, true))).toContain(`bound --> bound : ${calledMethod('receive')}<br/>send<br/>receiveAll`);
+        expect(lines(createMermaidDiagram(sm, 'TB', false, true)))
+            .toContain(`bound --> bound : ${calledMethod('receive')}<br/>${dimmedMethod('send')}<br/>${dimmedMethod('receiveAll')}`);
     });
 
     it.each([
@@ -164,7 +198,9 @@ describe('state error focus', () => {
         expect(focus).toMatchObject({ unknownState: true, validStates: [], invalidStates: [] });
         const diagram = createMermaidDiagram(sm, 'TB', false, true);
         expect(lines(diagram)).toContain('class unbound,bound,connected ljStateAccepted');
-        expect(diagram).not.toMatch(/ljStateValid|ljStateInvalid|ljStateDimmed|lj-dimmed-transitions|" as /);
+        expect(diagram).not.toMatch(/ljStateValid|ljStateInvalid|ljStateDimmed|" as /);
+        // every state is possible, so only the self loops other than the failed method are dimmed
+        expect(lines(diagram)).toEqual(expect.arrayContaining(['unbound --> bound : bind', `broken --> broken : ${dimmedMethod('repair')}`]));
     });
 
     it('marks the tree node example without an allowed state', () => {
@@ -175,8 +211,11 @@ describe('state error focus', () => {
             'class childrenAllowed ljStateInvalid',
             'class maybeHasChildren ljStateAccepted',
             `maybeHasChildren --> maybeHasChildren : ${calledMethod('getFirstChild')}`,
+            // add leaves childrenAllowed, removeAllChildren does not start from a possible state
+            'childrenAllowed --> maybeHasChildren : add',
+            `maybeHasChildren --> childrenAllowed : ${dimmedMethod('removeAllChildren')}`,
         ]));
-        expect(diagram.join('\n')).not.toMatch(/maybeHasChildren" as|ljStateValid|ljStateDimmed|lj-dimmed-transition/);
+        expect(diagram.join('\n')).not.toMatch(/maybeHasChildren" as|ljStateValid|ljStateDimmed/);
     });
 
     it('keeps the previous highlighting for an error context without the accepted states', () => {
