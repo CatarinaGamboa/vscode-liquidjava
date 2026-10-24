@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LJStateMachine, LJStateMachineErrorContext } from '../types/fsm';
-import { createMermaidDiagram } from './diagram';
+import { createMermaidDiagram, renderMermaidDiagram } from './diagram';
 import { getRelatedStates, getStateErrorFocus } from './diagram-focus';
 
-// DefaultMutableTreeNode from the state error focus issue (#117):
+// DefaultMutableTreeNode from the state error focus issue:
 // root.add(...); root.removeAllChildren(); root.getFirstChild(); // state error
 function treeNode(errorContext: Partial<LJStateMachineErrorContext> | null = {}): LJStateMachine {
     return {
@@ -27,7 +27,7 @@ function treeNode(errorContext: Partial<LJStateMachineErrorContext> | null = {})
     };
 }
 
-// java.net.DatagramSocket from the UDP chat client study example (#158): socket.close() on one branch,
+// java.net.DatagramSocket from the UDP chat client study example: socket.close() on one branch,
 // then socket.receive(...), with an extra state unrelated to the error
 function datagramSocket(errorContext: Partial<LJStateMachineErrorContext> = {}): LJStateMachine {
     const open = ['unbound', 'bound', 'connected'];
@@ -63,7 +63,7 @@ function lines(diagram: string): string[] {
     return diagram.split('\n').map(line => line.trim());
 }
 
-const dimmed = (label: string) => `<span class="lj-dimmed-transition">${label}</span>`;
+const dimmedTransitions = (diagram: string) => lines(diagram).filter(line => line.startsWith('%% lj-dimmed-transitions:'));
 const calledMethod = (label: string) => `<span class="lj-state-error-method">${label}</span>`;
 
 describe('state error focus', () => {
@@ -71,9 +71,11 @@ describe('state error focus', () => {
         expect(getStateErrorFocus(datagramSocket())).toEqual({
             calledMethod: 'receive',
             receiver: 'socket',
+            possibleStates: ['bound', 'closed'],
             validStates: ['bound'],
             invalidStates: ['closed'],
             acceptedStates: ['unbound', 'bound', 'connected'],
+            unknownState: false,
         });
         expect(getRelatedStates(getStateErrorFocus(datagramSocket())!)).toEqual(['bound', 'closed', 'unbound', 'connected']);
     });
@@ -108,33 +110,61 @@ describe('state error focus', () => {
         }
     });
 
-    it('dims the states and transitions unrelated to the error when focused', () => {
-        const focused = lines(createMermaidDiagram(datagramSocket(), 'TB', false, true));
-
-        expect(focused).toEqual(expect.arrayContaining([
-            'class broken ljStateDimmed',
-            `[*] --> broken : ${dimmed('')}`,
-            `broken --> broken : ${dimmed('repair')}`,
-            `broken --> closed : ${dimmed('discard')}`,
-            // transitions between related states, and initial transitions into them, stay
-            '[*] --> bound : new DatagramSocket()',
-            'unbound --> bound : bind',
-            'bound --> closed : close',
-        ]));
-        expect(focused.filter(line => line.includes('lj-dimmed-transition'))).toHaveLength(3);
-
+    it('dims the states and transitions unrelated to the error when focused, without changing the labels', () => {
+        const focused = createMermaidDiagram(datagramSocket(), 'TB', false, true);
         const full = createMermaidDiagram(datagramSocket(), 'TB', false, false);
-        expect(full).not.toContain('ljStateDimmed');
-        expect(full).not.toContain('lj-dimmed-transition');
+
+        expect(lines(focused)).toContain('class broken ljStateDimmed');
+        // the initial transition into broken, repair, and discard, in declaration order
+        expect(dimmedTransitions(focused)).toEqual(['%% lj-dimmed-transitions: edge1 edge11 edge12']);
+        // focusing only adds the dimming, so the layout stays the same
+        expect(lines(focused).filter(line => !line.startsWith('%%') && !line.endsWith('ljStateDimmed'))).toEqual(lines(full));
         expect(lines(full)).toContain('[*] --> broken');
+        expect(full).not.toContain('ljStateDimmed');
+        expect(dimmedTransitions(full)).toEqual([]);
     });
 
     it('keeps edges of the called method undimmed even between unrelated states', () => {
         const sm = datagramSocket();
         sm.transitions.push({ from: 'broken', to: 'broken', label: 'receive' });
 
-        expect(lines(createMermaidDiagram(sm, 'TB', false, true)))
-            .toContain(`broken --> broken : repair<br/>${calledMethod('receive')}`);
+        const diagram = createMermaidDiagram(sm, 'TB', false, true);
+        expect(lines(diagram)).toContain(`broken --> broken : repair<br/>${calledMethod('receive')}`);
+        expect(dimmedTransitions(diagram)).toEqual(['%% lj-dimmed-transitions: edge1 edge12']);
+    });
+
+    it('only colours labels that match the called method exactly', () => {
+        const sm = datagramSocket();
+        sm.transitions.push({ from: 'bound', to: 'bound', label: 'receiveAll' });
+
+        expect(lines(createMermaidDiagram(sm, 'TB', false, true))).toContain(`bound --> bound : ${calledMethod('receive')}<br/>send<br/>receiveAll`);
+    });
+
+    it.each([
+        ['no accepted states', { expectedStates: [], possibleStates: [] }],
+        ['accepted states outside the machine', { expectedStates: ['listening'] }],
+    ])('does not focus with %s', (_, errorContext) => {
+        const sm = datagramSocket(errorContext);
+
+        expect(getStateErrorFocus(sm)).toBeNull();
+        const diagram = createMermaidDiagram(sm, 'TB', false, true);
+        expect(diagram).not.toMatch(/ljStateDimmed|lj-dimmed-transitions|ljStateValid|ljStateInvalid/);
+        expect(diagram).toContain('class bound,closed ljStateErrorActual');
+    });
+
+    it('ignores possible states outside the machine and falls back when none are given', () => {
+        expect(getStateErrorFocus(datagramSocket({ possibleStates: ['closed', 'listening'] }))?.possibleStates).toEqual(['closed']);
+        expect(getStateErrorFocus(datagramSocket({ possibleStates: [] }))?.possibleStates).toEqual(['bound', 'closed']);
+    });
+
+    it('only hints at the accepted states when the state of the receiver is unknown', () => {
+        const sm = datagramSocket({ possibleStates: ['unbound', 'bound', 'connected', 'closed', 'broken'], foundCondition: 'true' });
+
+        const focus = getStateErrorFocus(sm);
+        expect(focus).toMatchObject({ unknownState: true, validStates: [], invalidStates: [] });
+        const diagram = createMermaidDiagram(sm, 'TB', false, true);
+        expect(lines(diagram)).toContain('class unbound,bound,connected ljStateAccepted');
+        expect(diagram).not.toMatch(/ljStateValid|ljStateInvalid|ljStateDimmed|lj-dimmed-transitions|" as /);
     });
 
     it('marks the tree node example without an allowed state', () => {
@@ -170,5 +200,29 @@ describe('state error focus', () => {
             '    maybeHasChildren --> childrenAllowed : removeAllChildren',
             '    maybeHasChildren --> maybeHasChildren : getFirstChild',
         ].join('\n'));
+    });
+});
+
+describe('rendered state error focus', () => {
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    it('dims the rendered path and label of the listed transitions', async () => {
+        const diagram = createMermaidDiagram(datagramSocket(), 'TB', false, true);
+        document.body.innerHTML = '<div class="diagram-container"><div id="diagram-wrapper"><pre class="mermaid"></pre></div></div>';
+        const pre = document.querySelector('.mermaid')!;
+        pre.textContent = diagram;
+        // edge markup copied from a Mermaid 11 state diagram rendered with the ELK layout
+        const run = vi.fn(async () => {
+            pre.innerHTML = '<svg>' + ['edge0', 'edge1', 'edge12'].map(id =>
+                `<path class="transition" data-id="${id}"></path><g class="edgeLabel"><g class="label" data-id="${id}"></g></g>`).join('') + '</svg>';
+        });
+
+        await renderMermaidDiagram(document, { mermaid: { run } });
+
+        const dimmed = (selector: string) => Array.from(document.querySelectorAll(selector), node => node.getAttribute('data-id'));
+        expect(dimmed('path.transition.lj-dimmed')).toEqual(['edge1', 'edge12']);
+        expect(dimmed('g.label.lj-dimmed')).toEqual(['edge1', 'edge12']);
     });
 });

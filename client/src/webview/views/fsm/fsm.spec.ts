@@ -141,6 +141,29 @@ describe('state machine view', () => {
     });
 
     it.each([
+        [
+            'the state of the receiver is unknown',
+            { possibleStates: ['unbound', 'bound', 'connected', 'closed'] },
+            'socket.receive() is rejected: the state of socket is unknown here \u00B7 allowed when unbound or bound or connected',
+        ],
+        [
+            'every possible state accepts the call',
+            { possibleStates: ['bound'] },
+            'socket.receive() is rejected here \u00B7 allowed when bound',
+        ],
+    ])('summarizes the error when %s', (_, errorContext, summary) => {
+        renderStateMachineView(document.body, machine({
+            states: ['unbound', 'bound', 'connected', 'closed'],
+            errorContext: {
+                calledMethod: 'receive', actualStates: [], receiver: 'socket',
+                expectedStates: ['unbound', 'bound', 'connected'], ...errorContext,
+            },
+        }), diagram, 'TB', false, true);
+
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe(summary);
+    });
+
+    it.each([
         ['no error', null],
         ['an error context without the accepted states', { calledMethod: 'open', actualStates: ['Closed'] }],
     ])('omits the error summary with %s', (_, errorContext) => {

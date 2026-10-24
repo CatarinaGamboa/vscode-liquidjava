@@ -192,6 +192,42 @@ describe('webview script', () => {
         expect(root.querySelector('.mermaid')?.textContent).not.toContain('ljState');
     });
 
+    it('keeps the zoom when toggling the dimming and resets it for a new error', async () => {
+        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+        click('.diagnostic-state-machine-btn');
+        const transform = () => root.querySelector<HTMLElement>('#diagram-wrapper')?.style.transform;
+        await vi.waitFor(() => expect(transform()).toBe('matrix(1, 0, 0, 1, 0, 0)'));
+
+        click('#zoom-in-btn');
+        click('#diagram-focus-btn');
+        await vi.waitFor(() => expect(runMermaid).toHaveBeenCalledTimes(2));
+        await vi.waitFor(() => expect(transform()).toBe('matrix(1.5, 0, 0, 1.5, 0, 0)'));
+
+        click('[data-tab="diagnostics"]');
+        click('.diagnostic-state-machine-btn');
+        await vi.waitFor(() => expect(transform()).toBe('matrix(1, 0, 0, 1, 0, 0)'));
+    });
+
+    it('copies the Mermaid source without the error overlay', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+        showDiagnostics([]);
+        receive({ type: 'fsm', sm: { ...errorMachine('Counter', 'close'), errorContext: null } });
+        click('[data-tab="fsm"]');
+        click('#copy-diagram-btn');
+        const plain = writeText.mock.calls[0][0];
+
+        click('[data-tab="diagnostics"]');
+        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+        click('.diagnostic-state-machine-btn');
+        await vi.waitFor(() => expect(root.querySelector<HTMLButtonElement>('#copy-diagram-btn')?.disabled).toBe(false));
+        click('#copy-diagram-btn');
+
+        expect(root.querySelector('.mermaid')?.textContent).toContain('ljStateDimmed');
+        expect(writeText.mock.calls[1][0]).toBe(plain);
+        expect(plain).not.toMatch(/ljState|lj-dimmed|lj-state-error-method/);
+    });
+
     it('opens another state error focused after showing the full diagram of the previous one', () => {
         showDiagnostics([
             stateError('First state error', errorMachine('First', 'close'), 4),

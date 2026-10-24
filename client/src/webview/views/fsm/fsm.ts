@@ -57,14 +57,20 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
 function renderStateErrorSummary(focus: StateErrorFocus, focusOnError: boolean): string {
     const call = getRejectedCallText(focus);
     const receiver = focus.receiver ? `<code>${escapeHtml(focus.receiver)}</code>` : 'the receiver';
-    const parts = [
-        `${call ? `<code>${escapeHtml(call)}</code>` : 'The call'} is rejected`
-            + (focus.invalidStates.length > 0 ? ` when ${receiver} is ${renderStates(focus.invalidStates)}` : ''),
-        focus.validStates.length > 0 ? `allowed when ${renderStates(focus.validStates)}` : '',
-    ];
+    const rejected = `${call ? `<code>${escapeHtml(call)}</code>` : 'The call'} is rejected`;
+    const allowedStates = focus.unknownState ? focus.acceptedStates : focus.validStates;
+    let summary: string;
+    if (focus.unknownState) {
+        summary = `${rejected}: the state of ${receiver} is unknown here`;
+    } else if (focus.invalidStates.length > 0) {
+        summary = `${rejected} when ${receiver} is ${renderStates(focus.invalidStates)}`;
+    } else {
+        summary = `${rejected} here`;
+    }
+    if (allowedStates.length > 0) summary += ` \u00B7 allowed when ${renderStates(allowedStates)}`;
     return /*html*/`
         <div class="diagram-error-summary">
-            <p class="diagram-error-text">${parts.filter(Boolean).join(' \u00B7 ')}</p>
+            <p class="diagram-error-text">${summary}</p>
             <button id="diagram-focus-btn" class="diagram-focus-btn" type="button">
                 ${focusOnError ? 'Show all' : 'Focus on error'}
             </button>

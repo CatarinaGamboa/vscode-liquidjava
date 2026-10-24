@@ -8,6 +8,8 @@ const MAX_ZOOM = 5;
 const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
+// Mermaid comment listing the transitions to dim once rendered, which leaves the layout unchanged
+const DIMMED_TRANSITIONS_COMMENT = '%% lj-dimmed-transitions:';
 
 // state variables
 let zoomLevel = 1;
@@ -35,8 +37,16 @@ export function createMermaidDiagram(
     
     const lines: string[] = [];
     const errorFocus = getStateErrorFocus(sm);
-    const relatedStates = focusOnError && errorFocus ? getRelatedStates(errorFocus) : null;
-    const isDimmed = (state: string) => !!relatedStates && !relatedStates.includes(state);
+    const relatedStates = focusOnError && errorFocus ? getRelatedStates(errorFocus) : [];
+    const isDimmed = (state: string) => relatedStates.length > 0 && !relatedStates.includes(state);
+    // Mermaid numbers the rendered transitions in the order they are declared
+    const dimmedTransitions: string[] = [];
+    let transitionCount = 0;
+    const addTransition = (line: string, dimmed: boolean) => {
+        if (dimmed) dimmedTransitions.push(`edge${transitionCount}`);
+        transitionCount++;
+        lines.push(line);
+    };
 
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
@@ -44,8 +54,7 @@ export function createMermaidDiagram(
     // initial transitions
     sm.initialTransitions.forEach(transition => {
         const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
-        const displayedLabel = isDimmed(transition.to) ? dimLabel(label) : label;
-        lines.push(`    [*] --> ${transition.to}${displayedLabel ? ` : ${displayedLabel}` : ''}`);
+        addTransition(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`, isDimmed(transition.to));
     });
     
     // group transitions by from/to states and merge labels
@@ -70,8 +79,7 @@ export function createMermaidDiagram(
     transitionMap.forEach(({ labels, hasCalledMethod }, key) => {
         const [from, to] = key.split('|');
         const mergedLabel = labels.join('<br/>');
-        const dimmed = !hasCalledMethod && (isDimmed(from) || isDimmed(to));
-        lines.push(`    ${from} --> ${to} : ${dimmed ? dimLabel(mergedLabel) : mergedLabel}`);
+        addTransition(`    ${from} --> ${to} : ${mergedLabel}`, !hasCalledMethod && (isDimmed(from) || isDimmed(to)));
     });
 
     if (!errorFocus) {
@@ -95,13 +103,9 @@ export function createMermaidDiagram(
     stateClasses.forEach(([states, className]) => {
         if (states.length > 0) lines.push(`    class ${states.join(',')} ${className}`);
     });
+    if (dimmedTransitions.length > 0) lines.push(`${DIMMED_TRANSITIONS_COMMENT} ${dimmedTransitions.join(' ')}`);
 
     return lines.join('\n');
-}
-
-// marks a transition label so that its transition is dimmed once rendered
-function dimLabel(label: string): string {
-    return `<span class="lj-dimmed-transition">${label}</span>`;
 }
 
 function getTransitionLabel(
@@ -154,9 +158,10 @@ export async function renderMermaidDiagram(document: any, window: any) {
     if (mermaidElements.length === 0) return;
 
     try { 
+        const dimmedTransitions = Array.from(mermaidElements, (element: any) => getDimmedTransitions(element.textContent));
         await mermaid.run({ nodes: mermaidElements });
         highlightErrorTransitions(document);
-        dimTransitions(document);
+        mermaidElements.forEach((element: any, index: number) => dimTransitions(element, dimmedTransitions[index]));
         applyTransform(document);
         registerPanListeners(document);
         const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
@@ -180,15 +185,15 @@ function highlightErrorTransitions(document: any) {
     });
 }
 
-function dimTransitions(document: any) {
-    document.querySelectorAll('.lj-dimmed-transition').forEach((dimmedLabel: any) => {
-        const label = dimmedLabel.closest('g.label[data-id]');
-        const edgeId = label?.getAttribute('data-id');
-        const svg = label?.ownerSVGElement;
-        if (!edgeId || !svg) return;
+function getDimmedTransitions(diagram: string | null): string[] {
+    const comment = diagram?.split('\n').find(line => line.startsWith(DIMMED_TRANSITIONS_COMMENT));
+    return comment?.slice(DIMMED_TRANSITIONS_COMMENT.length).trim().split(/\s+/) ?? [];
+}
 
-        label.classList.add('lj-dimmed');
-        svg.querySelector(`path.transition[data-id="${edgeId}"]`)?.classList.add('lj-dimmed');
+function dimTransitions(element: any, edgeIds: string[]) {
+    edgeIds.forEach(edgeId => {
+        element.querySelectorAll(`path.transition[data-id="${edgeId}"], g.label[data-id="${edgeId}"]`)
+            .forEach((part: any) => part.classList.add('lj-dimmed'));
     });
 }
 

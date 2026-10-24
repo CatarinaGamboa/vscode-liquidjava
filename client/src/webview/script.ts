@@ -206,7 +206,6 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (target.closest?.('#diagram-focus-btn')) {
             e.stopPropagation();
             focusDiagramOnError = !focusDiagramOnError;
-            resetZoom(document);
             updateView();
             return;
         }
@@ -416,7 +415,10 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 const displayedStateMachine = diagnosticStateMachine ?? stateMachine;
                 const focusOnError = focusDiagramOnError && !!diagnosticStateMachine;
                 const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions, focusOnError);
-                currentDiagram = diagram;
+                // copy the diagram without the error overlay
+                currentDiagram = displayedStateMachine?.errorContext
+                    ? createMermaidDiagram({ ...displayedStateMachine, errorContext: null }, diagramOrientation, showDiagramConditions)
+                    : diagram;
                 renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, focusOnError);
                 if (displayedStateMachine) renderMermaidDiagram(document, window);
                 break;
