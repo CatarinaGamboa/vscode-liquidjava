@@ -44,8 +44,10 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                                 <span class="diagram-condition-legend-post">Postcondition</span>
                             </div>
                         ` : ''}
-                        <div id="diagram-wrapper" class="diagram-wrapper">
-                            <pre class="mermaid">${diagram}</pre>
+                        <div class="diagram-viewport">
+                            <div id="diagram-wrapper" class="diagram-wrapper">
+                                <pre class="mermaid">${diagram}</pre>
+                            </div>
                         </div>
                     </div>
                 </div>`

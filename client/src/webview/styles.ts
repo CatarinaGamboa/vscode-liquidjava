@@ -875,6 +875,10 @@ export function getStyles(): string {
         .diagram-container:active {
             cursor: grabbing;
         }
+        /* clips the panned diagram so that it stays below the header, summary, and legend */
+        .diagram-viewport {
+            overflow: hidden;
+        }
         .diagram-wrapper {
             transition: transform 0.1s ease-out;
             transform-origin: 0 0;

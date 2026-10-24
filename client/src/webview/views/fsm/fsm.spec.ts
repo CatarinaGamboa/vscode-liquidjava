@@ -192,6 +192,18 @@ describe('state machine view', () => {
         expect(document.querySelector('#diagram-focus-btn')).toBeNull();
     });
 
+    it('clips the panned diagram below the error summary and legend', () => {
+        renderStateMachineView(document.body, machine({
+            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+        }), diagram, 'TB', false, true);
+
+        const viewport = document.querySelector('.diagram-viewport')!;
+        expect(viewport.querySelector('#diagram-wrapper .mermaid')).not.toBeNull();
+        for (const selector of ['.diagram-header', '.diagram-error-summary', '.diagram-error-legend']) {
+            expect(document.querySelector(selector)?.compareDocumentPosition(viewport)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+        }
+    });
+
     it('preserves the previous diagram container height when rerendering', () => {
         renderStateMachineView(document.body, machine(), diagram, 'TB', false);
         const previousContainer = document.querySelector<HTMLElement>('.diagram-container')!;

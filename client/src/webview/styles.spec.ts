@@ -63,6 +63,13 @@ describe('state error styles', () => {
         expect(border('accepted')).toEqual(['1px', 'dashed', 'var(--lj-state-accepted)']);
     });
 
+    it('clips the panned diagram to its viewport', () => {
+        render('');
+        document.body.insertAdjacentHTML('beforeend', '<div class="diagram-viewport"></div>');
+
+        expect(style('.diagram-viewport').overflow).toBe('hidden');
+    });
+
     it('dims unrelated states and transitions', () => {
         render(state('ljStateDimmed') + '<path class="transition lj-dimmed"></path><g class="label lj-dimmed"></g>');
 

@@ -51,10 +51,10 @@ export function createMermaidDiagram(
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
-    // initial transitions
+    // initial transitions, dimmed in focus mode since the receiver already exists at the call
     sm.initialTransitions.forEach(transition => {
         const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
-        addTransition(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`, isDimmed(transition.to));
+        addTransition(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`, relatedStates.length > 0);
     });
     
     // in focus mode, only the failed method and the ways out of the possible states stay bright

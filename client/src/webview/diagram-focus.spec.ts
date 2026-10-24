@@ -120,8 +120,8 @@ describe('state error focus', () => {
         const full = createMermaidDiagram(datagramSocket(), 'TB', false, false);
 
         expect(lines(focused)).toContain('class broken ljStateDimmed');
-        // the initial transition into broken, then bind, disconnect, close from unbound and connected, repair, and discard
-        expect(dimmedTransitions(focused)).toEqual(['%% lj-dimmed-transitions: edge1 edge2 edge4 edge8 edge10 edge11 edge12']);
+        // both initial transitions, then bind, disconnect, close from unbound and connected, repair, and discard
+        expect(dimmedTransitions(focused)).toEqual(['%% lj-dimmed-transitions: edge0 edge1 edge2 edge4 edge8 edge10 edge11 edge12']);
         // focusing only adds styling hooks, so the layout stays the same
         expect(withoutDimming(focused)).toEqual(lines(full));
         expect(full).not.toMatch(/ljStateDimmed|lj-dimmed/);
@@ -155,7 +155,7 @@ describe('state error focus', () => {
             'bound --> connected : connect<br/>reconnect',
         ]));
         // the self loop of broken keeps its path for the failed method
-        expect(dimmedTransitions(diagram)).toEqual(['%% lj-dimmed-transitions: edge1 edge2 edge4 edge8 edge10 edge12']);
+        expect(dimmedTransitions(diagram)).toEqual(['%% lj-dimmed-transitions: edge0 edge1 edge2 edge4 edge8 edge10 edge12']);
     });
 
     it('dims the conditions of a dimmed method with it', () => {
@@ -216,6 +216,8 @@ describe('state error focus', () => {
             `maybeHasChildren --> childrenAllowed : ${dimmedMethod('removeAllChildren')}`,
         ]));
         expect(diagram.join('\n')).not.toMatch(/maybeHasChildren" as|ljStateValid|ljStateDimmed/);
+        // the constructor is dimmed although it leads to a possible state
+        expect(dimmedTransitions(diagram.join('\n'))).toEqual(['%% lj-dimmed-transitions: edge0 edge2']);
     });
 
     it('keeps the previous highlighting for an error context without the accepted states', () => {
@@ -261,7 +263,7 @@ describe('rendered state error focus', () => {
         await renderMermaidDiagram(document, { mermaid: { run } });
 
         const dimmed = (selector: string) => Array.from(document.querySelectorAll(selector), node => node.getAttribute('data-id'));
-        expect(dimmed('path.transition.lj-dimmed')).toEqual(['edge1', 'edge12']);
-        expect(dimmed('g.label.lj-dimmed')).toEqual(['edge1', 'edge12']);
+        expect(dimmed('path.transition.lj-dimmed')).toEqual(['edge0', 'edge1', 'edge12']);
+        expect(dimmed('g.label.lj-dimmed')).toEqual(['edge0', 'edge1', 'edge12']);
     });
 });
